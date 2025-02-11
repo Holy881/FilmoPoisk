@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ФильмоПОИСК</title>
+  <script src="playerjs.js" type="text/javascript">
+  </script>
+  <link rel="stylesheet" href="watchplayer.css">
+</head>
+<body class="dark-background">
+    <header class="header">
+        <img src="images/logo.png" alt="ФильмоПОИСК.ру.нет" class="logo">
+        <nav>
+            <ul class="nav-links">
+                <li><a href="home.html">Главная</a></li>
+                <li><a href="home.html">Фильмы</a></li>
+                <li><a href="#">Сериалы</a></li>
+                <li><a href="#">Мой профиль</a></li>
+                <button id="toggleTheme" class="toggle-btn">
+                    <img id="themeIcon" src="images/sun.png" alt="Toggle Theme">
+                </button>
+            </ul>
+        </nav>
+    </header>    
+  <main class="container">
+    <div class="player-section">
+      <h1>Бегущий по лезвию 2049 (2017)</h1>
+      <div class="player" id="player"></div>
+    </div>
+    <div class="info-section">
+      <h2>Описание</h2>
+      <p>В продолжении культового фильма "Бегущий по лезвию" Кей, новый бегущий по лезвию, раскрывает тайну, которая может изменить ход человечества. Его поиски ведут к загадочному Рику Декарду, пропавшему много лет назад. Этот фильм продолжает исследовать темы искусственного интеллекта, человечности и самоопределения в будущем мире.</p>
+      <ul>
+        <li><strong>Год:</strong> 2017</li>
+        <li><strong>Режиссер:</strong> Дени Вильнев</li>
+        <li><strong>Актеры:</strong> Райан Гослинг (Кей), Харрисон Форд (Рик Декард), Ана де Армас (Жой), Джаред Лето (Ниандер Уоллес)</li>
+        <li><strong>Жанр:</strong> Научная фантастика, Триллер</li>
+      </ul>
+    </div>
+    <aside class="sidebar">
+      <h2>Предложенные фильмы</h2>
+      <div class="movie-tiles">
+        <div class="tile">
+          <a href="Drive.html">
+            <img src="images/Drive.jpg" alt="Гарри Поттер и Тайная комната" class="poster">
+            <p>Драйв (2011)</p>
+          </a>
+        </div>
+        <div class="tile">
+          <a href="Openheimer.html">
+            <img src="images/Openheimer.jpg" alt="Гарри Поттер и Тайная комната" class="poster">
+            <p>Опенгеймер (2023)</p>
+          </a>
+        </div>
+        <div class="tile">
+          <a href="Jurhead.html">
+            <img src="images/Jurhead.jpg" alt="Гарри Поттер и Кубок огня">
+            <p>Морпехи (2005)</p>
+          </a>
+        </div>
+        <div class="tile">
+            <a href="TheBigLebowski.html">
+                <img src="images/TheBigLebowski.webp" alt="Гарри Поттер и Тайная комната" class="poster">
+                <p>Большой Лебовски (1998)</p>
+            </a>
+        </div>
+        <div class="tile">
+            <a href="FightClub.html">
+                <img src="images/FightClub.jpg" alt="Гарри Поттер и Тайная комната" class="poster">
+                <p>Бойцовский клуб (1999)</p>
+            </a>
+        </div>
+        <div class="tile">
+            <a href="Tron.html">
+                <img src="images/Tron.jpg" alt="Гарри Поттер и Тайная комната" class="poster">
+                <p>Трон (2011)</p>
+            </a>
+        </div>
+      </div>
+    </aside>
+  </main>
+  <footer class="footer">
+    <p>&copy; 2024 ФильмоПОИСК.ру.нет. Все права защищены.</p>
+  </footer>
+  <script>
+        var player = new Playerjs({id:"player",
+        file:"https://www.youtube.com/watch?v=taQW31SVPCk"
+        })
+  </script>
+<script>
+    let isDarkTheme = false;
+  
+    document.getElementById('toggleTheme').addEventListener('click', function() {
+      var sections = ['.player-section', '.info-section', '.sidebar'];
+  
+      if (isDarkTheme) {
+        sections.forEach(function(section) {
+          var el = document.querySelector(section);
+          el.style.backgroundColor = '';
+          el.style.color = '';
+        });
+        document.getElementById('themeIcon').src = 'images/sun.png';
+      } else {
+        sections.forEach(function(section) {
+          var el = document.querySelector(section);
+          el.style.backgroundColor = '#242424';
+          el.style.color = '#fff';
+        });
+        document.getElementById('themeIcon').src = 'images/moon.png';
+      }
+  
+      isDarkTheme = !isDarkTheme;
+    });
+  </script>
+</body>
+</html>

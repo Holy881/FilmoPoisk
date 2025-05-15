@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль - ФильмоПОИСК.ру.нет</title>
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+</head>
+<body>
+    <header class="navbar">
+        <a href="home.html" class="home-btn">Главная</a>
+        <div class="avatar-container">
+            <img src="images/default-avatar.png" alt="Аватар" class="nav-avatar" id="nav-avatar">
+            <div class="dropdown" id="dropdown">
+                <a href="profile.html">Профиль</a>
+                <a href="#" id="logout-btn">Выход</a>
+            </div>
+        </div>
+    </header>
+    <div class="sidebar">
+        <button class="account-btn">Аккаунт</button>
+        <button class="catalog-btn">Мой каталог</button>
+    </div>
+    <div class="profile-container">
+        <h2>Аккаунт</h2>
+        <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+        <div class="profile-info">
+            <div class="info-row" data-action="avatar">
+                <div class="info-text">
+                    <span class="label">Фото профиля</span>
+                    <span class="description">Фото профиля позволяет подчеркнуть индивидуальность аккаунта.</span>
+                </div>
+                <img src="images/default-avatar.png" alt="Аватар" class="avatar-preview" id="avatar-preview">
+            </div>
+            <div class="info-row" data-action="username">
+                <div class="info-text">
+                    <span class="label">Имя пользователя</span>
+                    <span class="value username"></span>
+                </div>
+            </div>
+            <div class="info-row" data-action="email">
+                <div class="info-text">
+                    <span class="label">Электронная почта</span>
+                    <span class="value email"></span>
+                </div>
+            </div>
+            <div class="info-row" data-action="password">
+                <div class="info-text">
+                    <span class="label">Пароль</span>
+                    <span class="value">********</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lists-container">
+        <h2>Мой каталог</h2>
+        <div class="category-selector">
+            <div class="custom-dropdown">
+                <button class="dropdown-btn">
+                    <span id="selected-category">Все категории</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="dropdown-content">
+                    <div class="dropdown-item" data-category="Все категории">Все категории</div>
+                    <div class="dropdown-item" data-category="Просмотрено">Просмотрено</div>
+                    <div class="dropdown-item" data-category="Смотрю">Смотрю</div>
+                    <div class="dropdown-item" data-category="Брошено">Брошено</div>
+                    <div class="dropdown-item" data-category="Планирую">Планирую</div>
+                    <div class="dropdown-item" data-category="В избранном">В избранном</div>
+                    <div class="dropdown-item" data-category="Пересматриваю">Пересматриваю</div>
+                    <div class="dropdown-item" data-category="На паузе">На паузе</div>
+                    <div class="dropdown-item" data-category="Не интересно">Не интересно</div>
+                </div>
+            </div>
+        </div>
+        <div class="items-grid" id="items-grid"></div>
+        <div class="empty-state" id="empty-state">Вы пока ничего не добавили в эту категорию</div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <div class="modal delete-modal" id="delete-modal">
+        <div class="modal-content">
+            <span class="close-btn">×</span>
+            <p>Вы уверены, что хотите удалить этот фильм из категории?</p>
+            <button class="confirm-delete">Да</button>
+            <button class="cancel-delete">Нет</button>
+        </div>
+    </div>
+
+    <div class="modal category-modal" id="category-modal">
+        <div class="modal-content">
+            <h3>Изменить категорию</h3>
+            <div class="category-checkboxes">
+                <label><input type="checkbox" value="Просмотрено"> Просмотрено</label>
+                <label><input type="checkbox" value="Смотрю"> Смотрю</label>
+                <label><input type="checkbox" value="Брошено"> Брошено</label>
+                <label><input type="checkbox" value="Планирую"> Планирую</label>
+                <label><input type="checkbox" value="В избранном"> В избранном</label>
+                <label><input type="checkbox" value="Пересматриваю"> Пересматриваю</label>
+                <label><input type="checkbox" value="На паузе"> На паузе</label>
+                <label><input type="checkbox" value="Не интересно"> Не интересно</label>
+            </div>
+            <button id="save-category-btn">Сохранить</button>
+            <button id="cancel-category-btn">Отмена</button>
+        </div>
+    </div>
+
+    <div class="modal" id="crop-modal">
+        <div class="modal-content">
+            <h3>Обрезать изображение</h3>
+            <img id="image-to-crop" src="" alt="Изображение для обрезки">
+            <div class="modal-buttons">
+                <button id="crop-btn">Обрезать и сохранить</button>
+                <button id="cancel-crop-btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="password-modal" id="password-modal">
+        <div class="modal-content">
+            <h3>Сменить пароль</h3>
+            <input type="password" id="current-password" placeholder="Текущий пароль">
+            <input type="password" id="new-password" placeholder="Новый пароль">
+            <input type="password" id="confirm-password" placeholder="Подтвердите новый пароль">
+            <button id="save-password-btn">Сохранить</button>
+            <button id="cancel-password-btn">Отмена</button>
+        </div>
+    </div>
+    <div class="edit-modal" id="edit-modal">
+        <div class="modal-content">
+            <h3>Редактировать</h3>
+            <input type="text" id="edit-input" autocomplete="off">
+            <button id="save-edit-btn">Сохранить</button>
+            <button id="cancel-edit-btn">Отмена</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script src="profile.js"></script>
+</body>
+</html>

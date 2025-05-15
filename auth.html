@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход и регистрация - ФильмоПОИСК.ру.нет</title>
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <video autoplay loop muted class="background-video">
+        <source src="videos/FightClubG.mp4" type="video/mp4">
+        Ваш браузер не поддерживает видео.
+    </video>
+    <div class="auth-container">
+        <header>
+            <img src="images/logo.png" alt="ФильмоПОИСК.ру.нет" class="logo">
+        </header>
+        <h2>Войдите или зарегистрируйтесь</h2>
+        <div class="tab-switcher">
+            <button class="tab active" data-tab="login">Вход</button>
+            <button class="tab" data-tab="register">Регистрация</button>
+        </div>
+        <div class="form-container">
+            <form id="login-form" class="form active" novalidate>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" class="email" placeholder="Почта">
+                    <div class="error-message"></div>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" class="password" placeholder="Пароль">
+                    <div class="error-message"></div>
+                </div>
+                <div class="form-error"></div>
+                <button type="submit">Войти</button>
+            </form>
+            <form id="register-form" class="form" novalidate>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" class="email" placeholder="Почта">
+                    <div class="error-message"></div>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" class="username" placeholder="Имя пользователя">
+                    <div class="error-message"></div>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" class="password" placeholder="Пароль">
+                    <div class="error-message"></div>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" class="confirm-password" placeholder="Повтор пароля">
+                    <div class="error-message"></div>
+                </div>
+                <div class="form-error"></div>
+                <button type="submit">Зарегистрироваться</button>
+            </form>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+</body>
+</html>

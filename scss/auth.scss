@@ -1,0 +1,202 @@
+$bg-container: rgba(0, 0, 0, 0.7); // Полупрозрачный тёмный фон
+$button-bg: #333; // Серый фон кнопок
+$accent-color: #e50914; // Красный акцент
+
+.background-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -2;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: -1;
+    }
+}
+
+.auth-container {
+    width: 400px;
+    min-height: 300px;
+    background: $bg-container;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+
+    .logo {
+        max-width: 150px;
+        margin-bottom: 20px;
+    }
+
+    h2 {
+        color: #fff;
+        margin-bottom: 20px;
+        font-size: 24px;
+    }
+
+    .tab-switcher {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 20px;
+
+        .tab {
+            padding: 10px 20px;
+            border: none;
+            background: $button-bg;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background 0.3s;
+
+            &.active {
+                background: darken($button-bg, 10%);
+            }
+
+            &:hover {
+                background: darken($button-bg, 10%);
+            }
+        }
+    }
+
+    .form-container {
+        position: relative;
+        overflow: hidden;
+        height: auto;
+        min-height: 300px;
+
+        .form {
+            display: block;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            opacity: 0;
+            transform: translateX(100%);
+
+            &.active {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            &.slide-out-left {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+
+            &.slide-in-right {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    }
+
+    .input-group {
+        position: relative;
+        margin: 10px 0;
+        box-sizing: border-box;
+
+        i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #fff;
+            z-index: 1;
+            transition: top 0.2s ease;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 10px 10px 40px;
+            border: none;
+            border-radius: 5px;
+            background: #222;
+            color: #fff;
+            font-size: 14px;
+            box-sizing: border-box;
+            position: relative;
+
+            &::placeholder {
+                color: #aaa;
+            }
+
+            &:invalid {
+                border: 1px solid #ff4d4d;
+            }
+        }
+
+        &.error {
+            i {
+                top: 30%;
+            }
+
+            .error-message {
+                display: block;
+                color: #ff4d4d;
+                font-size: 12px;
+                text-align: left;
+                margin-top: 5px;
+                position: relative;
+            }
+        }
+
+        .error-message {
+            display: none;
+        }
+    }
+
+    .form-error {
+        color: #ff4d4d;
+        font-size: 14px;
+        margin: 10px 0;
+        min-height: 20px;
+        text-align: left;
+        padding-left: 10px;
+    }
+
+    button {
+        width: 100%;
+        padding: 10px;
+        background: $accent-color;
+        border: none;
+        border-radius: 5px;
+        color: #fff;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 10px;
+        display: block;
+
+        &:hover {
+            background: darken($accent-color, 10%);
+        }
+    }
+
+    @media (max-width: 480px) {
+        width: 90%;
+        padding: 15px;
+    }
+}

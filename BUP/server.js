@@ -10,12 +10,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const UPLOADS_DIR = 'uploads';
-if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR);
+const upload = multer({ dest: 'uploads/' });
+if (!fs.existsSync('uploads')) {
+    fs.mkdirSync('uploads');
 }
-const upload = multer({ dest: `${UPLOADS_DIR}/` });
-
 
 const db = new sqlite3.Database('./database.db', (err) => {
     if (err) {
@@ -49,7 +47,6 @@ const db = new sqlite3.Database('./database.db', (err) => {
 });
 
 app.use(express.static(path.join(__dirname, '..')));
-app.use(`/${UPLOADS_DIR}`, express.static(UPLOADS_DIR));
 
 app.post('/api/register', async (req, res) => {
     const { username, email, password } = req.body;
@@ -105,30 +102,16 @@ app.post('/api/user/:id/avatar', upload.single('avatar'), (req, res) => {
         return res.status(400).json({ error: 'Файл не загружен' });
     }
 
-    db.get('SELECT avatar FROM users WHERE id = ?', [userId], (err, user) => {
-        if (user && user.avatar && user.avatar !== '/images/default-avatar.png' && user.avatar.startsWith(`/${UPLOADS_DIR}/`)) {
-            const oldAvatarPath = path.join(__dirname, user.avatar.substring(1));
-            fs.unlink(oldAvatarPath, (unlinkErr) => {
-                if (unlinkErr && unlinkErr.code !== 'ENOENT') {
-                    console.error('Ошибка удаления старого аватара:', unlinkErr);
-                }
-            });
-        }
-    });
-
-    const newFileName = `avatar-${userId}-${Date.now()}${path.extname(file.originalname)}`;
-    const newPath = path.join(UPLOADS_DIR, newFileName);
-
+    const newPath = path.join('uploads', `avatar-${userId}${path.extname(file.originalname)}`);
     fs.rename(file.path, newPath, (err) => {
         if (err) {
-            fs.unlink(file.path, () => {});
             return res.status(500).json({ error: 'Ошибка сохранения файла' });
         }
 
-        const avatarUrl = `/${UPLOADS_DIR}/${newFileName}`;
-        db.run('UPDATE users SET avatar = ? WHERE id = ?', [avatarUrl, userId], (dbErr) => {
-            if (dbErr) {
-                return res.status(500).json({ error: 'Ошибка обновления аватара в базе данных' });
+        const avatarUrl = `/uploads/avatar-${userId}${path.extname(file.originalname)}`;
+        db.run('UPDATE users SET avatar = ? WHERE id = ?', [avatarUrl, userId], (err) => {
+            if (err) {
+                return res.status(500).json({ error: 'Ошибка обновления аватара' });
             }
             res.status(200).json({ avatarUrl });
         });
@@ -149,13 +132,13 @@ app.post('/api/user/:id/password', async (req, res) => {
             return res.status(400).json({ error: 'Текущий пароль неверен' });
         }
 
-        if (!newPassword || newPassword.length < 6) {
+        if (newPassword.length < 6) {
             return res.status(400).json({ error: 'Новый пароль должен содержать минимум 6 символов' });
         }
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId], (dbErr) => {
-            if (dbErr) {
+        db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId], (err) => {
+            if (err) {
                 return res.status(500).json({ error: 'Ошибка обновления пароля' });
             }
             res.status(200).json({ message: 'Пароль успешно изменён' });
@@ -171,20 +154,17 @@ app.post('/api/user/:id/update', (req, res) => {
         return res.status(400).json({ error: 'Недопустимое поле для обновления' });
     }
 
-    if (!value || String(value).trim().length < 3) {
+    if (!value || value.length < 3) {
         return res.status(400).json({ error: `${field === 'username' ? 'Имя пользователя' : 'Email'} должен содержать минимум 3 символа` });
     }
 
-    if (field === 'email' && !String(value).includes('@')) {
+    if (field === 'email' && !value.includes('@')) {
         return res.status(400).json({ error: 'Неверный формат email' });
     }
 
-    db.run(`UPDATE users SET ${field} = ? WHERE id = ?`, [String(value).trim(), userId], function(err) {
+    db.run(`UPDATE users SET ${field} = ? WHERE id = ?`, [value, userId], function(err) {
         if (err) {
-            if (err.message.includes('UNIQUE constraint failed')) {
-                 return res.status(400).json({ error: `Такое ${field === 'username' ? 'имя пользователя' : 'email'} уже используется` });
-            }
-            return res.status(500).json({ error: 'Ошибка обновления данных пользователя' });
+            return res.status(400).json({ error: `Такой ${field === 'username' ? 'имя пользователя' : 'email'} уже существует` });
         }
         res.status(200).json({ message: 'Данные успешно обновлены' });
     });
@@ -192,95 +172,56 @@ app.post('/api/user/:id/update', (req, res) => {
 
 app.get('/api/user/:id/lists', (req, res) => {
     const userId = req.params.id;
-    const categoryQueryParam = req.query.category;
-    const sortQueryParam = req.query.sort || 'date_desc';
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12;
+    const limit = parseInt(req.query.limit) || 15;
     const offset = (page - 1) * limit;
 
-    let countQuery = 'SELECT COUNT(*) as total FROM user_lists WHERE user_id = ?';
-    let itemsQuery = 'SELECT item_id AS id, category, title, poster, rating FROM user_lists WHERE user_id = ?';
-    const countQueryParams = [userId];
-    const itemsQueryParams = [userId];
-
-    if (categoryQueryParam && categoryQueryParam !== 'Все категории') {
-        countQuery += ' AND category = ?';
-        itemsQuery += ' AND category = ?';
-        countQueryParams.push(categoryQueryParam);
-        itemsQueryParams.push(categoryQueryParam);
-    }
-
-    // Логика сортировки
-    let orderByClause = '';
-    switch (sortQueryParam) {
-        case 'none': // Без специальной сортировки (порядок из БД, обычно по item_id)
-            orderByClause = ' ORDER BY item_id DESC'; // Или ASC, или вообще убрать ORDER BY для "естественного" порядка
-            break;
-        case 'date_asc':
-            orderByClause = ' ORDER BY item_id ASC';
-            break;
-        case 'title_asc':
-            orderByClause = ' ORDER BY title ASC';
-            break;
-        case 'title_desc':
-            orderByClause = ' ORDER BY title DESC';
-            break;
-        case 'rating_asc':
-            orderByClause = ' ORDER BY rating ASC, title ASC';
-            break;
-        case 'rating_desc':
-            orderByClause = ' ORDER BY rating DESC, title ASC';
-            break;
-        case 'date_desc':
-        default:
-            orderByClause = ' ORDER BY item_id DESC';
-            break;
-    }
-    itemsQuery += orderByClause;
-
-    itemsQuery += ' LIMIT ? OFFSET ?';
-    itemsQueryParams.push(limit, offset);
-
-    db.get(countQuery, countQueryParams, (err, countResult) => {
+    // Сначала получаем общее количество элементов
+    db.get('SELECT COUNT(*) as total FROM user_lists WHERE user_id = ?', [userId], (err, countResult) => {
         if (err) {
             console.error('Ошибка при подсчёте элементов:', err);
-            return res.status(500).json({ error: 'Ошибка сервера при подсчёте элементов' });
+            return res.status(500).json({ error: 'Ошибка сервера' });
         }
-        const totalItems = countResult ? countResult.total : 0;
-        db.all(itemsQuery, itemsQueryParams, (err, rows) => {
-            if (err) {
-                console.error('Ошибка при получении списков:', err);
-                return res.status(500).json({ error: 'Ошибка сервера при получении списка' });
+
+        const totalItems = countResult.total;
+        const totalPages = Math.ceil(totalItems / limit);
+
+        // Получаем элементы с учётом пагинации
+        db.all(
+            'SELECT item_id AS id, category, title, poster, rating FROM user_lists WHERE user_id = ? LIMIT ? OFFSET ?',
+            [userId, limit, offset],
+            (err, rows) => {
+                if (err) {
+                    console.error('Ошибка при получении списков:', err);
+                    return res.status(500).json({ error: 'Ошибка сервера' });
+                }
+
+                res.status(200).json({
+                    items: rows,
+                    totalItems: totalItems,
+                    totalPages: totalPages,
+                    currentPage: page
+                });
             }
-            res.status(200).json({
-                items: rows,
-                totalItems: totalItems,
-                currentPage: page
-            });
-        });
+        );
     });
 });
 
 app.post('/api/user/:id/lists', (req, res) => {
     const userId = req.params.id;
-    const { category, title, poster, rating } = req.body;
+    const { category, title, poster } = req.body;
     if (!["Просмотрено", "Смотрю", "Брошено", "Планирую", "В избранном", "Пересматриваю", "На паузе", "Не интересно"].includes(category)) {
         return res.status(400).json({ error: 'Недопустимая категория' });
     }
-    const ratingValue = rating !== undefined && rating !== null ? parseInt(rating) : 0;
-    if (ratingValue < 0 || ratingValue > 10) {
-        return res.status(400).json({ error: 'Рейтинг должен быть от 0 до 10' });
-    }
-
     db.run(
-        'INSERT INTO user_lists (user_id, category, title, poster, rating) VALUES (?, ?, ?, ?, ?)',
-        [userId, category, title, poster, ratingValue],
+        'INSERT INTO user_lists (user_id, category, title, poster) VALUES (?, ?, ?, ?)',
+        [userId, category, title, poster],
         function (err) {
             if (err) {
                 console.error('Ошибка при добавлении в список:', err);
                 return res.status(500).json({ error: 'Ошибка добавления в список' });
             }
-            res.status(200).json({ id: this.lastID, category, title, poster, rating: ratingValue });
+            res.status(200).json({ id: this.lastID });
         }
     );
 });
@@ -288,13 +229,10 @@ app.post('/api/user/:id/lists', (req, res) => {
 app.delete('/api/user/:id/lists/:item_id', (req, res) => {
     const userId = req.params.id;
     const itemId = req.params.item_id;
-    db.run('DELETE FROM user_lists WHERE user_id = ? AND item_id = ?', [userId, itemId], function(err) {
+    db.run('DELETE FROM user_lists WHERE user_id = ? AND item_id = ?', [userId, itemId], (err) => {
         if (err) {
             console.error('Ошибка при удалении из списка:', err);
             return res.status(500).json({ error: 'Ошибка удаления из списка' });
-        }
-        if (this.changes === 0) {
-            return res.status(404).json({ error: 'Элемент не найден для удаления' });
         }
         res.status(200).json({ message: 'Элемент удалён' });
     });
@@ -305,48 +243,32 @@ app.put('/api/user/:id/lists/:item_id', (req, res) => {
     const itemId = req.params.item_id;
     const { category, rating } = req.body;
 
-    let query = 'UPDATE user_lists SET ';
-    const params = [];
-    const updates = [];
-
     if (category) {
         if (!["Просмотрено", "Смотрю", "Брошено", "Планирую", "В избранном", "Пересматриваю", "На паузе", "Не интересно"].includes(category)) {
             return res.status(400).json({ error: 'Недопустимая категория' });
         }
-        updates.push('category = ?');
-        params.push(category);
+        db.run('UPDATE user_lists SET category = ? WHERE user_id = ? AND item_id = ?', [category, userId, itemId], (err) => {
+            if (err) {
+                console.error('Ошибка при обновлении категории:', err);
+                return res.status(500).json({ error: 'Ошибка обновления категории' });
+            }
+            res.status(200).json({ message: 'Категория обновлена' });
+        });
+    } else if (rating !== undefined) {
+        db.run('UPDATE user_lists SET rating = ? WHERE user_id = ? AND item_id = ?', [rating, userId, itemId], (err) => {
+            if (err) {
+                console.error('Ошибка при обновлении рейтинга:', err);
+                return res.status(500).json({ error: 'Ошибка обновления рейтинга' });
+            }
+            res.status(200).json({ message: 'Рейтинг обновлен' });
+        });
+    } else {
+        res.status(400).json({ error: 'Не указаны данные для обновления' });
     }
-
-    if (rating !== undefined) {
-        const ratingValue = parseInt(rating);
-        if (isNaN(ratingValue) || ratingValue < 0 || ratingValue > 10) {
-             return res.status(400).json({ error: 'Рейтинг должен быть числом от 0 до 10' });
-        }
-        updates.push('rating = ?');
-        params.push(ratingValue);
-    }
-
-    if (updates.length === 0) {
-        return res.status(400).json({ error: 'Не указаны данные для обновления' });
-    }
-
-    query += updates.join(', ') + ' WHERE user_id = ? AND item_id = ?';
-    params.push(userId, itemId);
-
-    db.run(query, params, function(err) {
-        if (err) {
-            console.error('Ошибка при обновлении элемента списка:', err);
-            return res.status(500).json({ error: 'Ошибка обновления элемента списка' });
-        }
-        if (this.changes === 0) {
-            return res.status(404).json({ error: 'Элемент не найден для обновления' });
-        }
-        res.status(200).json({ message: 'Элемент списка успешно обновлён' });
-    });
 });
 
+app.use('/uploads', express.static('uploads'));
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Сервер запущен на порту ${PORT}`);
+app.listen(3000, () => {
+    console.log('Сервер запущен на порту 3000');
 });

@@ -12,7 +12,7 @@
 <body>
     <header class="navbar">
         <div class="navbar-left">
-            <p class="navbar-brand">ФильмоПОИСК</p>
+            <p class="navbar-brand">ФильмоПОИСК</з>
             <a href="home.html" class="home-btn action-button">Главная</a>
         </div>
         <div class="avatar-container">
@@ -29,8 +29,7 @@
         <button class="catalog-btn action-button">Мой каталог</button>
     </div>
 
-    <div class="profile-wrapper">
-        <div class="profile-container tab-content is-active-tab">
+    <div class="profile-wrapper"> <div class="profile-container visible">
             <h2>Аккаунт</h2>
             <input type="file" id="avatar-input" accept="image/*" style="display: none;">
             <div class="profile-info">
@@ -62,52 +61,33 @@
             </div>
         </div>
 
-        <div class="lists-container tab-content is-inactive-tab-right">
-            <h2 id="catalog-header">Мой каталог</h2>
-            <div class="filters-and-sort-container" id="filters-and-sort">
-                <div class="category-selector">
-                    <div class="custom-dropdown">
-                        <button type="button" class="dropdown-btn action-button" id="category-dropdown-btn">
-                            <span id="selected-category">Все категории</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="dropdown-content" id="category-dropdown-content">
-                            <div class="dropdown-item" data-category="Все категории">Все категории</div>
-                            <div class="dropdown-item" data-category="Просмотрено">Просмотрено</div>
-                            <div class="dropdown-item" data-category="Смотрю">Смотрю</div>
-                            <div class="dropdown-item" data-category="Брошено">Брошено</div>
-                            <div class="dropdown-item" data-category="Планирую">Планирую</div>
-                            <div class="dropdown-item" data-category="В избранном">В избранном</div>
-                            <div class="dropdown-item" data-category="Пересматриваю">Пересматриваю</div>
-                            <div class="dropdown-item" data-category="На паузе">На паузе</div>
-                            <div class="dropdown-item" data-category="Не интересно">Не интересно</div>
-                        </div>
+        <div class="lists-container hidden">
+            <h2>Мой каталог</h2>
+            <div class="category-selector">
+                <div class="custom-dropdown">
+                    <button type="button" class="dropdown-btn action-button">
+                        <span id="selected-category">Все категории</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-content">
+                        <div class="dropdown-item" data-category="Все категории">Все категории</div>
+                        <div class="dropdown-item" data-category="Просмотрено">Просмотрено</div>
+                        <div class="dropdown-item" data-category="Смотрю">Смотрю</div>
+                        <div class="dropdown-item" data-category="Брошено">Брошено</div>
+                        <div class="dropdown-item" data-category="Планирую">Планирую</div>
+                        <div class="dropdown-item" data-category="В избранном">В избранном</div>
+                        <div class="dropdown-item" data-category="Пересматриваю">Пересматриваю</div>
+                        <div class="dropdown-item" data-category="На паузе">На паузе</div>
+                        <div class="dropdown-item" data-category="Не интересно">Не интересно</div>
                     </div>
                 </div>
-                <div class="sort-selector">
-                    <div class="custom-dropdown">
-                        <button type="button" class="dropdown-btn action-button" id="sort-dropdown-btn">
-                            <span id="selected-sort">По дате (новые)</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="dropdown-content" id="sort-dropdown-content">
-                            <div class="dropdown-item" data-sort="none">Без сортировки</div>
-                            <div class="dropdown-item" data-sort="date_desc">По дате (новые)</div>
-                            <div class="dropdown-item" data-sort="date_asc">По дате (старые)</div>
-                            <div class="dropdown-item" data-sort="title_asc">По названию (А-Я)</div>
-                            <div class="dropdown-item" data-sort="title_desc">По названию (Я-А)</div>
-                            <div class="dropdown-item" data-sort="rating_desc">По рейтингу (высокий)</div>
-                            <div class="dropdown-item" data-sort="rating_asc">По рейтингу (низкий)</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="pagination" id="pagination-controls">
-                    </div>
             </div>
             <div class="items-grid" id="items-grid">
                 </div>
             <div class="empty-state" id="empty-state">Вы пока ничего не добавили в эту категорию</div>
-            </div>
+            <div class="pagination" id="pagination">
+                </div>
+        </div>
     </div>
 
     <div class="modal delete-modal" id="delete-modal">

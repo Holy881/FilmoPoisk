@@ -1,6 +1,6 @@
 // profile.scss
 
-// 0. Глобальный box-sizing
+// 0. Глобальный box-sizing для предсказуемых размеров
 *,
 *::before,
 *::after {
@@ -13,15 +13,20 @@ $surface-color: #1A1A1A;
 $sidebar-profile-bg-color: $bg-color;
 $input-bg-color: #2C2C2C;
 
+// $button-sidebar-bg-color-hover: rgba(255, 255, 255, 0.04); // No longer primary for sidebar button hover
+// $button-sidebar-active-bg-color: #2F2F2F; // No longer primary for sidebar button active
+// $button-sidebar-text-color: #A0A0A0; // Will use $text-secondary-color from .action-button
+// $button-sidebar-active-text-color: #FFFFFF; // Will use $interactive-text-color from .action-button
+
 $dropdown-profile-bg-color: #222222;
 $text-color: #E0E0E0;
-$text-secondary-color: #A0A0A0;
-$border-color: #383838;
+$text-secondary-color: #A0A0A0; // Used by .action-button
+$border-color: #383838; // Used by .action-button
 
-$interactive-hover-bg-color: #2a2a2a;
-$interactive-active-bg-color: #3a3a3a;
-$interactive-text-color: #FFFFFF;
-$interactive-border-color: #5A5A5A;
+$interactive-hover-bg-color: #2a2a2a; // Used by .action-button
+$interactive-active-bg-color: #3a3a3a; // Used by .action-button
+$interactive-text-color: #FFFFFF; // Used by .action-button
+$interactive-border-color: #5A5A5A; // Used by .action-button
 
 $rating-red: #E53935;
 $rating-gray: #757575;
@@ -31,11 +36,9 @@ $navbar-height: 60px;
 $profile-sidebar-width: 240px;
 $item-animation-duration: 1s;
 $item-animation-stagger: 0.08s;
-$container-animation-duration: 0.3s;
-$tab-content-animation-duration: 0.4s;
 $content-padding: 20px;
 
-// 2. Скроллбар
+// 2. Глобальные стили для кастомного скроллбара
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: darken($input-bg-color, 7%); border-radius: 10px; }
 ::-webkit-scrollbar-thumb {
@@ -48,7 +51,7 @@ body, .sidebar, .dropdown-content, .category-checkboxes {
   scrollbar-color: $border-color darken($input-bg-color, 7%);
 }
 
-// 3. .action-button
+// Global .action-button style (adopted from home.scss)
 .action-button {
     color: $text-secondary-color;
     background-color: transparent;
@@ -69,14 +72,14 @@ body, .sidebar, .dropdown-content, .category-checkboxes {
         background-color: $interactive-hover-bg-color;
         border-color: $interactive-border-color;
     }
-    &.active, &:active {
+
+    &.active, &:active { // Includes :active pseudo-class for general button presses
         color: $interactive-text-color;
         background-color: $interactive-active-bg-color;
         border-color: $interactive-border-color;
     }
 }
 
-// 4. Body
 body {
     margin: 0;
     font-family: 'Inter', Arial, sans-serif;
@@ -87,7 +90,7 @@ body {
     padding-top: $navbar-height;
 }
 
-// 5. Navbar
+/* --- Navbar на странице профиля --- */
 .navbar {
     position: absolute;
     top: 0;
@@ -108,9 +111,12 @@ body {
     }
     .home-btn {
         @extend .action-button;
-        border-color: transparent;
-        padding: 8px 12px;
+        border-color: transparent; // Initially borderless
+        // background-color: transparent; // Handled by .action-button default
+        // color: $text-secondary-color; // Handled by .action-button default
+        padding: 8px 12px; // Specific padding
         margin-right: 0;
+        // Hover styles from .action-button:hover will apply border and background
     }
     .avatar-container {
         position: relative;
@@ -120,14 +126,13 @@ body {
             border: 2px solid transparent; transition: border-color 0.2s ease;
             &:hover { border-color: $interactive-border-color; }
         }
-        .dropdown { // Это dropdown для аватара в navbar
+        .dropdown {
             position: absolute; top: calc(100% + 10px); right: 0;
             background: $surface-color; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3); min-width: 160px;
             opacity: 0; transform: translateY(-10px) scale(0.95);
             transition: opacity 0.2s ease, transform 0.2s ease;
-            pointer-events: none; overflow: hidden;
-            z-index: 1001; // Выше чем navbar, чтобы быть поверх него
+            pointer-events: none; overflow: hidden; z-index: 1001;
             a {
                 display: block; padding: 12px 20px; color: $text-secondary-color;
                 text-decoration: none; font-size: 0.95em;
@@ -141,7 +146,7 @@ body {
     }
 }
 
-// 6. Sidebar
+/* --- Sidebar --- */
 .sidebar {
     position: absolute;
     top: $navbar-height;
@@ -150,79 +155,54 @@ body {
     height: calc(100vh - #{$navbar-height});
     background: $sidebar-profile-bg-color;
     padding: $content-padding;
-    z-index: 990; // Ниже navbar
+    z-index: 990;
     overflow-y: auto;
 
     .account-btn, .catalog-btn {
         @extend .action-button;
-        border-color: transparent;
+        border-color: transparent; // Initially borderless
         width: 100%;
-        padding: 12px 15px;
+        padding: 12px 15px; // Specific padding
         margin-bottom: 10px;
+        // border-radius: 8px; // Override if 8px is preferred over .action-button's 6px
         font-size: 1em;
-        text-align: center;
-        &.active { font-weight: 600; }
+        // font-weight: 500; // From .action-button
+        text-align: center; // Covered by .action-button flex properties
+
+        // Hover styles from .action-button:hover
+        // Active styles from .action-button.active or .action-button:active
+        &.active {
+            // background-color: $interactive-active-bg-color; // from .action-button.active
+            // color: $interactive-text-color; // from .action-button.active
+            // border-color: $interactive-border-color; // from .action-button.active
+            font-weight: 600; // Keep specific active font-weight
+        }
     }
 }
 
-// 7. Profile Wrapper и Контейнеры вкладок
+/* --- Основная обертка для контента --- */
 .profile-wrapper {
     margin-left: $profile-sidebar-width;
-    padding: 0;
+    padding: $content-padding;
     background-color: $bg-color;
-    min-height: calc(100vh - #{$navbar-height});
-    position: relative;
-    overflow-x: hidden;
+    min-height: calc(100vh - #{$navbar-height} - (#{$content-padding} * 2));
 }
 
-.tab-content {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    padding: $content-padding;
-    transition: transform $tab-content-animation-duration ease-in-out, opacity $tab-content-animation-duration ease-in-out;
-    opacity: 0;
-    transform: translateX(100%);
-    display: none;
-
+.profile-container, .lists-container {
+    text-align: left;
+    &.hidden { display: none !important; }
+    &.visible { display: block; }
     h2 {
         color: $text-color;
         margin-top: 0;
         margin-bottom: 25px;
         font-size: 1.8em;
         font-weight: 600;
-        margin-left: 50px;
-    }
-
-    &.is-active-tab {
-        display: block;
-        opacity: 1;
-        transform: translateX(0);
-        z-index: 1; // Активная вкладка
-    }
-
-    &.is-inactive-tab-left {
-        display: block;
-        opacity: 0;
-        transform: translateX(-100%);
-        z-index: 0; // Неактивная вкладка
-    }
-    &.is-inactive-tab-right {
-        display: none;
-        opacity: 0;
-        transform: translateX(100%);
-        z-index: 0;
-    }
-
-    &.lists-container.is-active-tab {
-        display: flex;
-        flex-direction: column;
     }
 }
 
 .profile-container {
+    &.visible { display: block; }
     .profile-info {
         width: 100%; background: $surface-color; border-radius: 8px;
         padding: 15px; display: flex;
@@ -245,49 +225,38 @@ body {
 }
 
 .lists-container {
-    .filters-and-sort-container {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        margin-bottom: 20px;
-        gap: 10px;
-        flex-wrap: wrap;
-        flex-shrink: 0;
-        position: relative; // Для z-index дочерних элементов
-        z-index: 5; // Чтобы фильтры были выше сетки, если есть пересечение
-    }
+    &.visible { display: block; }
 
-    .category-selector, .sort-selector {
-        flex-grow: 0;
-        flex-shrink: 1;
-        min-width: 180px;
-        margin-left: 50px;
-        max-width: 230px;
-        position: relative; // Для z-index .custom-dropdown
-        z-index: 10;      // Выше чем .filters-and-sort-container, чтобы дропдауны были поверх
-
+    .category-selector {
+        margin-bottom: 20px; text-align: left; position: relative; z-index: 5;
         .custom-dropdown {
-            position: relative; // Уже есть, но подтверждаем
-            display: block;
-            // z-index: 15; // Можно и здесь, если нужно еще один уровень
+            position: relative; display: inline-block; min-width: 220px;
             .dropdown-btn {
-                @extend .action-button;
+                @extend .action-button; // Gets transparent bg, $border-color border by default
                 width: 100%;
-                justify-content: space-between;
+                justify-content: space-between; // Override default center alignment for text
                 margin-right: 0;
-                padding: 8px 12px;
-                font-size: 0.9em;
+                padding: 10px 15px; // Specific padding
+                font-size: 1em;
+                // border-radius: 6px; // from .action-button
+
                 i {
-                    margin-left: 6px;
-                    color: $text-secondary-color;
-                    transition: transform 0.3s ease, color 0.2s ease;
+                    margin-left: 8px;
+                    color: $text-secondary-color; // Will be $interactive-text-color on hover via .action-button:hover color
+                    transition: transform 0.3s ease, color 0.2s ease; // Added color transition
                 }
-                 &:hover i { color: $interactive-text-color; }
-                 &.open {
-                    background-color: $interactive-hover-bg-color;
+
+                // Hover state from .action-button:hover
+                // Make sure icon color also changes on hover if it doesn't inherit
+                 &:hover i {
+                     color: $interactive-text-color;
+                 }
+
+                 &.open { // Styles for when the dropdown is open
+                    background-color: $interactive-hover-bg-color; // Consistent with hover
                     border-color: $interactive-border-color;
                     color: $interactive-text-color;
-                    i { color: $interactive-text-color; transform: rotate(180deg); }
+                    i { color: $interactive-text-color; }
                 }
             }
             .dropdown-content {
@@ -296,46 +265,15 @@ body {
                 border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
                 opacity: 0; pointer-events: none; transform: translateY(-10px);
                 transition: opacity 0.2s ease, transform 0.2s ease;
-                z-index: 50; // Значительно выше, чтобы перекрывать другие элементы вкладки
-                max-height: 220px; overflow-y: auto;
+                z-index: 10; max-height: 250px; overflow-y: auto;
                 &.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
                 .dropdown-item {
-                    padding: 8px 12px; cursor: pointer; color: $text-secondary-color;
-                    font-size: 0.85em;
+                    padding: 10px 15px; cursor: pointer; color: $text-secondary-color;
+                    font-size: 0.95em;
                     &:hover { background: $interactive-hover-bg-color; color: $text-color; }
                 }
             }
-        }
-    }
-
-    .pagination {
-        flex-grow: 0;
-        flex-shrink: 0;
-        margin-left: auto;
-        padding-top: 0;
-        margin-top: 0;
-        padding-bottom: 0;
-        display: flex;
-        align-items: center;
-        position: relative; // Для z-index, если необходимо
-        z-index: 5;      // Такой же как у фильтров, чтобы быть на одном уровне
-
-        &.hidden { display: none !important; }
-
-        .pagination-btn {
-            @extend .action-button;
-            padding: 7px 9px;
-            margin: 0 2px;
-            font-size: 0.8em;
-            margin-right: 50px;
-            line-height: 1;
-            i { font-size: 0.85em; }
-        }
-        .page-info {
-            color: $text-secondary-color;
-            margin: 0 6px;
-            font-size: 0.85em;
-            line-height: normal;
+             &.open .dropdown-btn i { transform: rotate(180deg); }
         }
     }
 
@@ -344,15 +282,7 @@ body {
         grid-template-columns: repeat(auto-fill, 240px);
         justify-content: center;
         gap: 20px;
-        flex-grow: 1;
-        min-height: 0;
-        padding-bottom: $content-padding;
-        overflow: visible; // Убедимся, что overflow не скрывает тени или анимации
-        position: relative; // Для z-index, если нужно (обычно не требуется для grid)
-        // z-index: 1; // Ниже чем фильтры и пагинация
-
-        &.slide-in { animation: slideInGridAnimation $container-animation-duration ease-out forwards; }
-        &.slide-out { animation: slideOutGridAnimation $container-animation-duration ease-in forwards; }
+        overflow: visible;
 
         .item {
             opacity: 0;
@@ -364,29 +294,19 @@ body {
             }
         }
     }
-
     @keyframes itemAppearSoft {
         0% { opacity: 0; transform: translateY(30px) scale(0.95); }
         60% { opacity: 0.8; transform: translateY(-7px) scale(1.03); }
         100% { opacity: 1; transform: translateY(0) scale(1); }
     }
-    @keyframes slideInGridAnimation {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideOutGridAnimation {
-        from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(-20px); }
-    }
-
     .item {
         position: relative; background: $surface-color; border-radius: 8px;
-        width: 240px;
-        height: 330px;
+        width: 240px; height: 330px;
         overflow: hidden; transition: transform 0.25s ease, box-shadow 0.25s ease;
         display: flex; flex-direction: column; min-width: 0;
 
         img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
         .item-overlay-content {
             position: absolute; bottom: 0; left: 0; right: 0; width: 100%;
             padding: 10px;
@@ -402,20 +322,24 @@ body {
             }
             .item-actions {
                 display: flex; gap: 8px;
-                .action-btn {
-                     @extend .action-button;
-                     padding: 4px 6px;
-                     border-radius: 4px;
-                     font-size: 0.8em;
-                     line-height: 1;
+                .action-btn { // These are specific small action buttons on cards
+                     @extend .action-button; // Inherit base style (transparent bg, $border-color border)
+                     padding: 4px 6px; // Override for smaller size
+                     border-radius: 4px; // Specific border-radius
+                     font-size: 0.8em; // Specific font size
+                     line-height: 1; // Specific line height
+                     // min-width: 0; // Keep if needed
+
                      i { font-size: 0.9em; vertical-align: middle; }
+                     // Hover styles from .action-button:hover
+                     // Color for <i> will be handled by .action-button:hover's color property
                 }
             }
         }
         .rating {
             position: absolute; top: 8px; right: 8px; color: #FFFFFF;
             padding: 5px 8px; border-radius: 5px; font-size: 0.9em; font-weight: 600;
-            text-shadow: 1px 1px 1px rgba(0,0,0,0.2); z-index: 3; // Выше оверлея
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.2); z-index: 3;
             opacity: 1; transition: opacity 0.25s ease, transform 0.25s ease;
             &.rating-red { background-color: $rating-red; }
             &.rating-gray { background-color: $rating-gray; }
@@ -427,22 +351,33 @@ body {
                 .item-overlay-content { opacity: 1; transform: translateY(0); }
             }
         }
-        &.dimmed { filter: brightness(0.7); }
+         &.dimmed { filter: brightness(0.7); }
     }
     .empty-state {
-        text-align: center; color: $text-secondary-color;
+        display: none; text-align: center; color: $text-secondary-color;
         font-size: 1em; margin-top: 30px;
-        align-items: center; justify-content: center;
-        flex-grow: 1;
-        display: none;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .pagination {
+        padding-top: $content-padding;
+        display: flex; justify-content: center; align-items: center;
+        margin-top: 20px;
+        &.hidden { display: none;}
+        &.visible { display: flex;}
+        .pagination-btn {
+            @extend .action-button;
+            padding: 8px 12px; // Specific padding
+            margin: 0 5px; // Specific margin
+            i { font-size: 0.9em; }
+        }
+        .page-info { color: $text-secondary-color; margin: 0 10px; font-size: 0.95em; }
     }
 }
 
-// 8. Модальные окна
+/* --- Модальные окна (без изменений) --- */
 .modal {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.75);
-    z-index: 1010; // Модальные окна должны быть поверх всего остального
+    background: rgba(0,0,0,0.75); z-index: 1010;
     display: flex; justify-content: center; align-items: center;
     opacity: 0; visibility: hidden;
     transition: opacity 0.25s ease, visibility 0.25s ease;
@@ -468,7 +403,7 @@ body {
         }
         .category-checkboxes {
             display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start;
-            margin-bottom: 20px; max-height: 180px; overflow-y: auto; padding-right: 5px;
+            margin-bottom: 20px; max-height: 150px; overflow-y: auto; padding-right: 5px;
             label {
                 display: flex; align-items: center; margin: 0; width: calc(50% - 5px);
                 text-align: left; color: $text-secondary-color; font-size: 0.9em; cursor: pointer;
@@ -480,7 +415,7 @@ body {
             display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;
              button {
                 @extend .action-button;
-                margin: 0;
+                margin: 0; // Keep specific margin
              }
         }
         .close-btn {
@@ -499,11 +434,12 @@ body {
     }
 }
 
-// 9. Адаптивность
+
+// Адаптивность
 @media (max-width: 1023px) {
     .lists-container .items-grid {
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
     }
     .lists-container .item {
         width: auto;
@@ -513,76 +449,91 @@ body {
 }
 
 @media (max-width: 767px) {
-    html { height: auto; overflow-y: auto; }
-    body { height: auto; overflow-y: auto; padding-top: 0; display: block; }
+    html {
+        height: auto;
+        overflow-y: auto;
+    }
+    body {
+        height: auto;
+        overflow-y: auto;
+        padding-top: 0;
+        display: block;
+    }
     .navbar {
-        position: relative; background-color: $bg-color; border-bottom: 1px solid $border-color;
-        padding: 0; height: auto; flex-direction: column;
+        position: relative;
+        background-color: $bg-color;
+        border-bottom: 1px solid $border-color;
+        padding: 0;
         .navbar-left {
             flex-direction: column; align-items: stretch; margin-bottom: 0; width: 100%;
-            .navbar-brand { font-size: 1.3em; padding: 12px 15px; text-align: center; border-bottom: 1px solid $border-color; margin-right: 0;}
-            .home-btn {
+            .navbar-brand { font-size: 1.3em; padding: 12px 15px; text-align: center; border-bottom: 1px solid $border-color;}
+            .home-btn { // Already extended, styles will adapt. Ensure width is appropriate.
                 width: 100%; margin: 0; border-radius: 0; justify-content: center; padding: 12px 15px;
                 border-bottom: 1px solid $border-color;
+                // background-color: $surface-color; // Overridden by .action-button transparent, consider if this bg is needed
+                // border-color: $border-color; // Overridden by .action-button transparent (default state)
+                // color: $text-color; // Overridden by .action-button $text-secondary-color
+                // &:hover { background-color: $interactive-hover-bg-color; } // Covered by .action-button
             }
         }
-        .avatar-container { position: absolute; top: 10px; right: 15px; }
+        .navbar-right {
+            padding: 10px 15px; display: flex; justify-content: flex-end; width: 100%;
+            background-color: $bg-color;
+        }
     }
     .sidebar {
-        position: relative; width: 100%; height: auto; top: auto;
-        border-right: none; border-bottom: 1px solid $border-color; display: flex; padding: 0;
-        .account-btn, .catalog-btn {
-            flex:1; text-align: center; margin-bottom: 0; border-radius: 0;
-            &:not(:first-child) { border-left: 1px solid $border-color; }
-        }
-    }
-    .profile-wrapper {
-        margin-left: 0; padding: 0; min-height: auto;
-    }
-
-    .tab-content {
-        width: 100%;
-        padding: ($content-padding / 1.5);
         position: relative;
-        transform: none;
-        opacity: 1;
-        &.is-inactive-tab-left, &.is-inactive-tab-right {
-            display: none !important;
+        width: 100%;
+        height: auto;
+        top: auto;
+        border-right: none;
+        border-bottom: 1px solid $border-color; display: flex; padding: 0;
+        .account-btn, .catalog-btn { // Already extended
+            flex:1; text-align: center; margin-bottom: 0;
+            // Potentially add border-left/right if they need separation in flex layout
+            &:not(:first-child) {
+                // border-left: 1px solid $border-color; // Example if separation is needed
+            }
         }
-        h2 { padding: 0; }
     }
 
-    .filters-and-sort-container {
-        flex-direction: column; align-items: stretch; gap: 10px;
-        .category-selector, .sort-selector { min-width: 100%; max-width: 100%; }
-        .pagination {
-            width: 100%;
-            justify-content: center;
-            margin-top: 10px;
-            margin-left: 0;
-        }
+    .profile-wrapper {
+        margin-left: 0;
+        padding: ($content-padding / 1.5);
+        min-height: auto;
+    }
+    .profile-container, .lists-container {
+        padding: 0;
     }
 
     .lists-container {
         .items-grid {
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px; padding-bottom: ($content-padding / 1.5);
+            gap: 10px;
+            padding-bottom: 0;
         }
-        .item .item-overlay-content {
-            opacity: 1; transform: translateY(0);
-            background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 40%, transparent 100%);
-            padding: 8px; min-height: 60px;
-            h4 { font-size: 0.75em; margin-bottom: 5px;}
-            .item-actions {
-                gap: 4px;
-                .action-btn { padding: 3px 5px; font-size: 0.7em; i { font-size: 0.8em;} }
+        .pagination {
+             margin-top: ($content-padding / 1.5);
+             padding-bottom: 0;
+        }
+    }
+    .lists-container .item .item-overlay-content {
+        opacity: 1; transform: translateY(0);
+        background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 40%, transparent 100%);
+        padding: 8px; min-height: 60px;
+        h4 { font-size: 0.75em; margin-bottom: 5px;}
+        .item-actions {
+            gap: 4px;
+            .action-btn { // Already extended, padding/font-size overrides apply
+                padding: 3px 5px; font-size: 0.7em;
+                i { font-size: 0.8em;}
             }
         }
     }
 }
 
 @media (max-width: 479px) {
-    .tab-content {
+    .profile-wrapper {
         padding: ($content-padding / 2);
     }
     .lists-container {
@@ -590,15 +541,13 @@ body {
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             gap: 8px;
         }
-        .item .item-overlay-content {
-            padding: 6px; min-height: 50px;
-            h4 { font-size: 0.7em; margin-bottom: 4px;}
-            .item-actions .action-btn { padding: 2px 4px; font-size: 0.65em; i { font-size: 0.75em;} }
-        }
     }
-    .modal-content {
-        padding: 20px 15px;
-        h3 { font-size: 1.2em; margin-bottom: 15px;}
-        .category-checkboxes label { width: 100%; }
+    .lists-container .item .item-overlay-content {
+        padding: 6px; min-height: 50px;
+        h4 { font-size: 0.7em; margin-bottom: 4px;}
+        .item-actions .action-btn { // Already extended
+            padding: 2px 4px; font-size: 0.65em;
+            i { font-size: 0.75em;}
+        }
     }
 }

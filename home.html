@@ -3,78 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ФильмоПОИСК.ру.нет</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>ФильмоПОИСК</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/home.css">
 </head>
-<body class="dark-background">
-    <header class="header">
-        <img src="images/logo.png" alt="ФильмоПОИСК.ру.нет" class="logo">
-        <nav>
-            <ul class="nav-links">
-                <li><a href="#">Главная</a></li>
-                <li><a href="#">Фильмы</a></li>
-                <li><a href="#">Сериалы</a></li>
-                <li><a href="profile.html">Мой профиль</a></li>
-            </ul>
-        </nav>
-    </header>
+<body>
+    <nav class="navbar">
+        <div class="navbar-left">
+            <p class="navbar-brand">ФильмоПОИСК</p>
+            <button class="navbar-button" data-section="popular">Популярное</button>
+            <button class="navbar-button" data-section="now-playing">Сейчас смотрят</button>
+        </div>
+        <div class="navbar-right">
+            <button class="navbar-icon" id="search-button"><i class="fas fa-search"></i></button>
+            <a href="profile.html" class="navbar-icon"><i class="fas fa-user"></i></a>
+        </div>
+    </nav>
 
-    <main>
-        <section class="search-section">
-            <input type="text" placeholder="Поиск фильмов..." class="search-input">
-            <button class="btn search-btn">Поиск</button>
-        </section>
+    <div class="search-modal" id="search-modal">
+        <div class="search-modal-content">
+             <div class="search-modal-layout">
+                <div class="search-modal-main">
+                    <input type="text" placeholder="Поиск фильмов, сериалов, аниме..." class="search-modal-input">
+                    <div class="search-results-placeholder">
+                        <p>Введите ваш запрос для поиска...</p>
+                    </div>
+                </div>
 
-        <section class="movies-section">
-            <h2>Популярные фильмы</h2>
-            <div class="movies-grid">
-                <div class="movie-card">
-                    <a href="Tron.html">
-                        <img src="images/Tron.jpg" alt="Гарри Поттер и Тайная комната">
-                        <p>Трон:Наследие (2010)</p>
-                      </a>
-                </div>
-                <div class="movie-card">
-                    <a href="Openheimer.html">
-                        <img src="images/Openheimer.jpg" alt="Гарри Поттер и Тайная комната">
-                        <p>Опенгеймер (2023)</p>
-                      </a>
-                </div>
-                <div class="movie-card">
-                    <a href="Jurhead.html">
-                        <img src="images/Jurhead.jpg" alt="Гарри Поттер и Тайная комната">
-                        <p>Морпехи (2005)</p>
-                      </a>
-                </div>
-                <div class="movie-card">
-                    <a href="Drive.html">
-                        <img src="images/Drive.jpg" alt="Гарри Поттер и Тайная комната">
-                        <p>Драйв (2011)</p>
-                      </a>
-                </div>
-                <div class="movie-card">
-                    <a href="BladeRunner.html">
-                        <img src="images/BladeRunner20409.webp" alt="Гарри Поттер и Тайная комната">
-                        <p>Бегущий по лезвию 2049 (2017)</p>
-                    </a>
-                </div>
-                <div class="movie-card">
-                    <a href="FightClub.html">
-                        <img src="images/FightClub.jpg" alt="Гарри Поттер и Тайная комната">
-                        <p>Бойцовский клуб (1999)</p>
-                    </a>
-                </div>
-                <div class="movie-card">
-                    <a href="TheBigLebowski.html">
-                        <img src="images/TheBigLebowski.webp" alt="Гарри Поттер и Тайная комната" class="poster">
-                        <p>Большой Лебовски (1998)</p>
-                    </a>
-                </div>
+                <aside class="search-modal-sidebar">
+                    <h3 class="filters-title">Фильтры</h3>
+
+                    <div class="filter-group">
+                        <h4 class="filter-group-title">Жанры</h4>
+                        <div class="custom-dropdown" data-dropdown-id="genres">
+                            <button type="button" class="dropdown-toggle">
+                                <span>Выберите жанр(ы)</span>
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                <label><input type="checkbox" name="genre" value="action"> Боевик</label>
+                                <label><input type="checkbox" name="genre" value="comedy"> Комедия</label>
+                                <label><input type="checkbox" name="genre" value="drama"> Драма</label>
+                                <label><input type="checkbox" name="genre" value="fantasy"> Фэнтези</label>
+                                <label><input type="checkbox" name="genre" value="horror"> Ужасы</label>
+                                <label><input type="checkbox" name="genre" value="sci-fi"> Фантастика</label>
+                                <label><input type="checkbox" name="genre" value="thriller"> Триллер</label>
+                                <label><input type="checkbox" name="genre" value="anime"> Аниме</label>
+                                <label><input type="checkbox" name="genre" value="adventure"> Приключения</label>
+                                <label><input type="checkbox" name="genre" value="romance"> Мелодрама</label>
+                                <label><input type="checkbox" name="genre" value="detective"> Детектив</label>
+                                <label><input type="checkbox" name="genre" value="historical"> Исторический</label>
+                                <!-- <div class="dropdown-actions">
+                                    <button type="button" class="dropdown-apply-btn">Применить</button>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h4 class="filter-group-title">Тип</h4>
+                        <div class="custom-dropdown" data-dropdown-id="type">
+                            <button type="button" class="dropdown-toggle">
+                                <span>Выберите тип</span>
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                <label><input type="checkbox" name="type_filter" value="movie"> Фильм</label>
+                                <label><input type="checkbox" name="type_filter" value="series"> Сериал</label>
+                                 <!-- <div class="dropdown-actions">
+                                    <button type="button" class="dropdown-apply-btn">Применить</button>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h4 class="filter-group-title">Возрастное ограничение</h4>
+                        <div class="custom-dropdown" data-dropdown-id="rating-age">
+                            <button type="button" class="dropdown-toggle">
+                                <span>Выберите рейтинг</span>
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                <label><input type="checkbox" name="age_rating" value="0+"> 0+</label>
+                                <label><input type="checkbox" name="age_rating" value="6+"> 6+</label>
+                                <label><input type="checkbox" name="age_rating" value="12+"> 12+</label>
+                                <label><input type="checkbox" name="age_rating" value="16+"> 16+</label>
+                                <label><input type="checkbox" name="age_rating" value="18+"> 18+</label>
+                                 <!-- <div class="dropdown-actions">
+                                    <button type="button" class="dropdown-apply-btn">Применить</button>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h4 class="filter-group-title">Год</h4>
+                        <div class="filter-range">
+                            <div class="number-input-container">
+                                <input type="number" min="1900" max="2025" placeholder="от" class="range-input year-input">
+                                <div class="number-input-arrows">
+                                    <span class="arrow up-arrow"></span>
+                                    <span class="arrow down-arrow"></span>
+                                </div>
+                            </div>
+                            <span>&ndash;</span>
+                            <div class="number-input-container">
+                                <input type="number" min="1900" max="2025" placeholder="до" class="range-input year-input">
+                                <div class="number-input-arrows">
+                                    <span class="arrow up-arrow"></span>
+                                    <span class="arrow down-arrow"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h4 class="filter-group-title">Оценка</h4>
+                        <div class="filter-range">
+                            <div class="number-input-container">
+                                <input type="number" min="0" max="10" step="0.1" placeholder="от" class="range-input rating-input">
+                                <div class="number-input-arrows">
+                                    <span class="arrow up-arrow"></span>
+                                    <span class="arrow down-arrow"></span>
+                                </div>
+                            </div>
+                            <span>&ndash;</span>
+                            <div class="number-input-container">
+                                <input type="number" min="0" max="10" step="0.1" placeholder="до" class="range-input rating-input">
+                                <div class="number-input-arrows">
+                                    <span class="arrow up-arrow"></span>
+                                    <span class="arrow down-arrow"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="reset-filters-button action-button">Сбросить фильтры</button> </aside>
             </div>
+        </div>
+    </div>
+
+    <section class="hero" id="hero-section">
+        <video class="hero-video" autoplay muted playsinline>
+            <source src="videos/FightClubG.mp4" type="video/mp4">
+            Ваш браузер не поддерживает видео.
+        </video>
+        <div class="hero-fallback">
+            <img src="images/FightClub.jpg" alt="Fallback Poster">
+        </div>
+        <button class="sound-button"><i class="fas fa-volume-mute"></i></button>
+        <div class="hero-overlay">
+            <div class="hero-content-video-playing">
+                <h1 class="hero-title">Название фильма</h1>
+                <button class="hero-button action-button">Смотреть</button> </div>
+            <div class="hero-content-poster-active">
+                <h1 class="hero-title">Название фильма</h1>
+                <p class="hero-description">Краткое описание фильма. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                <button class="hero-button action-button">Смотреть</button> </div>
+        </div>
+    </section>
+
+    <div class="content-area">
+        <section class="movie-list" id="popular">
+            <h2>Популярное</h2>
+            <div class="movie-grid"></div>
         </section>
-    </main>
-    <footer class="footer">
-        <p>&copy; 2024 ФильмоПОИСК.ру.нет. Все права защищены.</p>
-    </footer>
+        <section class="movie-list" id="now-playing">
+            <h2>Сейчас смотрят</h2>
+            <div class="movie-grid"></div>
+        </section>
+    </div>
+
+    <script src="home.js"></script>
 </body>
 </html>

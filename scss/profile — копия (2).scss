@@ -1,0 +1,585 @@
+// profile.scss
+
+// 0. Глобальный box-sizing для предсказуемых размеров
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+// 1. Цветовая палитра и переменные (без изменений)
+$bg-color: #080808;
+$surface-color: #1A1A1A;
+$sidebar-profile-bg-color: $bg-color;
+$input-bg-color: #2C2C2C;
+
+$button-sidebar-bg-color-hover: rgba(255, 255, 255, 0.04);
+$button-sidebar-active-bg-color: #2F2F2F;
+$button-sidebar-text-color: #A0A0A0;
+$button-sidebar-active-text-color: #FFFFFF;
+
+$dropdown-profile-bg-color: #222222;
+$text-color: #E0E0E0;
+$text-secondary-color: #A0A0A0;
+$border-color: #383838;
+
+$interactive-hover-bg-color: #2a2a2a;
+$interactive-active-bg-color: #3a3a3a;
+$interactive-text-color: #FFFFFF;
+$interactive-border-color: #5A5A5A;
+
+$rating-red: #E53935;
+$rating-gray: #757575;
+$rating-green: #4CAF50;
+
+$navbar-height: 60px;
+$profile-sidebar-width: 240px;
+$container-animation-duration: 1s;
+$item-animation-duration: 1s;
+$item-animation-stagger: 0.08s;
+
+
+// 2. Глобальные стили для кастомного скроллбара (без изменений)
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: darken($input-bg-color, 7%); border-radius: 10px; }
+::-webkit-scrollbar-thumb {
+    background-color: $border-color; border-radius: 10px;
+    border: 1px solid darken($input-bg-color, 7%);
+    &:hover { background-color: lighten($border-color, 15%); }
+}
+body, .dropdown-content, .category-checkboxes, .items-grid {
+  scrollbar-width: thin;
+  scrollbar-color: $border-color darken($input-bg-color, 7%);
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', Arial, sans-serif;
+    background: $bg-color;
+    color: $text-color;
+    overflow-x: hidden; // Остается, чтобы предотвратить скролл на body, если все дочерние overflow:hidden работают
+    padding-top: $navbar-height;
+}
+
+// 3. Стилизация input[type="number"] (без изменений)
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+}
+.number-input-container {
+    position: relative; display: flex; align-items: center; flex-grow: 1;
+    .range-input, .year-input, .rating-input { padding-right: 28px; width: 100%; }
+    .number-input-arrows {
+        position: absolute; right: 1px; top: 1px; bottom: 1px;
+        display: flex; flex-direction: column; justify-content: center;
+        align-items: center; width: 24px;
+        border-top-right-radius: 5px; border-bottom-right-radius: 5px;
+        .arrow {
+            color: $text-secondary-color; font-size: 9px; line-height: 1;
+            cursor: pointer; padding: 3px 4px; user-select: none;
+            transition: color 0.2s ease;
+            &:hover { color: $text-color; }
+            &.up-arrow::before { content: '▲'; }
+            &.down-arrow::before { content: '▼'; }
+        }
+    }
+}
+
+/* --- Общий стиль для кнопок (кроме кнопок сайдбара и hero) --- */
+.action-button {
+    // ... (без изменений) ...
+    color: $text-secondary-color;
+    background-color: transparent;
+    border: 1px solid $border-color;
+    padding: 9px 14px; cursor: pointer;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 6px; font-weight: 500; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    line-height: 1.2; text-align: center;
+
+    &:hover {
+        color: $interactive-text-color;
+        background-color: $interactive-hover-bg-color;
+        border-color: $interactive-border-color;
+    }
+    &.active:not(.account-btn):not(.catalog-btn) {
+        color: $interactive-text-color;
+        background-color: $interactive-active-bg-color;
+        border-color: $interactive-border-color;
+    }
+}
+
+/* --- Navbar на странице профиля --- */
+.navbar {
+    // ... (без изменений) ...
+    position: fixed; top: 0; left: 0; width: 100%;
+    height: $navbar-height; background-color: transparent;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 20px; z-index: 1000; // box-sizing уже глобальный
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+
+    &.scrolled {
+         background-color: rgba($bg-color, 0.85);
+         border-bottom: 1px solid $border-color;
+         box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .navbar-left { display: flex; align-items: center; }
+    .navbar-brand {
+        color: $text-color; text-decoration: none; font-size: 1.5em;
+        margin-right: 20px; font-weight: 600;
+    }
+    .home-btn {
+        @extend .action-button;
+        border-color: transparent; background-color: transparent;
+        color: $text-secondary-color; padding: 8px 12px; margin-right: 0;
+        &:hover {
+            border-color: $interactive-border-color;
+            background-color: $interactive-hover-bg-color;
+            color: $interactive-text-color;
+        }
+    }
+    .avatar-container {
+        position: relative;
+        .nav-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            object-fit: cover; cursor: pointer;
+            border: 2px solid transparent; transition: border-color 0.2s ease;
+            &:hover { border-color: $interactive-border-color; }
+        }
+        .dropdown {
+            position: absolute; top: calc(100% + 10px); right: 0;
+            background: $surface-color; border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); min-width: 160px;
+            opacity: 0; transform: translateY(-10px) scale(0.95);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none; overflow: hidden; z-index: 1001;
+            a {
+                display: block; padding: 12px 20px; color: $text-secondary-color;
+                text-decoration: none; font-size: 0.95em;
+                transition: background-color 0.2s ease, color 0.2s ease;
+                &:hover { background: $interactive-hover-bg-color; color: $text-color; }
+            }
+        }
+        &.active .dropdown {
+            opacity: 1; transform: translateY(0) scale(1); pointer-events: auto;
+        }
+    }
+}
+
+/* --- Sidebar (боковая панель навигации профиля) --- */
+.sidebar {
+    // ... (без изменений) ...
+    position: fixed; top: $navbar-height; left: 0;
+    width: $profile-sidebar-width; height: calc(100vh - #{$navbar-height});
+    background: $sidebar-profile-bg-color; padding: 20px;
+    z-index: 990; // box-sizing уже глобальный
+
+    .account-btn, .catalog-btn {
+        width: 100%; padding: 12px 15px; margin-bottom: 10px;
+        border-radius: 8px;
+        background-color: transparent;
+        border: 1px solid transparent;
+        color: $button-sidebar-text-color;
+        font-size: 1em; font-weight: 500; text-align: center;
+        cursor: pointer;
+        transition: background-color 0.2s ease, color 0.2s ease;
+
+         &:hover {
+            background-color: $button-sidebar-bg-color-hover;
+            color: $text-color;
+        }
+        &.active {
+            background-color: $button-sidebar-active-bg-color;
+            color: $button-sidebar-active-text-color;
+            font-weight: 600;
+        }
+    }
+}
+
+/* --- Основная обертка для контента профиля и каталога --- */
+.profile-wrapper {
+    margin-left: $profile-sidebar-width;
+    padding: 20px; // Оставляем для общего отступа контентной области
+    background-color: $bg-color;
+    min-height: calc(100vh - #{$navbar-height});
+    position: relative;
+    overflow: hidden; // Важно, чтобы обрезать все, что выходит за пределы этой обертки
+}
+
+.profile-container, .lists-container {
+    text-align: left;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    // padding: inherit; // Убираем наследование padding от profile-wrapper, чтобы иметь больше контроля
+    padding: 0; // Устанавливаем в 0, чтобы .items-grid мог использовать всю ширину .lists-container
+                // Отступы для контента сетки лучше задавать непосредственно для .items-grid или его родителя внутри .lists-container
+    transition: transform $container-animation-duration cubic-bezier(0.68, -0.15, 0.27, 1.15), opacity ($container-animation-duration * 0.7) ease-in-out ($container-animation-duration * 0.1);
+
+    &.hidden { /* ... (без изменений) ... */ transform: translateX(-100%); opacity: 0; pointer-events: none; z-index: 1; }
+    &.visible { /* ... (без изменений) ... */ transform: translateX(0%); opacity: 1; pointer-events: auto; z-index: 2; }
+    &.entering { /* ... (без изменений) ... */ transform: translateX(100%); opacity: 0; z-index: 2; }
+
+    h2 { /* ... (без изменений) ... */ color: $text-color; margin-top: 0; margin-bottom: 25px; font-size: 1.8em; font-weight: 600; }
+}
+.lists-container:not(.visible):not(.entering) { /* ... (без изменений) ... */ transform: translateX(100%); opacity: 0; }
+
+
+.profile-container { /* ... (без изменений, если не относится к сетке) ... */
+    .profile-info {
+        width: 100%; background: $surface-color; border-radius: 8px;
+        padding: 15px; display: flex;
+        flex-direction: column; border: 1px solid $border-color;
+        .info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 18px 15px; background: transparent;
+            border-bottom: 1px solid $border-color; cursor: pointer;
+            transition: background-color 0.2s ease;
+            &:last-child { border-bottom: none; }
+            &:hover { background: lighten($surface-color, 3%); }
+            .info-text {
+                display: flex; flex-direction: column; text-align: left;
+                .label { font-weight: 500; font-size: 1em; color: $text-color; margin-bottom: 4px;}
+                .value, .description { font-size: 0.9em; color: $text-secondary-color; }
+            }
+            .avatar-preview { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+        }
+    }
+}
+
+.lists-container {
+    display: flex;
+    flex-direction: column;
+    // height: 100%; // Уже есть
+
+    .category-selector { /* ... (без изменений) ... */
+        margin-bottom: 20px; text-align: left; position: relative; z-index: 5;
+        flex-shrink: 0; padding: 0 20px; // Добавим отступы здесь, если .lists-container их лишился
+        .custom-dropdown {
+            position: relative; display: inline-block; min-width: 220px;
+            .dropdown-btn {
+                @extend .action-button;
+                width: 100%; justify-content: space-between; margin-right: 0;
+                padding: 10px 15px; font-size: 1em;
+                i { margin-left: 8px; color: $text-secondary-color; transition: transform 0.3s ease;}
+                 &.open {
+                    background-color: $interactive-hover-bg-color;
+                    border-color: $interactive-border-color;
+                    color: $interactive-text-color;
+                    i { color: $interactive-text-color; }
+                }
+            }
+            .dropdown-content {
+                position: absolute; top: calc(100% + 5px); left: 0; width: 100%;
+                background: $dropdown-profile-bg-color; border: 1px solid $border-color;
+                border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                opacity: 0; pointer-events: none; transform: translateY(-10px);
+                transition: opacity 0.2s ease, transform 0.2s ease;
+                z-index: 10; max-height: 250px; overflow-y: auto;
+                &.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+                .dropdown-item {
+                    padding: 10px 15px; cursor: pointer; color: $text-secondary-color;
+                    font-size: 0.95em;
+                    &:hover { background: $interactive-hover-bg-color; color: $text-color; }
+                }
+            }
+             &.open .dropdown-btn i { transform: rotate(180deg); }
+        }
+    }
+
+    .items-grid {
+        display: grid;
+        // Базовое количество колонок для самых больших экранов.
+        // Если 150px - это желаемая МИНИМАЛЬНАЯ ширина элемента, то используем auto-fill.
+        // Если 6 колонок - это желаемое количество для больших экранов, а элементы должны подстраиваться:
+        grid-template-columns: repeat(6, minmax(0, 1fr)); // minmax(0, 1fr) позволяет колонкам сжиматься до нуля, если контент позволяет
+        gap: 15px;
+        flex-grow: 1;
+        overflow-y: auto; // Для вертикальной прокрутки внутри сетки
+        overflow-x: hidden; // Явно запрещаем горизонтальную прокрутку для самой сетки
+        padding: 0 20px 20px 20px; // Добавляем отступы по бокам и снизу здесь
+                                    // (0 сверху, т.к. у .category-selector есть margin-bottom)
+
+        .item { // Стили для одного постера
+            opacity: 0; // Для анимации появления
+            animation: itemAppearSoft $item-animation-duration cubic-bezier(0.23, 1, 0.32, 1) forwards;
+            // Ниже будут детальные стили для .item
+        }
+        @for $i from 1 through 12 { // Анимация (без изменений)
+            .item:nth-child(#{$i}) {
+                animation-delay: #{$i * $item-animation-stagger};
+            }
+        }
+    }
+
+    @keyframes itemAppearSoft { // Анимация (без изменений)
+        0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+        60% { opacity: 0.8; transform: translateY(-7px) scale(1.03); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .item {
+        position: relative;
+        background: $surface-color;
+        border-radius: 8px;
+        aspect-ratio: 2 / 3; // Ключевое свойство для пропорций
+        overflow: hidden; // Важно! Обрезает все, что выходит за рамки .item
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        display: flex; // Для внутреннего расположения img и overlay
+        flex-direction: column;
+        min-width: 0; // Позволяет элементу сетки сжиматься меньше его min-content ширины
+
+        img {
+            display: block; // Убирает лишние отступы под картинкой
+            width: 100%;
+            height: 100%;
+            object-fit: cover; // Масштабирует изображение с сохранением пропорций, обрезая лишнее
+        }
+
+        .item-overlay-content {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            width: 100%; // Явно указываем ширину
+            padding: 10px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 40%, transparent 100%);
+            opacity: 0; // Изначально скрыт (появляется на hover)
+            transform: translateY(100%);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 70px;
+            overflow: hidden; // Обрезаем контент оверлея, если он не помещается
+
+            h4 {
+                font-size: 0.9em; color: $text-color;
+                margin: 0 0 8px 0;
+                white-space: nowrap;
+                overflow: hidden; // Обрезаем длинные названия
+                text-overflow: ellipsis; // Добавляем многоточие
+                text-align: left;
+                min-width: 0; // Позволяет заголовку сжиматься
+            }
+            .item-actions {
+                display: flex;
+                gap: 8px;
+                // Если кнопки создают минимальную ширину, их нужно будет адаптировать
+                // Например, уменьшить padding, размер иконок на очень узких постерах,
+                // или даже скрыть часть кнопок.
+                // flex-wrap: wrap; // Можно добавить, если кнопок много и они должны переноситься (потребует настройки высоты оверлея)
+
+                .action-btn {
+                     @extend .action-button;
+                     padding: 4px 6px; // Меньшие отступы для кнопок на постере
+                     border-radius: 4px;
+                     background-color: rgba($input-bg-color, 0.6);
+                     border-color: rgba($border-color, 0.4);
+                     color: $text-secondary-color;
+                     font-size: 0.8em; // Можно уменьшить шрифт кнопок
+                     line-height: 1; // Для компактности
+                     min-width: 0; // Позволяет кнопкам сжиматься
+
+                     i { font-size: 0.9em; vertical-align: middle; } // Скорректировал размер иконки относительно шрифта кнопки
+
+                     &:hover { /* ... (без изменений) ... */
+                        background-color: $interactive-hover-bg-color;
+                        border-color: $interactive-border-color;
+                        i { color: $interactive-text-color; }
+                     }
+                }
+            }
+        }
+
+        .rating { /* ... (без изменений) ... */
+            position: absolute; top: 8px; right: 8px; color: #FFFFFF;
+            padding: 5px 8px; border-radius: 5px; font-size: 0.9em; font-weight: 600;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.2); z-index: 3;
+            opacity: 1;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            &.rating-red { background-color: $rating-red; }
+            &.rating-gray { background-color: $rating-gray; }
+            &.rating-green { background-color: $rating-green; }
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            &:hover {
+                transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+                .item-overlay-content { opacity: 1; transform: translateY(0); }
+            }
+        }
+         &.dimmed { filter: brightness(0.7); } // без изменений
+    }
+    .empty-state { /* ... (без изменений) ... */ display: none; text-align: center; color: $text-secondary-color; font-size: 1em; margin-top: 30px; flex-grow: 1; display: flex; align-items: center; justify-content: center;}
+    .pagination { /* ... (без изменений) ... */
+        display: flex; justify-content: center; align-items: center;
+        margin-top: 20px; padding-bottom: 10px;
+        flex-shrink: 0; padding-left: 20px; padding-right: 20px; // Добавим отступы здесь
+        &.hidden { display: none;}
+        &.visible { display: flex;}
+        .pagination-btn { @extend .action-button; padding: 8px 12px; margin: 0 5px; i { font-size: 0.9em; } }
+        .page-info { color: $text-secondary-color; margin: 0 10px; font-size: 0.95em; }
+    }
+}
+
+/* --- Модальные окна --- */
+.modal { /* ... (без изменений, если не относится к сетке) ... */
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.75); z-index: 1010;
+    display: flex; justify-content: center; align-items: center;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    &.active { opacity: 1; visibility: visible; }
+    .modal-content {
+        background: $surface-color; border: 1px solid $border-color;
+        padding: 25px 30px; border-radius: 8px; text-align: center;
+        transform: translateY(10px) scale(0.98); opacity: 0;
+        transition: transform 0.25s ease, opacity 0.25s ease;
+        position: relative; min-width: 320px; max-width: 500px;
+        width: 90%; box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        h3 { margin-top: 0; margin-bottom: 20px; font-size: 1.4em; color: $text-color; }
+        p { margin-bottom: 20px; color: $text-secondary-color; line-height: 1.5; }
+        input[type="text"], input[type="password"], input[type="email"], select {
+            width: 100%; padding: 12px 15px; margin-bottom: 15px;
+            border: 1px solid $border-color; border-radius: 5px;
+            background: $input-bg-color; color: $text-color; font-size: 1em;
+            &::placeholder { color: $text-secondary-color; }
+            &:focus {
+                outline: none; border-color: $interactive-border-color;
+                box-shadow: 0 0 0 2px rgba($interactive-border-color, 0.2);
+            }
+        }
+        .category-checkboxes {
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start;
+            margin-bottom: 20px; max-height: 150px; overflow-y: auto; padding-right: 5px;
+            label {
+                display: flex; align-items: center; margin: 0; width: calc(50% - 5px);
+                text-align: left; color: $text-secondary-color; font-size: 0.9em; cursor: pointer;
+                padding: 8px 0;
+                input { margin-right: 8px; accent-color: $interactive-border-color;}
+            }
+        }
+        .modal-buttons {
+            display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;
+             button { margin: 0; }
+        }
+        .close-btn {
+            position: absolute; top: 10px; right: 15px; font-size: 1.8em;
+            color: $text-secondary-color; cursor: pointer; background: none; border: none; padding: 0;
+            &:hover { color: $text-color; }
+        }
+    }
+    &.active .modal-content { transform: translateY(0) scale(1); opacity: 1; }
+}
+#crop-modal .modal-content { /* ... (без изменений) ... */
+    max-width: 600px;
+    .cropper-image-container {
+        width: 100%; max-height: 45vh; margin-bottom: 20px; overflow: hidden;
+        img#image-to-crop { max-width: 100%; display: block; max-height: 100%;}
+    }
+}
+
+// Адаптивность
+@media (max-width: 1200px) { // Например, для планшетов и небольших десктопов
+    .lists-container .items-grid {
+        // Используем auto-fill с минимальной шириной, чтобы сетка адаптировалась
+        // 150px - это ширина, которую вы упомянули. Если кнопки и текст требуют больше, можно увеличить.
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        // gap: 12px; // Можно немного уменьшить отступ
+    }
+}
+@media (max-width: 992px) { // Меньшие планшеты
+    .lists-container .items-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); // Уменьшаем минимальную ширину
+        // gap: 10px;
+    }
+}
+@media (max-width: 768px) { // Мобильные телефоны (ландшафт) и большие вертикальные
+    body { padding-top: 0; } // Navbar становится частью потока
+    .navbar {
+        position: relative; background-color: $bg-color;
+        border-bottom: 1px solid $border-color;
+        // ... (остальные стили navbar для мобильных без изменений) ...
+        &.scrolled { background-color: $bg-color; box-shadow: none; }
+        .navbar-left {
+            flex-direction: column; align-items: stretch; margin-bottom: 0; width: 100%;
+            .navbar-brand { font-size: 1.3em; padding: 12px 15px; text-align: center; border-bottom: 1px solid $border-color;}
+            .home-btn {
+                width: 100%; margin: 0; border-radius: 0; justify-content: center; padding: 12px 15px;
+                border-bottom: 1px solid $border-color; background-color: $surface-color;
+                border-color: $border-color; color: $text-color;
+                &:hover { background-color: $interactive-hover-bg-color; }
+            }
+        }
+        .navbar-right {
+            padding: 10px 15px; display: flex; justify-content: flex-end; width: 100%;
+            background-color: $bg-color;
+        }
+    }
+    .sidebar { // Сайбдар становится горизонтальным меню
+        width: 100%; height: auto; position: static; border-right: none;
+        border-bottom: 1px solid $border-color; display: flex; padding: 0;
+        .account-btn, .catalog-btn {
+            flex:1; text-align: center;
+            &:hover { background-color: $button-sidebar-bg-color-hover; }
+            &.active { background-color: $button-sidebar-active-bg-color; }
+        }
+    }
+    .profile-wrapper { margin-left: 0; padding: 15px; overflow: visible; } // Убираем отступ от сайдбара
+    .profile-container, .lists-container {
+        position: relative; transform: none !important; opacity: 1 !important;
+        padding: 0; // Убрали padding, чтобы .items-grid мог управлять своими отступами
+        &.hidden { display: none; }
+        &.visible { display: block; }
+    }
+
+    .lists-container {
+        .category-selector { padding: 0 15px; } // Уменьшаем отступы на мобильных
+        .items-grid {
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); // Еще меньше мин. ширина
+            gap: 10px;
+            padding: 0 15px 15px 15px; // Уменьшаем отступы на мобильных
+        }
+        .pagination { padding-left: 15px; padding-right: 15px; }
+    }
+
+    // Постоянно видимый оверлей на тач-устройствах (уже было)
+    .lists-container .item .item-overlay-content {
+        opacity: 1; transform: translateY(0);
+        background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 40%, transparent 100%);
+        padding-bottom: 5px;
+        h4 { font-size: 0.8em; margin-bottom: 4px;}
+        .item-actions {
+            gap: 4px;
+            .action-btn { padding: 3px 5px; i { font-size: 0.65em;}}
+        }
+    }
+}
+
+@media (max-width: 480px) { // Маленькие мобильные телефоны
+    .navbar { /* ... (без изменений) ... */
+        .navbar-left .navbar-brand { font-size: 1.2em;}
+        .navbar-left .home-btn { padding: 10px; font-size: 0.9em;}
+        .navbar-right .avatar-container .nav-avatar { width: 35px; height: 35px;}
+    }
+    .lists-container {
+        .category-selector { padding: 0 10px; }
+        .items-grid {
+             // Для очень маленьких экранов можно сделать 2 колонки или адаптировать minmax
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            padding: 0 10px 10px 10px;
+        }
+        .pagination { padding-left: 10px; padding-right: 10px; }
+    }
+}
+
+// Закрывающий тег для .lists-container, если он был бы оберткой для .item-grid и .item, но .item - дочерний .items-grid.
+// Поэтому здесь просто конец файла.

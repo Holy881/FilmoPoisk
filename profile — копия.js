@@ -38,14 +38,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const catalogHeader = listsContainer.querySelector('h2');
     const profileHeader = profileContainer.querySelector('h2');
     const pagination = document.querySelector('.pagination');
-    const navbar = document.querySelector('.navbar'); 
+    const navbar = document.querySelector('.navbar'); // Navbar для эффекта прокрутки
 
     let cropper;
     let currentFieldToEdit;
     let currentItemIdToDeleteOrEdit;
     let currentCategoryFilter = 'Все категории';
     let currentPageInCatalog = 1;
-    const itemsPerPage = 12; // Это значение должно совпадать с limit на сервере для корректной пагинации
+    const itemsPerPage = 12;
 
     const DEFAULT_AVATAR_PATH = '/images/default-avatar.png';
     const DEFAULT_POSTER_PATH = '/images/default-poster.jpg';
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 navbar.classList.remove('scrolled');
             }
-        }, { passive: true }); // Добавлено passive:true для лучшей производительности
+        });
     }
 
     // --- Функция установки цвета для рейтинга ---
@@ -71,16 +71,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!ratingElement) return;
         const rating = parseFloat(ratingValue);
         ratingElement.classList.remove('rating-red', 'rating-gray', 'rating-green');
-        ratingElement.style.backgroundColor = ''; 
+        ratingElement.style.backgroundColor = ''; // Сбрасываем инлайн стиль, если был
 
         if (isNaN(rating) || rating === null || rating === undefined) {
-            ratingElement.textContent = '–'; 
-            ratingElement.style.backgroundColor = '#4a4a4a'; 
+            ratingElement.textContent = '–'; // Для отсутствующего рейтинга
+            ratingElement.style.backgroundColor = '#4a4a4a'; // Нейтральный фон для "нет оценки"
             ratingElement.style.color = '#ccc';
             return;
         }
         
-        ratingElement.textContent = `★ ${rating.toFixed(1)}`; 
+        ratingElement.textContent = `★ ${rating.toFixed(1)}`; // Показываем с одной цифрой после запятой
 
         if (rating < 5) {
             ratingElement.classList.add('rating-red');
@@ -94,18 +94,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Инициализация состояния страницы
     if (profileContainer && listsContainer && accountBtn && profileHeader && catalogHeader && categorySelector && pagination) {
         profileContainer.classList.add('visible');
-        profileContainer.classList.remove('hidden', 'entering'); // Убираем entering, если он был
-        profileHeader.classList.add('visible'); // Убедимся, что заголовок профиля видим
-
+        profileContainer.classList.remove('hidden');
+        profileHeader.classList.add('visible');
         listsContainer.classList.add('hidden');
-        listsContainer.classList.remove('visible', 'entering');
+        listsContainer.classList.remove('visible');
         accountBtn.classList.add('active');
-        catalogBtn.classList.remove('active'); // Убедимся, что кнопка каталога не активна
-
-        // Скрываем элементы каталога при инициализации, если активна вкладка аккаунта
-        if(catalogHeader) catalogHeader.classList.remove('visible'); 
-        if(categorySelector) categorySelector.classList.remove('visible'); 
-        if(pagination) pagination.classList.remove('visible'); 
+        catalogHeader.classList.remove('visible'); // Убедимся, что заголовок каталога скрыт
+        categorySelector.classList.remove('visible'); // И селектор категорий тоже
+        pagination.classList.remove('visible'); // И пагинация
     } else {
         console.error("Ошибка: не найдены основные контейнеры профиля или кнопки навигации.");
     }
@@ -136,68 +132,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Ошибка сети при загрузке данных пользователя:', error.message);
     }
 
-    // --- Логика переключения вкладок (упрощенная для display) ---
-    function switchTab(tabToShow, tabToHide) {
-        if (tabToHide) {
-            tabToHide.classList.remove('visible');
-            tabToHide.classList.add('hidden');
-        }
-        if (tabToShow) {
-            tabToShow.classList.remove('hidden');
-            tabToShow.classList.add('visible');
-        }
-
-        // Управление видимостью элементов каталога
-        const catalogHeaderLocal = listsContainer ? listsContainer.querySelector('h2') : null;
-        const categorySelectorLocal = listsContainer ? listsContainer.querySelector('.category-selector') : null;
-        const paginationLocal = document.querySelector('.pagination');
-
-        if (tabToShow === listsContainer) {
-            if(catalogHeaderLocal) catalogHeaderLocal.style.display = 'block';
-            if(categorySelectorLocal) categorySelectorLocal.style.display = 'block';
-            if(paginationLocal && paginationLocal.querySelector('button')) { 
-                paginationLocal.style.display = 'flex';
-            } else if (paginationLocal) {
-                 paginationLocal.style.display = 'none';
-            }
-        } else { // Если активна вкладка Аккаунт
-            if(catalogHeaderLocal) catalogHeaderLocal.style.display = 'none';
-            if(categorySelectorLocal) categorySelectorLocal.style.display = 'none';
-            if(paginationLocal) paginationLocal.style.display = 'none';
-        }
-    }
-
-    if (accountBtn && catalogBtn && profileContainer && listsContainer) {
-        accountBtn.addEventListener('click', () => {
-            if (!accountBtn.classList.contains('active')) {
-                accountBtn.classList.add('active'); catalogBtn.classList.remove('active');
-                switchTab(profileContainer, listsContainer);
-            }
-        });
-        catalogBtn.addEventListener('click', async () => {
-            if (!catalogBtn.classList.contains('active')) {
-                catalogBtn.classList.add('active'); accountBtn.classList.remove('active');
-                switchTab(listsContainer, profileContainer); 
-                if(itemsGrid) itemsGrid.classList.add('loading'); 
-                await loadItems(currentCategoryFilter, 1); 
-                if(itemsGrid) itemsGrid.classList.remove('loading');
-            }
-        });
-    }
-    
     // Обработчики для строк информации профиля
     document.querySelectorAll('.info-row').forEach(row => {
         row.addEventListener('click', (e) => {
             e.stopPropagation();
             const action = row.dataset.action;
-            currentFieldToEdit = action; 
+            currentFieldToEdit = action;
             if (action === 'avatar') {
                 if (avatarInput) avatarInput.click();
             } else if (action === 'username' || action === 'email') {
                 if(editModal && editInput) {
                     editModal.style.display = 'flex'; editModal.classList.add('active');
                     disableInteractiveElements(true, row);
-                    editInput.value = ''; 
+                    editInput.value = '';
                     editInput.placeholder = action === 'username' ? 'Новое имя пользователя' : 'Новая почта';
                     editInput.focus();
                 }
@@ -222,7 +169,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     disableInteractiveElements(true);
                     if (cropper) cropper.destroy();
                     cropper = new Cropper(imageToCrop, {
-                        aspectRatio: 1, viewMode: 1, dragMode: 'move', autoCropArea: 0.8, 
+                        aspectRatio: 1, viewMode: 1, dragMode: 'move', autoCropArea: 0.8,
                         cropBoxResizable: true, cropBoxMovable: true, toggleDragModeOnDblclick: false,
                         ready() { if(this.cropper) this.cropper.setCropBoxData({ width: 150, height: 150 }); }
                     });
@@ -244,8 +191,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if(navAvatar) { navAvatar.src = newAvatarSrc; navAvatar.onerror = () => { navAvatar.src = DEFAULT_AVATAR_PATH; }}
                     if(avatarPreview) { avatarPreview.src = newAvatarSrc; avatarPreview.onerror = () => { avatarPreview.src = DEFAULT_AVATAR_PATH; }}
                     closeAndResetCropModal();
-                } else { console.error('Ошибка загрузки аватара: ' + (data.error || 'Неизвестная ошибка')); }
-            } catch (error) { console.error('Ошибка сети при загрузке аватара: ' + error.message); }
+                } else { alert('Ошибка загрузки аватара: ' + (data.error || 'Неизвестная ошибка')); }
+            } catch (error) { alert('Ошибка сети при загрузке аватара: ' + error.message); }
         });
         cancelCropBtn.addEventListener('click', closeAndResetCropModal);
     }
@@ -262,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (saveEditBtn && cancelEditBtn && editModal && editInput) {
         saveEditBtn.addEventListener('click', async () => {
             const newValue = editInput.value.trim();
-            if (!newValue) { console.error('Поле не может быть пустым'); return; }
+            if (!newValue) return alert('Поле не может быть пустым');
             try {
                 const response = await fetch(`http://localhost:3000/api/user/${userId}/update`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -273,8 +220,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (currentFieldToEdit === 'username' && usernameElement) usernameElement.textContent = newValue;
                     else if (currentFieldToEdit === 'email' && emailElement) emailElement.textContent = '********' + newValue.slice(-5);
                     closeAndResetEditModal();
-                } else { console.error('Ошибка: ' + (data.error || 'Неизвестная ошибка')); }
-            } catch (error) { console.error('Ошибка сети: ' + error.message); }
+                } else { alert('Ошибка: ' + (data.error || 'Неизвестная ошибка')); }
+            } catch (error) { alert('Ошибка сети: ' + error.message); }
         });
         cancelEditBtn.addEventListener('click', closeAndResetEditModal);
     }
@@ -297,8 +244,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const newPassword = newPasswordEl.value;
             const confirmPassword = confirmPasswordEl.value;
 
-            if (!currentPassword || !newPassword || !confirmPassword) { console.error('Все поля обязательны'); return; }
-            if (newPassword !== confirmPassword) { console.error('Новые пароли не совпадают'); return; }
+            if (!currentPassword || !newPassword || !confirmPassword) return alert('Все поля обязательны');
+            if (newPassword !== confirmPassword) return alert('Новые пароли не совпадают');
             try {
                 const response = await fetch(`http://localhost:3000/api/user/${userId}/password`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -306,10 +253,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 const data = await response.json();
                 if (response.ok) {
-                    console.log('Пароль успешно изменён');
+                    alert('Пароль успешно изменён');
                     closeAndResetPasswordModal();
-                } else { console.error('Ошибка: ' + (data.error || 'Неизвестная ошибка')); }
-            } catch (error) { console.error('Ошибка сети: ' + error.message); }
+                } else { alert('Ошибка: ' + (data.error || 'Неизвестная ошибка')); }
+            } catch (error) { alert('Ошибка сети: ' + error.message); }
         });
         cancelPasswordBtn.addEventListener('click', closeAndResetPasswordModal);
     }
@@ -325,12 +272,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         setTimeout(() => { if(passwordModal) passwordModal.style.display = 'none'; }, 300);
     }
 
+    // Переключение вкладок Аккаунт/Каталог
+    if (accountBtn && catalogBtn && profileContainer && listsContainer && profileHeader && catalogHeader && categorySelector && pagination) {
+        accountBtn.addEventListener('click', () => {
+            accountBtn.classList.add('active'); catalogBtn.classList.remove('active');
+            listsContainer.classList.remove('visible'); listsContainer.classList.add('hidden');
+            profileContainer.classList.remove('hidden'); profileContainer.classList.add('visible');
+            profileHeader.classList.add('visible'); catalogHeader.classList.remove('visible');
+            categorySelector.classList.remove('visible'); pagination.classList.remove('visible');
+        });
+        catalogBtn.addEventListener('click', async () => {
+            catalogBtn.classList.add('active'); accountBtn.classList.remove('active');
+            profileContainer.classList.remove('visible'); profileContainer.classList.add('hidden');
+            profileHeader.classList.remove('visible');
+            listsContainer.classList.remove('hidden'); listsContainer.classList.add('visible');
+            if(itemsGrid) itemsGrid.classList.add('loading'); // Показываем индикатор загрузки
+            await loadItems(currentCategoryFilter, 1);
+            if(itemsGrid) itemsGrid.classList.remove('loading'); // Убираем индикатор загрузки
+        });
+    }
+
     // Выпадающий список категорий в каталоге
     if (dropdownBtn && dropdownContent) {
         dropdownBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             dropdownContent.classList.toggle('open');
-            dropdownBtn.classList.toggle('open'); // Добавлено для изменения состояния кнопки
         });
         document.querySelectorAll('.lists-container .dropdown-item').forEach(item => {
             item.addEventListener('click', async (e) => {
@@ -339,9 +305,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const selectedCategorySpan = document.getElementById('selected-category');
                 if(selectedCategorySpan) selectedCategorySpan.textContent = currentCategoryFilter;
                 dropdownContent.classList.remove('open');
-                dropdownBtn.classList.remove('open'); // Закрываем кнопку
                 if(itemsGrid) itemsGrid.classList.add('loading');
-                await loadItems(currentCategoryFilter, 1); // Загружаем первую страницу новой категории
+                await loadItems(currentCategoryFilter, 1);
                 if(itemsGrid) itemsGrid.classList.remove('loading');
             });
         });
@@ -350,105 +315,87 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Загрузка элементов каталога
     async function loadItems(category, page) {
         currentPageInCatalog = parseInt(page);
-        // Переменные для элементов каталога, чтобы избежать конфликтов с глобальными
-        const localItemsGrid = document.querySelector('.items-grid'); 
-        const localEmptyState = document.querySelector('.empty-state');
-        const localPagination = document.querySelector('.pagination');
-        const localCatalogHeader = listsContainer ? listsContainer.querySelector('h2') : null;
-        const localCategorySelector = listsContainer ? listsContainer.querySelector('.category-selector') : null;
-
-
-        if (!localItemsGrid || !localEmptyState || !localPagination || !localCatalogHeader || !localCategorySelector) {
-            console.error("UI элементы каталога не найдены в loadItems."); 
-            if(localItemsGrid) localItemsGrid.classList.remove('loading');
-            return;
+        if (!itemsGrid || !emptyState || !pagination || !catalogHeader || !categorySelector) {
+            console.error("UI элементы каталога не найдены."); return;
         }
         try {
-            // Анимация исчезновения старых элементов
-            if (localItemsGrid.children.length > 0) { // Анимация только если есть что убирать
-                localItemsGrid.classList.remove('slide-in'); 
-                localItemsGrid.classList.add('slide-out');    
-                await new Promise(resolve => setTimeout(resolve, 300)); // Даем время на анимацию
-            }
+            itemsGrid.classList.remove('slide-in'); // Сначала убираем slide-in, если он был
+            itemsGrid.classList.add('slide-out');    // Добавляем slide-out для анимации исчезновения
             
-            localItemsGrid.innerHTML = ''; // Очищаем сетку ПОСЛЕ анимации slide-out (или если ее не было)
+            // Ждем завершения анимации slide-out перед очисткой и загрузкой новых данных
+            await new Promise(resolve => setTimeout(resolve, itemsGrid.children.length > 0 ? 300 : 0));
+
 
             const response = await fetch(`http://localhost:3000/api/user/${userId}/lists?category=${encodeURIComponent(category)}&page=${currentPageInCatalog}&limit=${itemsPerPage}`);
             const data = await response.json();
             
+            itemsGrid.innerHTML = ''; // Очищаем сетку ПОСЛЕ анимации slide-out
+
             if (response.ok) {
                 const itemsToDisplay = data.items || [];
                 const totalItemsInResponse = data.totalItems || 0;
-
-                // Управление видимостью заголовка и селектора категорий
-                if (localCatalogHeader) localCatalogHeader.style.display = 'block';
-                if (localCategorySelector) localCategorySelector.style.display = 'block';
-
-
-                if (itemsToDisplay.length === 0 && currentPageInCatalog === 1) { // Если на первой странице нет элементов
-                    if(localEmptyState) localEmptyState.style.display = 'flex'; // Показываем emptyState
-                    if(localPagination) localPagination.style.display = 'none'; // Скрываем пагинацию
+                if (itemsToDisplay.length === 0) {
+                    if(emptyState) emptyState.style.display = 'block';
+                    if(pagination) { pagination.classList.remove('visible'); pagination.classList.add('hidden');}
+                    if (catalogHeader) { catalogHeader.style.opacity = '0'; setTimeout(() => catalogHeader.classList.remove('visible'), 300); }
+                    if (categorySelector) { categorySelector.style.opacity = '0'; setTimeout(() => categorySelector.classList.remove('visible'), 300); }
                 } else {
-                    if(localEmptyState) localEmptyState.style.display = 'none'; // Скрываем emptyState если есть элементы
-                }
-                
-                const totalPages = Math.ceil(totalItemsInResponse / itemsPerPage);
-                updatePaginationControls(totalPages, currentPageInCatalog); // Обновляем пагинацию
-
-                if (itemsToDisplay.length > 0) {
-                    itemsToDisplay.forEach(itemData => { // Переименовал item в itemData
+                    if(emptyState) emptyState.style.display = 'none';
+                    const totalPages = Math.ceil(totalItemsInResponse / itemsPerPage);
+                    if (totalItemsInResponse > itemsPerPage) {
+                       if(pagination) { pagination.classList.remove('hidden'); pagination.classList.add('visible');}
+                    } else {
+                       if(pagination) { pagination.classList.remove('visible'); pagination.classList.add('hidden');}
+                    }
+                    if (catalogHeader && !catalogHeader.classList.contains('visible')) {
+                        catalogHeader.style.opacity = '0'; catalogHeader.classList.add('visible');
+                        setTimeout(() => { catalogHeader.style.opacity = '1'; }, 10);
+                    }
+                    if (categorySelector && !categorySelector.classList.contains('visible')) {
+                        categorySelector.style.opacity = '0'; categorySelector.classList.add('visible');
+                        setTimeout(() => { categorySelector.style.opacity = '1'; }, 10);
+                    }
+                    itemsToDisplay.forEach(item => {
                         const itemDiv = document.createElement('div');
                         itemDiv.className = 'item';
-                        itemDiv.dataset.id = itemData.id; // Используем itemData.id (или item_id как было раньше)
-                        itemDiv.dataset.category = itemData.category;
+                        itemDiv.dataset.id = item.item_id; // Используем item_id
+                        itemDiv.dataset.category = item.category;
                         let posterSrc = DEFAULT_POSTER_PATH;
-                        if (itemData.poster) {
-                            if (itemData.poster.startsWith('http://') || itemData.poster.startsWith('https://')) {
-                                posterSrc = itemData.poster;
+                        if (item.poster) {
+                            if (item.poster.startsWith('http://') || item.poster.startsWith('https://')) {
+                                posterSrc = item.poster;
                             } else {
-                                posterSrc = itemData.poster.startsWith('/') ? itemData.poster : `/${itemData.poster.replace(/\\/g, "/")}`;
+                                posterSrc = item.poster.startsWith('/') ? item.poster : `/${item.poster.replace(/\\/g, "/")}`;
                             }
                         }
                         
-                        const ratingValue = itemData.rating === null || itemData.rating === undefined ? '-' : itemData.rating;
+                        const ratingValue = item.rating === null || item.rating === undefined ? '-' : item.rating;
                         const ratingSpan = document.createElement('span');
                         ratingSpan.className = 'rating';
+                        // Текст и цвет будут установлены функцией setRatingColor
                         
-                        // Создаем оверлей с названием и кнопками
-                        const overlayContentDiv = document.createElement('div');
-                        overlayContentDiv.className = 'item-overlay-content';
-                        overlayContentDiv.innerHTML = `
-                            <h4>${itemData.title || 'Без названия'}</h4>
+                        itemDiv.innerHTML = `
+                            <img src="${posterSrc}" alt="${item.title || 'Постер'}" onerror="this.onerror=null;this.src='${DEFAULT_POSTER_PATH}';">
+                            <h4>${item.title || 'Без названия'}</h4>
                             <div class="item-actions">
                                 <button class="action-btn edit-btn"><i class="fas fa-pen"></i></button>
                                 <button class="action-btn delete-btn"><i class="fas fa-trash"></i></button>
                             </div>
                         `;
-                        
-                        itemDiv.innerHTML = `<img src="${posterSrc}" alt="${itemData.title || 'Постер'}" onerror="this.onerror=null;this.src='${DEFAULT_POSTER_PATH}';">`;
-                        itemDiv.appendChild(ratingSpan); 
-                        itemDiv.appendChild(overlayContentDiv); // Добавляем оверлей
-                        
-                        setRatingColor(ratingSpan, ratingValue); 
-                        localItemsGrid.appendChild(itemDiv);
+                        itemDiv.insertBefore(ratingSpan, itemDiv.querySelector('.item-actions')); // Вставляем рейтинг перед кнопками
+                        setRatingColor(ratingSpan, ratingValue); // Устанавливаем цвет и текст рейтинга
+                        itemsGrid.appendChild(itemDiv);
                     });
                     setupItemInteractivity();
-                    // Анимация появления новых элементов
-                    localItemsGrid.classList.remove('slide-out'); 
+                    updatePaginationControls(totalPages, currentPageInCatalog);
+                    itemsGrid.classList.remove('slide-out'); // Убираем класс для анимации исчезновения
+                    // Задержка перед slide-in для более плавной смены контента
                     setTimeout(() => {
-                        localItemsGrid.classList.add('slide-in'); 
+                        itemsGrid.classList.add('slide-in'); // Добавляем класс для анимации появления
                     }, 50); 
                 }
-            } else { 
-                console.error('Ошибка загрузки списка:', data.error); 
-                if(localEmptyState) localEmptyState.style.display = 'flex';
-            }
-        } catch (error) { 
-            console.error('Ошибка fetch при загрузке элементов:', error); 
-            if(localEmptyState) localEmptyState.style.display = 'flex'; 
-            if(localItemsGrid) localItemsGrid.innerHTML = '';
-        }
-        if(localItemsGrid) localItemsGrid.classList.remove('loading'); // Убираем класс загрузки
+            } else { console.error('Ошибка загрузки списка:', data.error); }
+        } catch (error) { console.error('Ошибка fetch при загрузке элементов:', error); if(emptyState) emptyState.style.display = 'block'; if(itemsGrid) itemsGrid.innerHTML = '';}
     }
 
     // Интерактивность элементов каталога
@@ -485,9 +432,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const response = await fetch(`http://localhost:3000/api/user/${userId}/lists/${itemId}`, { method: 'DELETE' });
             if (response.ok) {
-                await loadItems(currentCategoryFilter, currentPageInCatalog); // Перезагружаем текущую страницу
+                await loadItems(currentCategoryFilter, currentPageInCatalog);
             } else { const data = await response.json(); throw new Error(data.error || 'Ошибка удаления'); }
-        } catch (error) { console.error('Ошибка: ' + error.message); } // Заменил alert на console.error
+        } catch (error) { alert('Ошибка: ' + error.message); }
     }
 
     if (confirmDeleteBtn && cancelDeleteModalBtn && closeDeleteModalBtn && deleteModal) {
@@ -519,10 +466,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                     if (response.ok) {
                         closeAndResetCategoryModal();
-                        await loadItems(currentCategoryFilter, currentPageInCatalog); // Перезагружаем, чтобы отразить изменения
+                        await loadItems(currentCategoryFilter, currentPageInCatalog);
                     } else { const data = await response.json(); throw new Error(data.error || 'Ошибка изменения категории');}
-                } catch (error) { console.error('Ошибка: ' + error.message); }
-            } else if (!selectedCategoryInput) { console.error("Пожалуйста, выберите категорию."); }
+                } catch (error) { alert('Ошибка: ' + error.message); }
+            } else if (!selectedCategoryInput) { alert("Пожалуйста, выберите категорию."); }
         });
         cancelCategoryModalBtn.addEventListener('click', (e) => { e.stopPropagation(); closeAndResetCategoryModal();});
     }
@@ -548,10 +495,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (deleteModal && deleteModal.classList.contains('active') && !e.target.closest('#delete-modal .modal-content')) closeAndDeleteModal();
         if (categoryModal && categoryModal.classList.contains('active') && !e.target.closest('#category-modal .modal-content')) closeAndResetCategoryModal();
         if (avatarContainer && avatarContainer.classList.contains('active') && !e.target.closest('.avatar-container')) avatarContainer.classList.remove('active');
-        if (dropdownContent && dropdownContent.classList.contains('open') && !e.target.closest('.custom-dropdown')) {
-            dropdownContent.classList.remove('open');
-            if(dropdownBtn) dropdownBtn.classList.remove('open'); // Также закрываем кнопку
-        }
+        if (dropdownContent && dropdownContent.classList.contains('open') && !e.target.closest('.custom-dropdown')) dropdownContent.classList.remove('open');
     });
 
     // Функция блокировки/разблокировки интерактивных элементов
@@ -559,10 +503,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const elements = [
             homeBtn, avatarContainer, accountBtn, catalogBtn, dropdownBtn,
             ...(document.querySelectorAll('.info-row') || []),
-            ...(document.querySelectorAll('.items-grid .action-btn') || []), 
-            ...(document.querySelectorAll('.pagination button') || [])
-        ].filter(el => el && el !== excludeElement && !el.closest('.modal-content')); 
-
+            ...(document.querySelectorAll('.items-grid .action-btn') || []), // Кнопки на плитках
+            ...(document.querySelectorAll('.pagination button') || []) // Кнопки пагинации
+        ].filter(el => el && el !== excludeElement);
         elements.forEach(el => {
             el.style.pointerEvents = disable ? 'none' : 'auto';
             el.style.opacity = disable ? '0.5' : '1';
@@ -575,42 +518,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Обновление пагинации
     function updatePaginationControls(totalPages, page) {
         currentPageInCatalog = parseInt(page);
-        const localPagination = document.querySelector('.pagination'); // Используем локальную переменную
-        if (!localPagination) return;
-        localPagination.innerHTML = ''; 
+        if (!pagination) return;
+        pagination.innerHTML = '';
         if (totalPages > 1) {
-            localPagination.style.display = 'flex'; // Показываем пагинацию
             if (currentPageInCatalog > 1) {
                 const prevBtn = document.createElement('button');
                 prevBtn.className = 'pagination-btn action-button';
                 prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
                 prevBtn.addEventListener('click', () => loadItems(currentCategoryFilter, currentPageInCatalog - 1));
-                localPagination.appendChild(prevBtn);
+                pagination.appendChild(prevBtn);
             }
             const pageInfo = document.createElement('span');
             pageInfo.className = 'page-info';
             pageInfo.textContent = `${currentPageInCatalog}/${totalPages}`;
-            localPagination.appendChild(pageInfo);
+            pagination.appendChild(pageInfo);
             if (currentPageInCatalog < totalPages) {
                 const nextBtn = document.createElement('button');
                 nextBtn.className = 'pagination-btn action-button';
                 nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
                 nextBtn.addEventListener('click', () => loadItems(currentCategoryFilter, currentPageInCatalog + 1));
-                localPagination.appendChild(nextBtn);
+                pagination.appendChild(nextBtn);
             }
-        } else {
-            localPagination.style.display = 'none'; // Скрываем пагинацию, если страниц мало
         }
     }
-
-    // Первоначальное скрытие элементов каталога, если он не активен при загрузке
-    if (listsContainer && listsContainer.classList.contains('hidden')) {
-        const catalogHeaderLocal = listsContainer.querySelector('h2');
-        const categorySelectorLocal = listsContainer.querySelector('.category-selector');
-        const paginationLocal = document.querySelector('.pagination');
-        if(catalogHeaderLocal) catalogHeaderLocal.style.display = 'none';
-        if(categorySelectorLocal) categorySelectorLocal.style.display = 'none';
-        if(paginationLocal) paginationLocal.style.display = 'none';
-    }
-
 }); // Конец DOMContentLoaded

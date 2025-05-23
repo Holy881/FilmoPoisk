@@ -24,12 +24,76 @@
   background-color: #5e5e5e;
 }
 
-body, .sidebar, .dropdown-content, .category-checkboxes {
+body, .dropdown-content, .category-checkboxes, .items-grid {
   scrollbar-width: thin;
   scrollbar-color: #383838 #1a1a1a;
 }
 
-.action-button, .modal .modal-content .modal-buttons button, .lists-container .pagination .pagination-btn, .lists-container .item .item-overlay-content .item-actions .action-btn, .lists-container .category-selector .custom-dropdown .dropdown-btn, .sidebar .account-btn, .sidebar .catalog-btn, .navbar .home-btn {
+body {
+  margin: 0;
+  font-family: "Inter", Arial, sans-serif;
+  background: #080808;
+  color: #E0E0E0;
+  overflow-x: hidden;
+  padding-top: 60px;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  -webkit-appearance: textfield;
+          appearance: textfield;
+}
+input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.number-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+}
+.number-input-container .range-input, .number-input-container .year-input, .number-input-container .rating-input {
+  padding-right: 28px;
+  width: 100%;
+}
+.number-input-container .number-input-arrows {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 24px;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+.number-input-container .number-input-arrows .arrow {
+  color: #A0A0A0;
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 3px 4px;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  transition: color 0.2s ease;
+}
+.number-input-container .number-input-arrows .arrow:hover {
+  color: #E0E0E0;
+}
+.number-input-container .number-input-arrows .arrow.up-arrow::before {
+  content: "▲";
+}
+.number-input-container .number-input-arrows .arrow.down-arrow::before {
+  content: "▼";
+}
+
+/* --- Общий стиль для кнопок (кроме кнопок сайдбара и hero) --- */
+.action-button, .lists-container .pagination .pagination-btn, .lists-container .item .item-overlay-content .item-actions .action-btn, .lists-container .category-selector .custom-dropdown .dropdown-btn, .navbar .home-btn {
   color: #A0A0A0;
   background-color: transparent;
   border: 1px solid #383838;
@@ -43,41 +107,38 @@ body, .sidebar, .dropdown-content, .category-checkboxes {
   align-items: center;
   justify-content: center;
   line-height: 1.2;
+  text-align: center;
 }
-.action-button:hover, .modal .modal-content .modal-buttons button:hover, .lists-container .pagination .pagination-btn:hover, .lists-container .item .item-overlay-content .item-actions .action-btn:hover, .lists-container .category-selector .custom-dropdown .dropdown-btn:hover, .sidebar .account-btn:hover, .sidebar .catalog-btn:hover, .navbar .home-btn:hover {
+.action-button:hover, .lists-container .pagination .pagination-btn:hover, .lists-container .item .item-overlay-content .item-actions .action-btn:hover, .lists-container .category-selector .custom-dropdown .dropdown-btn:hover, .navbar .home-btn:hover {
   color: #FFFFFF;
   background-color: #2a2a2a;
   border-color: #5A5A5A;
 }
-.action-button.active, .modal .modal-content .modal-buttons button.active, .lists-container .pagination .active.pagination-btn, .lists-container .item .item-overlay-content .item-actions .active.action-btn, .lists-container .category-selector .custom-dropdown .active.dropdown-btn, .sidebar .active.account-btn, .sidebar .active.catalog-btn, .navbar .active.home-btn, .action-button:active, .modal .modal-content .modal-buttons button:active, .lists-container .pagination .pagination-btn:active, .lists-container .item .item-overlay-content .item-actions .action-btn:active, .lists-container .category-selector .custom-dropdown .dropdown-btn:active, .sidebar .account-btn:active, .sidebar .catalog-btn:active, .navbar .home-btn:active {
+.action-button.active:not(.account-btn):not(.catalog-btn), .lists-container .pagination .active.pagination-btn:not(.account-btn):not(.catalog-btn), .lists-container .item .item-overlay-content .item-actions .active.action-btn:not(.account-btn):not(.catalog-btn), .lists-container .category-selector .custom-dropdown .active.dropdown-btn:not(.account-btn):not(.catalog-btn), .navbar .active.home-btn:not(.account-btn):not(.catalog-btn) {
   color: #FFFFFF;
   background-color: #3a3a3a;
   border-color: #5A5A5A;
 }
 
-body {
-  margin: 0;
-  font-family: "Inter", Arial, sans-serif;
-  background: #080808;
-  color: #E0E0E0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding-top: 60px;
-}
-
 /* --- Navbar на странице профиля --- */
 .navbar {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  right: 0;
+  width: 100%;
   height: 60px;
-  background-color: rgba(8, 8, 8, 0.85);
+  background-color: transparent;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 20px;
   z-index: 1000;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.navbar.scrolled {
+  background-color: rgba(8, 8, 8, 0.85);
+  border-bottom: 1px solid #383838;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 .navbar .navbar-left {
   display: flex;
@@ -92,8 +153,15 @@ body {
 }
 .navbar .home-btn {
   border-color: transparent;
+  background-color: transparent;
+  color: #A0A0A0;
   padding: 8px 12px;
   margin-right: 0;
+}
+.navbar .home-btn:hover {
+  border-color: #5A5A5A;
+  background-color: #2a2a2a;
+  color: #FFFFFF;
 }
 .navbar .avatar-container {
   position: relative;
@@ -144,9 +212,9 @@ body {
   pointer-events: auto;
 }
 
-/* --- Sidebar --- */
+/* --- Sidebar (боковая панель навигации профиля) --- */
 .sidebar {
-  position: absolute;
+  position: fixed;
   top: 60px;
   left: 0;
   width: 240px;
@@ -154,38 +222,69 @@ body {
   background: #080808;
   padding: 20px;
   z-index: 990;
-  overflow-y: auto;
 }
 .sidebar .account-btn, .sidebar .catalog-btn {
-  border-color: transparent;
   width: 100%;
   padding: 12px 15px;
   margin-bottom: 10px;
+  border-radius: 8px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  color: #A0A0A0;
   font-size: 1em;
+  font-weight: 500;
   text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.sidebar .account-btn:hover, .sidebar .catalog-btn:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  color: #E0E0E0;
 }
 .sidebar .account-btn.active, .sidebar .catalog-btn.active {
+  background-color: #2F2F2F;
+  color: #FFFFFF;
   font-weight: 600;
 }
 
-/* --- Основная обертка для контента --- */
+/* --- Основная обертка для контента профиля и каталога --- */
 .profile-wrapper {
   margin-left: 240px;
   padding: 20px;
   background-color: #080808;
-  min-height: calc(100vh - 60px - 20px * 2);
+  min-height: calc(100vh - 60px);
+  position: relative;
+  overflow: hidden;
 }
 
 .profile-container, .lists-container {
   text-align: left;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0;
+  transition: transform 1s cubic-bezier(0.68, -0.15, 0.27, 1.15), opacity 0.7s ease-in-out 0.1s;
 }
-.profile-container.hidden, .lists-container.hidden {
-  display: none !important;
+.profile-container.hidden, .lists-container.hidden { /* ... (без изменений) ... */
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
 }
-.profile-container.visible, .lists-container.visible {
-  display: block;
+.profile-container.visible, .lists-container.visible { /* ... (без изменений) ... */
+  transform: translateX(0%);
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
 }
-.profile-container h2, .lists-container h2 {
+.profile-container.entering, .lists-container.entering { /* ... (без изменений) ... */
+  transform: translateX(100%);
+  opacity: 0;
+  z-index: 2;
+}
+.profile-container h2, .lists-container h2 { /* ... (без изменений) ... */
   color: #E0E0E0;
   margin-top: 0;
   margin-bottom: 25px;
@@ -193,9 +292,12 @@ body {
   font-weight: 600;
 }
 
-.profile-container.visible {
-  display: block;
+.lists-container:not(.visible):not(.entering) { /* ... (без изменений) ... */
+  transform: translateX(100%);
+  opacity: 0;
 }
+
+.profile-container { /* ... (без изменений, если не относится к сетке) ... */ }
 .profile-container .profile-info {
   width: 100%;
   background: #1A1A1A;
@@ -244,14 +346,17 @@ body {
      object-fit: cover;
 }
 
-.lists-container.visible {
-  display: block;
+.lists-container {
+  display: flex;
+  flex-direction: column;
 }
-.lists-container .category-selector {
+.lists-container .category-selector { /* ... (без изменений) ... */
   margin-bottom: 20px;
   text-align: left;
   position: relative;
   z-index: 5;
+  flex-shrink: 0;
+  padding: 0 20px;
 }
 .lists-container .category-selector .custom-dropdown {
   position: relative;
@@ -268,10 +373,7 @@ body {
 .lists-container .category-selector .custom-dropdown .dropdown-btn i {
   margin-left: 8px;
   color: #A0A0A0;
-  transition: transform 0.3s ease, color 0.2s ease;
-}
-.lists-container .category-selector .custom-dropdown .dropdown-btn:hover i {
-  color: #FFFFFF;
+  transition: transform 0.3s ease;
 }
 .lists-container .category-selector .custom-dropdown .dropdown-btn.open {
   background-color: #2a2a2a;
@@ -318,10 +420,12 @@ body {
 }
 .lists-container .items-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 240px);
-  justify-content: center;
-  gap: 20px;
-  overflow: visible;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 15px;
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 20px 20px 20px;
 }
 .lists-container .items-grid .item {
   opacity: 0;
@@ -381,8 +485,7 @@ body {
   position: relative;
   background: #1A1A1A;
   border-radius: 8px;
-  width: 240px;
-  height: 330px;
+  aspect-ratio: 2/3;
   overflow: hidden;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   display: flex;
@@ -431,14 +534,25 @@ body {
 .lists-container .item .item-overlay-content .item-actions .action-btn {
   padding: 4px 6px;
   border-radius: 4px;
+  background-color: rgba(44, 44, 44, 0.6);
+  border-color: rgba(56, 56, 56, 0.4);
+  color: #A0A0A0;
   font-size: 0.8em;
   line-height: 1;
+  min-width: 0;
 }
 .lists-container .item .item-overlay-content .item-actions .action-btn i {
   font-size: 0.9em;
   vertical-align: middle;
 }
-.lists-container .item .rating {
+.lists-container .item .item-overlay-content .item-actions .action-btn:hover { /* ... (без изменений) ... */
+  background-color: #2a2a2a;
+  border-color: #5A5A5A;
+}
+.lists-container .item .item-overlay-content .item-actions .action-btn:hover i {
+  color: #FFFFFF;
+}
+.lists-container .item .rating { /* ... (без изменений) ... */
   position: absolute;
   top: 8px;
   right: 8px;
@@ -474,22 +588,26 @@ body {
 .lists-container .item.dimmed {
   filter: brightness(0.7);
 }
-.lists-container .empty-state {
+.lists-container .empty-state { /* ... (без изменений) ... */
   display: none;
   text-align: center;
   color: #A0A0A0;
   font-size: 1em;
   margin-top: 30px;
+  flex-grow: 1;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.lists-container .pagination {
-  padding-top: 20px;
+.lists-container .pagination { /* ... (без изменений) ... */
   display: flex;
   justify-content: center;
   align-items: center;
   margin-top: 20px;
+  padding-bottom: 10px;
+  flex-shrink: 0;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 .lists-container .pagination.hidden {
   display: none;
@@ -510,8 +628,8 @@ body {
   font-size: 0.95em;
 }
 
-/* --- Модальные окна (без изменений) --- */
-.modal {
+/* --- Модальные окна --- */
+.modal { /* ... (без изменений, если не относится к сетке) ... */
   position: fixed;
   top: 0;
   left: 0;
@@ -630,7 +748,7 @@ body {
   opacity: 1;
 }
 
-#crop-modal .modal-content {
+#crop-modal .modal-content { /* ... (без изменений) ... */
   max-width: 600px;
 }
 #crop-modal .modal-content .cropper-image-container {
@@ -645,33 +763,28 @@ body {
   max-height: 100%;
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1200px) {
   .lists-container .items-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 15px;
-  }
-  .lists-container .item {
-    width: auto;
-    height: auto;
-    aspect-ratio: 2/3;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 }
-@media (max-width: 767px) {
-  html {
-    height: auto;
-    overflow-y: auto;
+@media (max-width: 992px) {
+  .lists-container .items-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
+}
+@media (max-width: 768px) {
   body {
-    height: auto;
-    overflow-y: auto;
     padding-top: 0;
-    display: block;
   }
   .navbar {
     position: relative;
     background-color: #080808;
     border-bottom: 1px solid #383838;
-    padding: 0;
+  }
+  .navbar.scrolled {
+    background-color: #080808;
+    box-shadow: none;
   }
   .navbar .navbar-left {
     flex-direction: column;
@@ -692,6 +805,12 @@ body {
     justify-content: center;
     padding: 12px 15px;
     border-bottom: 1px solid #383838;
+    background-color: #1A1A1A;
+    border-color: #383838;
+    color: #E0E0E0;
+  }
+  .navbar .navbar-left .home-btn:hover {
+    background-color: #2a2a2a;
   }
   .navbar .navbar-right {
     padding: 10px 15px;
@@ -701,10 +820,9 @@ body {
     background-color: #080808;
   }
   .sidebar {
-    position: relative;
     width: 100%;
     height: auto;
-    top: auto;
+    position: static;
     border-right: none;
     border-bottom: 1px solid #383838;
     display: flex;
@@ -713,68 +831,85 @@ body {
   .sidebar .account-btn, .sidebar .catalog-btn {
     flex: 1;
     text-align: center;
-    margin-bottom: 0;
+  }
+  .sidebar .account-btn:hover, .sidebar .catalog-btn:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+  .sidebar .account-btn.active, .sidebar .catalog-btn.active {
+    background-color: #2F2F2F;
   }
   .profile-wrapper {
     margin-left: 0;
-    padding: 13.3333333333px;
-    min-height: auto;
+    padding: 15px;
+    overflow: visible;
   }
   .profile-container, .lists-container {
+    position: relative;
+    transform: none !important;
+    opacity: 1 !important;
     padding: 0;
   }
+  .profile-container.hidden, .lists-container.hidden {
+    display: none;
+  }
+  .profile-container.visible, .lists-container.visible {
+    display: block;
+  }
+  .lists-container .category-selector {
+    padding: 0 15px;
+  }
   .lists-container .items-grid {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 10px;
-    padding-bottom: 0;
+    padding: 0 15px 15px 15px;
   }
   .lists-container .pagination {
-    margin-top: 13.3333333333px;
-    padding-bottom: 0;
+    padding-left: 15px;
+    padding-right: 15px;
   }
   .lists-container .item .item-overlay-content {
     opacity: 1;
     transform: translateY(0);
     background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.6) 40%, transparent 100%);
-    padding: 8px;
-    min-height: 60px;
+    padding-bottom: 5px;
   }
   .lists-container .item .item-overlay-content h4 {
-    font-size: 0.75em;
-    margin-bottom: 5px;
+    font-size: 0.8em;
+    margin-bottom: 4px;
   }
   .lists-container .item .item-overlay-content .item-actions {
     gap: 4px;
   }
   .lists-container .item .item-overlay-content .item-actions .action-btn {
     padding: 3px 5px;
-    font-size: 0.7em;
   }
   .lists-container .item .item-overlay-content .item-actions .action-btn i {
-    font-size: 0.8em;
-  }
-}
-@media (max-width: 479px) {
-  .profile-wrapper {
-    padding: 10px;
-  }
-  .lists-container .items-grid {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 8px;
-  }
-  .lists-container .item .item-overlay-content {
-    padding: 6px;
-    min-height: 50px;
-  }
-  .lists-container .item .item-overlay-content h4 {
-    font-size: 0.7em;
-    margin-bottom: 4px;
-  }
-  .lists-container .item .item-overlay-content .item-actions .action-btn {
-    padding: 2px 4px;
     font-size: 0.65em;
   }
-  .lists-container .item .item-overlay-content .item-actions .action-btn i {
-    font-size: 0.75em;
+}
+@media (max-width: 480px) {
+  .navbar { /* ... (без изменений) ... */ }
+  .navbar .navbar-left .navbar-brand {
+    font-size: 1.2em;
+  }
+  .navbar .navbar-left .home-btn {
+    padding: 10px;
+    font-size: 0.9em;
+  }
+  .navbar .navbar-right .avatar-container .nav-avatar {
+    width: 35px;
+    height: 35px;
+  }
+  .lists-container .category-selector {
+    padding: 0 10px;
+  }
+  .lists-container .items-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    padding: 0 10px 10px 10px;
+  }
+  .lists-container .pagination {
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }

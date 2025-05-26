@@ -392,15 +392,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                         itemDiv.dataset.id = itemData.id;
                         itemDiv.dataset.category = itemData.category;
 
+                        console.log('Обрабатываем элемент:', itemData.title, '| poster_path из БД:', itemData.poster_path); // <--- НОВЫЙ ЛОГ
+
                         let posterSrc = DEFAULT_POSTER_PATH;
-                        if (itemData.poster && itemData.poster.trim() !== '') {
-                            const pathCandidate = itemData.poster.replace(/\\/g, "/");
+                        if (itemData.poster_path && itemData.poster_path.trim() !== '') {
+                            const pathCandidate = itemData.poster_path.replace(/\\/g, "/");
+                            console.log('Кандидат пути после замены слэшей:', pathCandidate); // <--- НОВЫЙ ЛОГ
+
                             if (pathCandidate.startsWith('http://') || pathCandidate.startsWith('https://')) {
                                 posterSrc = pathCandidate;
                             } else {
-                                posterSrc = pathCandidate.startsWith('/') ? pathCandidate : `/${pathCandidate}`;
+                                posterSrc = `https://image.tmdb.org/t/p/w342${pathCandidate.startsWith('/') ? pathCandidate : `/${pathCandidate}`}`;
                             }
+                            console.log('Сформированный posterSrc:', posterSrc); // <--- НОВЫЙ ЛОГ
+                        } else {
+                            console.log('Используем DEFAULT_POSTER_PATH для:', itemData.title); // <--- НОВЫЙ ЛОГ
                         }
+
+                        itemDiv.innerHTML = `<img src="${posterSrc}" alt="${itemData.title || 'Постер'}" onerror="this.onerror=null;this.src='${DEFAULT_POSTER_PATH}';">`;
+
+
+                        itemDiv.innerHTML = `<img src="${posterSrc}" alt="${itemData.title || 'Постер'}" onerror="this.onerror=null;this.src='${DEFAULT_POSTER_PATH}';">`;
 
                         const ratingValue = itemData.rating;
                         const ratingSpan = document.createElement('span');

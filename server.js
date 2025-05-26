@@ -1,7 +1,6 @@
 // server.js
-require('dotenv').config(); // Для загрузки переменных из .env файла
+require('dotenv').config();
 
-// Импорт необходимых модулей
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors =require('cors');
@@ -12,32 +11,25 @@ const fs = require('fs');
 const axios = require('axios');
 
 const app = express();
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// --- TMDB Конфигурация ---
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 if (!TMDB_API_KEY) {
-    console.error('КРИТИЧЕСКАЯ ОШИБКА: API ключ TMDB не найден в переменных окружения (TMDB_API_KEY). Запросы к TMDB не будут работать.');
+    console.error('КРИТИЧЕСКАЯ ОШИБКА: API ключ TMDB не найден в переменных окружения (TMDB_API_KEY).');
 }
-// --- Конец TMDB Конфигурации ---
 
-// --- НАСТРОЙКА ПАПКИ ДЛЯ ЗАГРУЗОК ---
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 const upload = multer({ dest: UPLOADS_DIR });
 
-// --- РАЗДАЧА СТАТИЧЕСКИХ ФАЙЛОВ ---
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
-// --- МАРШРУТЫ ДЛЯ ОТДАЧИ HTML-СТРАНИЦ ---
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'html', 'home.html'));
 });
@@ -48,10 +40,14 @@ app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'html', 'profile.html'));
 });
 app.get('/watch.html', (req, res) => {
-    res.status(404).send(`Страница watch.html еще не создана. Запрошен URL: ${req.originalUrl}`);
+    const watchPath = path.join(__dirname, 'public', 'html', 'watch.html');
+    if (fs.existsSync(watchPath)) {
+        res.sendFile(watchPath);
+    } else {
+        res.status(404).send(`Страница watch.html не найдена по пути: ${watchPath}.`);
+    }
 });
 
-// --- ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ SQLITE ---
 const dbPath = path.join(__dirname, 'database.db');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
@@ -73,7 +69,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
             item_id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             tmdb_id INTEGER,
-            media_type TEXT, -- 'movie' или 'tv'
+            media_type TEXT, 
             category TEXT NOT NULL,
             title TEXT NOT NULL,
             poster_path TEXT,
@@ -83,8 +79,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
     }
 });
 
-// --- API МАРШРУТЫ (пользовательские) ---
-// Регистрация пользователя
 app.post('/api/register', async (req, res) => {
     const { username, email, password } = req.body;
     if (!username || !email || !password) {
@@ -112,7 +106,6 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// Вход пользователя
 app.post('/api/login', (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -140,7 +133,6 @@ app.post('/api/login', (req, res) => {
     });
 });
 
-// Получение данных пользователя
 app.get('/api/user/:id', (req, res) => {
     const userId = req.params.id;
     db.get('SELECT id, username, email, avatar FROM users WHERE id = ?', [userId], (err, user) => {
@@ -155,14 +147,13 @@ app.get('/api/user/:id', (req, res) => {
     });
 });
 
-// Обновление аватара пользователя
 app.post('/api/user/:id/avatar', upload.single('avatar'), (req, res) => {
     const userId = req.params.id;
     const file = req.file;
     if (!file) {
         return res.status(400).json({ error: 'Файл не загружен' });
     }
-
+    
     db.get('SELECT avatar FROM users WHERE id = ?', [userId], (err, user) => {
         if (err) console.error('Ошибка получения старого аватара:', err.message);
 
@@ -180,7 +171,7 @@ app.post('/api/user/:id/avatar', upload.single('avatar'), (req, res) => {
         fs.rename(file.path, newPathInUploads, (renameErr) => {
             if (renameErr) {
                 console.error('Ошибка перемещения загруженного файла:', renameErr);
-                fs.unlink(file.path, (tempUnlinkErr) => {
+                fs.unlink(file.path, (tempUnlinkErr) => { // Удаляем временный файл multer в случае ошибки
                     if (tempUnlinkErr) console.error('Ошибка удаления временного файла multer:', tempUnlinkErr);
                 });
                 return res.status(500).json({ error: 'Ошибка сохранения файла аватара' });
@@ -197,32 +188,27 @@ app.post('/api/user/:id/avatar', upload.single('avatar'), (req, res) => {
     });
 });
 
-// Смена пароля
 app.post('/api/user/:id/password', async (req, res) => {
     const userId = req.params.id;
     const { currentPassword, newPassword } = req.body;
-
     if (!currentPassword || !newPassword) {
         return res.status(400).json({ error: 'Текущий и новый пароли обязательны' });
     }
     if (newPassword.length < 6) {
         return res.status(400).json({ error: 'Новый пароль должен содержать минимум 6 символов' });
     }
-
     db.get('SELECT password FROM users WHERE id = ?', [userId], async (err, user) => {
-        if (err) {
+        if (err) { 
             console.error('Ошибка БД при получении пароля:', err.message);
             return res.status(500).json({ error: 'Ошибка сервера' });
         }
         if (!user) { return res.status(404).json({ error: 'Пользователь не найден' }); }
         try {
             const match = await bcrypt.compare(currentPassword, user.password);
-            if (!match) {
-                return res.status(400).json({ error: 'Текущий пароль неверен' });
-            }
+            if (!match) { return res.status(400).json({ error: 'Текущий пароль неверен' });}
             const hashedPassword = await bcrypt.hash(newPassword, 10);
             db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId], (dbErr) => {
-                if (dbErr) {
+                if (dbErr) { 
                     console.error('Ошибка БД при обновлении пароля:', dbErr.message);
                     return res.status(500).json({ error: 'Ошибка обновления пароля' });
                 }
@@ -235,11 +221,9 @@ app.post('/api/user/:id/password', async (req, res) => {
     });
 });
 
-// Обновление имени пользователя или email
 app.post('/api/user/:id/update', (req, res) => {
     const userId = req.params.id;
     const { field, value } = req.body;
-
     if (!['username', 'email'].includes(field)) {
         return res.status(400).json({ error: 'Недопустимое поле для обновления' });
     }
@@ -249,7 +233,6 @@ app.post('/api/user/:id/update', (req, res) => {
     if (field === 'email' && !String(value).includes('@')) {
         return res.status(400).json({ error: 'Некорректный формат email' });
     }
-
     const sql = `UPDATE users SET ${field} = ? WHERE id = ?`;
     db.run(sql, [String(value).trim(), userId], function(err) {
         if (err) {
@@ -266,8 +249,6 @@ app.post('/api/user/:id/update', (req, res) => {
     });
 });
 
-
-// Получение списков пользователя
 app.get('/api/user/:id/lists', (req, res) => {
     const userId = req.params.id;
     const categoryQueryParam = req.query.category;
@@ -294,8 +275,8 @@ app.get('/api/user/:id/lists', (req, res) => {
         case 'date_asc': orderByClause = ' ORDER BY item_id ASC'; break;
         case 'title_asc': orderByClause = ' ORDER BY LOWER(title) ASC'; break;
         case 'title_desc': orderByClause = ' ORDER BY LOWER(title) DESC'; break;
-        case 'rating_asc': orderByClause = ' ORDER BY rating ASC, LOWER(title) ASC'; break;
-        case 'rating_desc': orderByClause = ' ORDER BY rating DESC, LOWER(title) ASC'; break;
+        case 'rating_asc': orderByClause = ' ORDER BY rating ASC NULLS LAST, LOWER(title) ASC'; break;
+        case 'rating_desc': orderByClause = ' ORDER BY rating DESC NULLS LAST, LOWER(title) ASC'; break;
         case 'date_desc': default: orderByClause = ' ORDER BY item_id DESC'; break;
     }
     itemsQuery += orderByClause;
@@ -323,7 +304,6 @@ app.get('/api/user/:id/lists', (req, res) => {
     });
 });
 
-// Добавление элемента в список пользователя
 app.post('/api/user/:id/lists', (req, res) => {
     const userId = req.params.id;
     const { category, title, poster_path, rating, tmdb_id, media_type } = req.body;
@@ -348,7 +328,7 @@ app.post('/api/user/:id/lists', (req, res) => {
             return res.status(500).json({ error: 'Ошибка сервера при добавлении в список' });
         }
         if (existingItem) {
-            return res.status(409).json({ error: 'Этот элемент уже есть в одном из ваших списков.' });
+            return res.status(409).json({ error: 'Этот элемент уже есть в одном из ваших списков. Вы можете изменить его категорию или оценку в профиле.' });
         }
 
         const sql = 'INSERT INTO user_lists (user_id, tmdb_id, media_type, category, title, poster_path, rating) VALUES (?, ?, ?, ?, ?, ?, ?)';
@@ -368,7 +348,6 @@ app.post('/api/user/:id/lists', (req, res) => {
     });
 });
 
-// Удаление элемента из списка
 app.delete('/api/user/:id/lists/:item_id', (req, res) => {
     const userId = req.params.id;
     const itemId = req.params.item_id;
@@ -384,7 +363,6 @@ app.delete('/api/user/:id/lists/:item_id', (req, res) => {
     });
 });
 
-// Обновление элемента в списке (категория, рейтинг)
 app.put('/api/user/:id/lists/:item_id', (req, res) => {
     const userId = req.params.id;
     const itemId = req.params.item_id;
@@ -402,16 +380,16 @@ app.put('/api/user/:id/lists/:item_id', (req, res) => {
         params.push(category);
     }
     if (rating !== undefined) {
-        const ratingValue = (rating === null || String(rating).trim() === '') ? null : parseInt(rating);
+        const ratingValue = (rating === null || String(rating).trim() === '') ? null : parseInt(rating, 10);
         if (ratingValue !== null && (isNaN(ratingValue) || ratingValue < 0 || ratingValue > 10)) {
-             return res.status(400).json({ error: 'Рейтинг должен быть числом от 0 до 10 или отсутствовать' });
+             return res.status(400).json({ error: 'Рейтинг должен быть числом от 0 до 10 или отсутствовать (null)' });
         }
         updates.push('rating = ?');
         params.push(ratingValue);
     }
 
     if (updates.length === 0) {
-        return res.status(400).json({ error: 'Не указаны данные для обновления' });
+        return res.status(400).json({ error: 'Не указаны данные для обновления (категория или рейтинг)' });
     }
 
     query += updates.join(', ') + ' WHERE user_id = ? AND item_id = ?';
@@ -425,161 +403,171 @@ app.put('/api/user/:id/lists/:item_id', (req, res) => {
         if (this.changes === 0) {
             return res.status(404).json({ error: 'Элемент не найден или данные не изменены' });
         }
-        res.status(200).json({ message: 'Элемент списка успешно обновлён' });
+        db.get('SELECT item_id AS id, user_id, tmdb_id, media_type, category, title, poster_path, rating FROM user_lists WHERE item_id = ? AND user_id = ?', [itemId, userId], (fetchErr, updatedItem) => {
+            if (fetchErr) {
+                console.error('Ошибка при получении обновленного элемента:', fetchErr.message);
+                return res.status(200).json({ message: 'Элемент списка успешно обновлён (ошибка получения данных)'});
+            }
+            if (!updatedItem) {
+                 return res.status(404).json({ error: 'Обновленный элемент не найден после обновления' });
+            }
+            res.status(200).json({ message: 'Элемент списка успешно обновлён', item: updatedItem });
+        });
     });
 });
 
 
 // --- TMDB API МАРШРУТЫ ---
-
-// Получение списка жанров для фильмов или сериалов
-app.get('/api/tmdb/genres/:type', async (req, res) => {
-    const { type } = req.params;
-    const language = req.query.language || 'ru-RU';
-
-    if (type !== 'movie' && type !== 'tv') {
-        return res.status(400).json({ error: "Неверный тип для жанров. Используйте 'movie' или 'tv'." });
-    }
-     if (!TMDB_API_KEY) {
-        console.error('TMDB_API_KEY не определен для жанров!');
+app.get('/api/tmdb/hero-content', async (req, res) => {
+    if (!TMDB_API_KEY) {
         return res.status(500).json({ error: 'Ошибка конфигурации сервера: API ключ TMDB не найден.' });
     }
-
-    const tmdbGenreUrl = `${TMDB_BASE_URL}/genre/${type}/list`;
+    const language = 'ru-RU';
     try {
-        const response = await axios.get(tmdbGenreUrl, {
-            params: { api_key: TMDB_API_KEY, language: language }
+        const popularMoviesUrl = `${TMDB_BASE_URL}/movie/popular`;
+        const popularResponse = await axios.get(popularMoviesUrl, {
+            params: { api_key: TMDB_API_KEY, language: language, page: 1 }
         });
-        res.status(200).json(response.data.genres || []);
+
+        if (!popularResponse.data.results || popularResponse.data.results.length === 0) {
+            return res.status(404).json({ error: 'Не найдены популярные фильмы для hero секции.' });
+        }
+        
+        const topN = Math.min(5, popularResponse.data.results.length);
+        const randomIndex = Math.floor(Math.random() * topN);
+        const heroMovieCandidate = popularResponse.data.results[randomIndex];
+
+        const movieDetailsUrl = `${TMDB_BASE_URL}/movie/${heroMovieCandidate.id}`;
+        const detailsResponse = await axios.get(movieDetailsUrl, {
+            params: {
+                api_key: TMDB_API_KEY,
+                language: language,
+                append_to_response: 'videos,images'
+            }
+        });
+        const movieDetails = detailsResponse.data;
+
+        let videoInfo = { type: 'none', key_or_url: null };
+
+        if (movieDetails.videos && movieDetails.videos.results) {
+            let officialYouTubeTrailer = movieDetails.videos.results.find(
+                video => video.site === 'YouTube' && video.type === 'Trailer' && video.official === true
+            );
+            if (officialYouTubeTrailer) {
+                videoInfo.type = 'youtube';
+                videoInfo.key_or_url = officialYouTubeTrailer.key;
+            } else {
+                let anyYouTubeTrailer = movieDetails.videos.results.find(
+                    video => video.site === 'YouTube' && video.type === 'Trailer'
+                );
+                if (anyYouTubeTrailer) {
+                    videoInfo.type = 'youtube';
+                    videoInfo.key_or_url = anyYouTubeTrailer.key;
+                }
+            }
+        }
+        
+        let backdropPath = movieDetails.backdrop_path;
+        if (movieDetails.images && movieDetails.images.backdrops && movieDetails.images.backdrops.length > 0) {
+            const russianBackdrop = movieDetails.images.backdrops.find(b => b.iso_639_1 === 'ru');
+            if (russianBackdrop) {
+                backdropPath = russianBackdrop.file_path;
+            } else if (movieDetails.images.backdrops[0]) {
+                backdropPath = movieDetails.images.backdrops[0].file_path;
+            }
+        }
+
+        res.status(200).json({
+            id: movieDetails.id,
+            title: movieDetails.title,
+            overview: movieDetails.overview,
+            backdrop_path: backdropPath,
+            poster_path: movieDetails.poster_path,
+            vote_average: movieDetails.vote_average,
+            release_date: movieDetails.release_date,
+            video_info: videoInfo,
+            media_type: 'movie'
+        });
+
     } catch (error) {
-        console.error(`Ошибка при запросе жанров (${type}) с TMDB:`, error.response ? error.response.data : error.message);
-        res.status(error.response ? error.response.status : 500).json({ error: `Ошибка при получении жанров ${type} от TMDB.` });
+        console.error('Ошибка при получении контента для Hero из TMDB:',
+            error.response ? { status: error.response.status, data: error.response.data } : error.message);
+        res.status(error.response ? error.response.status : 500)
+           .json({ error: 'Ошибка при получении контента для hero от TMDB.', details: error.response ? error.response.data : null });
     }
 });
 
+app.get('/api/tmdb/genres/:type', async (req, res) => {
+    const { type } = req.params;
+    const language = req.query.language || 'ru-RU';
+    if (type !== 'movie' && type !== 'tv') {
+        return res.status(400).json({ error: "Неверный тип для жанров." });
+    }
+    if (!TMDB_API_KEY) return res.status(500).json({ error: 'API ключ TMDB не найден.' });
+    const tmdbGenreUrl = `${TMDB_BASE_URL}/genre/${type}/list`;
+    try {
+        const response = await axios.get(tmdbGenreUrl, { params: { api_key: TMDB_API_KEY, language: language } });
+        res.status(200).json(response.data.genres || []);
+    } catch (error) {
+        res.status(error.response ? error.response.status : 500).json({ error: `Ошибка при получении жанров ${type}.` });
+    }
+});
 
 app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
     const { type, tmdbId } = req.params;
     const language = req.query.language || 'ru-RU';
-
-    if (type !== 'movie' && type !== 'tv') {
-        return res.status(400).json({ error: "Неверный тип контента. Используйте 'movie' или 'tv'." });
-    }
-    if (!tmdbId) {
-        return res.status(400).json({ error: "TMDB ID не указан." });
-    }
-
-    if (!TMDB_API_KEY) {
-        console.error('TMDB_API_KEY не определен для деталей!');
-        return res.status(500).json({ error: 'Ошибка конфигурации сервера: API ключ TMDB не найден.' });
-    }
-
+    if (!['movie', 'tv'].includes(type)) return res.status(400).json({ error: "Неверный тип контента." });
+    if (!tmdbId) return res.status(400).json({ error: "TMDB ID не указан." });
+    if (!TMDB_API_KEY) return res.status(500).json({ error: 'API ключ TMDB не найден.' });
     const tmdbUrl = `${TMDB_BASE_URL}/${type}/${tmdbId}`;
     try {
         const response = await axios.get(tmdbUrl, {
-            params: {
-                api_key: TMDB_API_KEY,
-                language: language,
-                append_to_response: 'credits,videos,images,recommendations,similar,release_dates'
-            }
+            params: { api_key: TMDB_API_KEY, language: language, append_to_response: 'credits,videos,images,recommendations,similar,release_dates,content_ratings' }
         });
         res.status(200).json(response.data);
     } catch (error) {
-        console.error(`Ошибка при запросе к TMDB API (${tmdbUrl}):`,
-            error.response ? { status: error.response.status, data: error.response.data } : error.message
-        );
         const status = error.response ? error.response.status : 500;
         const message = error.response?.data?.status_message || 'Ошибка при получении данных от TMDB.';
         res.status(status).json({ error: message, details: error.response ? error.response.data : null });
     }
 });
 
-// Обновленный маршрут поиска, который принимает все фильтры как query-параметры
 app.get('/api/tmdb/search', async (req, res) => {
-    const {
-        query, // Текстовый запрос
-        media_type, // 'movie', 'tv', или 'multi' (для /search) или 'movie', 'tv' (для /discover)
-        genres, // Строка ID жанров через запятую, например "28,12"
-        year_from, // Год "от"
-        year_to, // Год "до"
-        rating_from, // Оценка "от"
-        rating_to, // Оценка "до"
-        page = 1,
-        language = 'ru-RU',
-        sort_by = 'popularity.desc' // Для /discover
-    } = req.query;
-
-    if (!TMDB_API_KEY) {
-        return res.status(500).json({ error: 'Ошибка конфигурации сервера: API ключ TMDB не найден.' });
-    }
+    const { query, media_type, genres, year_from, year_to, rating_from, rating_to, page = 1, language = 'ru-RU', sort_by = 'popularity.desc' } = req.query;
+    if (!TMDB_API_KEY) return res.status(500).json({ error: 'API ключ TMDB не найден.' });
 
     let tmdbUrl;
-    const params = {
-        api_key: TMDB_API_KEY,
-        language: language,
-        page: page,
-        include_adult: false
-    };
+    const params = { api_key: TMDB_API_KEY, language: language, page: parseInt(page, 10), include_adult: false };
 
-    // Логика выбора между /search и /discover
-    if (query) { // Если есть текстовый запрос, используем /search
+    if (query) {
         const searchType = (media_type === 'movie' || media_type === 'tv') ? media_type : 'multi';
         tmdbUrl = `${TMDB_BASE_URL}/search/${searchType}`;
         params.query = query;
-        // Фильтры (genres, year, rating) для /search не очень эффективны и могут игнорироваться TMDB,
-        // если они передаются вместе с query. Их лучше применять на клиенте или использовать /discover.
-        // Для простоты, если есть query, мы не будем передавать эти фильтры в /search на сервер TMDB.
-        // Клиент может отфильтровать результаты /search по жанрам.
-    } else if (media_type && (genres || year_from || year_to || rating_from || rating_to)) {
-        // Если нет текстового запроса, но есть media_type и хотя бы один другой фильтр, используем /discover
-        if (!['movie', 'tv'].includes(media_type)) {
-            return res.status(400).json({ error: "Для /discover должен быть указан корректный 'media_type' ('movie' или 'tv')." });
-        }
+    } else if (media_type && (media_type === 'movie' || media_type === 'tv')) {
         tmdbUrl = `${TMDB_BASE_URL}/discover/${media_type}`;
         if (genres) params.with_genres = genres;
-
-        // Фильтрация по году для /discover
+        const dateParamPrefix = media_type === 'movie' ? 'primary_release_date' : 'first_air_date';
         if (year_from) {
-            params[media_type === 'movie' ? 'primary_release_date.gte' : 'first_air_date.gte'] = `${year_from}-01-01`;
+            params[`${dateParamPrefix}.gte`] = `${year_from}-01-01`;
+            if (!year_to) params[`${dateParamPrefix}.lte`] = `${year_from}-12-31`;
         }
-        if (year_to) {
-            params[media_type === 'movie' ? 'primary_release_date.lte' : 'first_air_date.lte'] = `${year_to}-12-31`;
-        }
-        // Если указан только год "от", ищем за этот конкретный год
-        if (year_from && !year_to) {
-             params[media_type === 'movie' ? 'primary_release_date.lte' : 'first_air_date.lte'] = `${year_from}-12-31`;
-        }
-         // Если указан только год "до" (менее типичный случай для discover без "от")
-        if (!year_from && year_to) {
-            params[media_type === 'movie' ? 'primary_release_date.lte' : 'first_air_date.lte'] = `${year_to}-12-31`;
-        }
-
-
-        if (rating_from) params['vote_average.gte'] = rating_from;
-        if (rating_to) params['vote_average.lte'] = rating_to;
+        if (year_to) params[`${dateParamPrefix}.lte`] = `${year_to}-12-31`;
+        if (rating_from) params['vote_average.gte'] = parseFloat(rating_from);
+        if (rating_to) params['vote_average.lte'] = parseFloat(rating_to);
         params.sort_by = sort_by;
     } else {
-        // Если нет ни query, ни media_type с фильтрами для discover
-        return res.status(400).json({ error: "Необходимо указать текстовый запрос (query) или тип медиа ('movie'/'tv') и хотя бы один фильтр (жанры, год, оценка)." });
+        return res.status(400).json({ error: "Необходим запрос (query) или тип медиа (movie/tv) и фильтры." });
     }
-
     try {
         console.log(`Запрос к TMDB: URL=${tmdbUrl}, Params=${JSON.stringify(params)}`);
         const response = await axios.get(tmdbUrl, { params });
         res.status(200).json(response.data);
     } catch (error) {
-        console.error(`Ошибка при запросе к TMDB API (${tmdbUrl}):`,
-            error.response ? { status: error.response.status, data: error.response.data } : error.message
-        );
         const status = error.response ? error.response.status : 500;
-        const message = error.response?.data?.status_message || 'Ошибка при выполнении поиска на TMDB.';
+        const message = error.response?.data?.status_message || 'Ошибка поиска на TMDB.';
         res.status(status).json({ error: message, details: error.response ? error.response.data : null });
     }
 });
 
-
-// --- ЗАПУСК СЕРВЕРА ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Сервер запущен на порту ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));

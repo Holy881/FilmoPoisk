@@ -276,9 +276,27 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   text-align: center;
   color: #A0A0A0;
   font-size: 1.1em;
+  padding: 20px 0;
 }
 .search-modal .search-modal-main .search-results-placeholder p {
   margin: 0;
+}
+.search-modal .search-modal-main .search-loading-indicator {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+}
+.search-modal .search-modal-main .search-loading-indicator::after {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 4px solid #383838;
+  border-top-color: #FFFFFF;
+  animation: spinner 0.8s linear infinite;
 }
 .search-modal .search-modal-sidebar {
   flex: 1;
@@ -339,7 +357,10 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   flex-shrink: 0;
 }
 .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-menu {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s 0.2s;
   position: absolute;
   top: calc(100% + 5px);
   left: 0;
@@ -384,7 +405,10 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   transform: rotate(180deg);
 }
 .search-modal .search-modal-sidebar .filter-group .custom-dropdown.open .dropdown-menu {
-  display: block;
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0s;
 }
 .search-modal .search-modal-sidebar .filter-group .filter-range {
   display: flex;
@@ -439,16 +463,25 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   height: calc(100vh - 60px);
   overflow: hidden;
   margin-top: -60px;
+  background-color: #0D0D0D;
 }
-.hero .hero-video, .hero .hero-fallback img {
+.hero .hero-video-container {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+  z-index: 1;
+  background-color: #000;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+.hero .hero-video-container iframe, .hero .hero-video-container video {
+  width: 100%;
+  height: 100%;
   -o-object-fit: cover;
      object-fit: cover;
-  z-index: 1;
+  border: none;
 }
 .hero .hero-fallback {
   position: absolute;
@@ -458,10 +491,32 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   height: 100%;
   z-index: 0;
   opacity: 0;
-  transition: opacity 0.5s ease;
+  transition: opacity 0.5s ease-in-out;
+}
+.hero .hero-fallback img {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
 }
 .hero .hero-fallback.active {
+  opacity: 1 !important;
+  z-index: 2;
+}
+.hero.video-playing .hero-video-container {
   opacity: 1;
+  z-index: 3;
+}
+.hero.video-playing .hero-fallback {
+  opacity: 0;
+  z-index: 0;
+}
+.hero.poster-active .hero-fallback {
+  opacity: 1 !important;
+  z-index: 2;
+}
+.hero.poster-active .hero-video-container {
+  opacity: 0;
   z-index: 1;
 }
 .hero .hero-overlay {
@@ -476,38 +531,29 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   align-items: flex-start;
   padding: 0 5% 50px;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 70%);
-  z-index: 2;
+  z-index: 4;
 }
-.hero .hero-content-video-playing, .hero .hero-content-poster-active {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.5s ease;
-  z-index: 5;
-}
-.hero .hero-content-video-playing .hero-title {
-  font-size: 3.5em;
-  margin-bottom: 5px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-.hero .hero-content-poster-active .hero-title {
+.hero .hero-content-display .hero-title {
   font-size: 3.5em;
   margin-bottom: 15px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  color: #fff;
 }
-.hero .hero-content-poster-active .hero-description {
+.hero .hero-content-display .hero-description {
   font-size: 1.2em;
   margin-bottom: 30px;
   line-height: 1.5;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+  color: #e0e0e0;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   max-width: 60%;
 }
-.hero .hero-button.action-button, .hero .hero-button.sound-button, .hero .navbar .hero-button.navbar-button, .navbar .hero .hero-button.navbar-button, .hero .navbar .hero-button.navbar-icon, .navbar .hero .hero-button.navbar-icon, .hero .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-button.dropdown-toggle, .hero .search-modal .search-modal-sidebar .hero-button.reset-filters-button, .search-modal .search-modal-sidebar .hero .hero-button.reset-filters-button {
+.hero .hero-content-display .hero-button.action-button, .hero .hero-content-display .hero-button.sound-button, .hero .hero-content-display .navbar .hero-button.navbar-button, .navbar .hero .hero-content-display .hero-button.navbar-button, .hero .hero-content-display .navbar .hero-button.navbar-icon, .navbar .hero .hero-content-display .hero-button.navbar-icon, .hero .hero-content-display .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-content-display .hero-button.dropdown-toggle, .hero .hero-content-display .search-modal .search-modal-sidebar .hero-button.reset-filters-button, .search-modal .search-modal-sidebar .hero .hero-content-display .hero-button.reset-filters-button {
   padding: 12px 25px;
   font-size: 1.1em;
   margin-right: 0;
@@ -518,7 +564,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   -webkit-backdrop-filter: blur(3px);
           backdrop-filter: blur(3px);
 }
-.hero .hero-button.action-button:hover, .hero .hero-button.sound-button:hover, .hero .navbar .hero-button.navbar-button:hover, .navbar .hero .hero-button.navbar-button:hover, .hero .navbar .hero-button.navbar-icon:hover, .navbar .hero .hero-button.navbar-icon:hover, .hero .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle:hover, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-button.dropdown-toggle:hover, .hero .search-modal .search-modal-sidebar .hero-button.reset-filters-button:hover, .search-modal .search-modal-sidebar .hero .hero-button.reset-filters-button:hover {
+.hero .hero-content-display .hero-button.action-button:hover, .hero .hero-content-display .hero-button.sound-button:hover, .hero .hero-content-display .navbar .hero-button.navbar-button:hover, .navbar .hero .hero-content-display .hero-button.navbar-button:hover, .hero .hero-content-display .navbar .hero-button.navbar-icon:hover, .navbar .hero .hero-content-display .hero-button.navbar-icon:hover, .hero .hero-content-display .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle:hover, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-content-display .hero-button.dropdown-toggle:hover, .hero .hero-content-display .search-modal .search-modal-sidebar .hero-button.reset-filters-button:hover, .search-modal .search-modal-sidebar .hero .hero-content-display .hero-button.reset-filters-button:hover {
   background-color: rgba(255, 255, 255, 0.25);
   border-color: rgba(255, 255, 255, 0.8);
   color: #E0E0E0;
@@ -534,33 +580,18 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   width: 40px;
   height: 40px;
   font-size: 1.2em;
-  z-index: 10;
+  z-index: 5;
   margin-right: 0;
   padding: 0;
   color: #A0A0A0;
   -webkit-backdrop-filter: blur(3px);
           backdrop-filter: blur(3px);
+  display: none;
 }
 .hero .sound-button:hover {
   background-color: rgba(44, 44, 44, 0.7);
   color: #E0E0E0;
   border-color: rgba(56, 56, 56, 0.6);
-}
-.hero.video-playing .hero-content-video-playing {
-  opacity: 1;
-  pointer-events: auto;
-}
-.hero.video-playing .hero-content-poster-active {
-  opacity: 0;
-  pointer-events: none;
-}
-.hero.poster-active .hero-content-video-playing {
-  opacity: 0;
-  pointer-events: none;
-}
-.hero.poster-active .hero-content-poster-active {
-  opacity: 1;
-  pointer-events: auto;
 }
 
 /* --- Стили для секций с плитками фильмов --- */
@@ -694,7 +725,13 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   display: flex;
   gap: 15px;
   border: 1px solid #383838;
-  transition: background-color 0.2s ease;
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+.search-modal-main .search-result-item.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 .search-modal-main .search-result-item:hover {
   background-color: #1f1f1f;
@@ -780,11 +817,16 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   width: 100%;
 }
 
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
 @media (max-width: 1024px) {
-  .hero-content-video-playing .hero-title, .hero-content-poster-active .hero-title {
+  .hero .hero-content-display .hero-title {
     font-size: 2.8em;
   }
-  .hero-content-video-playing .hero-description, .hero-content-poster-active .hero-description {
+  .hero .hero-content-display .hero-description {
     font-size: 1.05em;
     max-width: 70%;
   }
@@ -910,23 +952,18 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   .hero .hero-overlay {
     padding: 0 5% 15%;
   }
-  .hero .hero-content-video-playing, .hero .hero-content-poster-active {
-    position: static;
-    width: 100%;
-    padding: 0;
-  }
-  .hero .hero-content-video-playing .hero-title, .hero .hero-content-poster-active .hero-title {
+  .hero .hero-content-display .hero-title {
     font-size: 1.8em;
     margin-bottom: 10px;
   }
-  .hero .hero-content-video-playing .hero-description, .hero .hero-content-poster-active .hero-description {
+  .hero .hero-content-display .hero-description {
     font-size: 0.9em;
     -webkit-line-clamp: 3;
     line-clamp: 3;
     margin-bottom: 15px;
     max-width: 100%;
   }
-  .hero .hero-content-video-playing .hero-button, .hero .hero-content-poster-active .hero-button {
+  .hero .hero-content-display .hero-button.action-button, .hero .hero-content-display .navbar .hero-button.navbar-button, .navbar .hero .hero-content-display .hero-button.navbar-button, .hero .hero-content-display .navbar .hero-button.navbar-icon, .navbar .hero .hero-content-display .hero-button.navbar-icon, .hero .hero-content-display .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-content-display .hero-button.dropdown-toggle, .hero .hero-content-display .search-modal .search-modal-sidebar .hero-button.reset-filters-button, .search-modal .search-modal-sidebar .hero .hero-content-display .hero-button.reset-filters-button, .hero .hero-content-display .hero-button.sound-button {
     padding: 10px 18px;
     font-size: 0.95em;
   }
@@ -976,15 +1013,15 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   .search-result-item .search-result-overview {
     font-size: 0.85em;
   }
-  .hero-content-video-playing .hero-title, .hero-content-poster-active .hero-title {
+  .hero .hero-content-display .hero-title {
     font-size: 1.6em;
   }
-  .hero-content-video-playing .hero-description, .hero-content-poster-active .hero-description {
+  .hero .hero-content-display .hero-description {
     font-size: 0.85em;
     -webkit-line-clamp: 2;
     line-clamp: 2;
   }
-  .hero-content-video-playing .hero-button, .hero-content-poster-active .hero-button {
+  .hero .hero-content-display .hero-button.action-button, .hero .hero-content-display .navbar .hero-button.navbar-button, .navbar .hero .hero-content-display .hero-button.navbar-button, .hero .hero-content-display .navbar .hero-button.navbar-icon, .navbar .hero .hero-content-display .hero-button.navbar-icon, .hero .hero-content-display .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-content-display .hero-button.dropdown-toggle, .hero .hero-content-display .search-modal .search-modal-sidebar .hero-button.reset-filters-button, .search-modal .search-modal-sidebar .hero .hero-content-display .hero-button.reset-filters-button, .hero .hero-content-display .hero-button.sound-button {
     padding: 8px 15px;
     font-size: 0.9em;
   }

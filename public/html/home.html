@@ -7,6 +7,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/home.css">
+    <style>
+        /* Дополнительные стили для hero-video-container, если нужны */
+        .hero-video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; 
+            background-color: #000; /* Черный фон на случай, если видео не покроет все */
+            opacity: 0; /* Начальное состояние, JS сделает opacity: 1 */
+            transition: opacity 0.5s ease-in-out;
+        }
+        .hero-video-container iframe,
+        .hero-video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Для <video>, для iframe может понадобиться JS для aspect ratio */
+        }
+        .hero-fallback.active {
+            opacity: 1 !important; /* Убедимся, что fallback виден, когда активен */
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -31,10 +54,8 @@
                         <p>Введите ваш запрос для поиска...</p>
                     </div>
                 </div>
-
                 <aside class="search-modal-sidebar">
                     <h3 class="filters-title">Фильтры</h3>
-
                     <div class="filter-group">
                         <h4 class="filter-group-title">Жанры</h4>
                         <div class="custom-dropdown" data-dropdown-id="genres-movie">
@@ -47,7 +68,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="filter-group">
                         <h4 class="filter-group-title">Тип</h4>
                         <div class="custom-dropdown" data-dropdown-id="type">
@@ -61,49 +81,34 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="filter-group">
                         <h4 class="filter-group-title">Год</h4>
                         <div class="filter-range">
                             <div class="number-input-container">
                                 <input type="number" min="1900" max="2025" placeholder="от" class="range-input year-input">
-                                <div class="number-input-arrows">
-                                    <span class="arrow up-arrow"></span>
-                                    <span class="arrow down-arrow"></span>
-                                </div>
+                                <div class="number-input-arrows"><span class="arrow up-arrow"></span><span class="arrow down-arrow"></span></div>
                             </div>
                             <span>&ndash;</span>
                             <div class="number-input-container">
                                 <input type="number" min="1900" max="2025" placeholder="до" class="range-input year-input">
-                                <div class="number-input-arrows">
-                                    <span class="arrow up-arrow"></span>
-                                    <span class="arrow down-arrow"></span>
-                                </div>
+                                <div class="number-input-arrows"><span class="arrow up-arrow"></span><span class="arrow down-arrow"></span></div>
                             </div>
                         </div>
                     </div>
-
                     <div class="filter-group">
                         <h4 class="filter-group-title">Оценка</h4>
                         <div class="filter-range">
                             <div class="number-input-container">
                                 <input type="number" min="0" max="10" step="0.1" placeholder="от" class="range-input rating-input">
-                                <div class="number-input-arrows">
-                                    <span class="arrow up-arrow"></span>
-                                    <span class="arrow down-arrow"></span>
-                                </div>
+                                <div class="number-input-arrows"><span class="arrow up-arrow"></span><span class="arrow down-arrow"></span></div>
                             </div>
                             <span>&ndash;</span>
                             <div class="number-input-container">
                                 <input type="number" min="0" max="10" step="0.1" placeholder="до" class="range-input rating-input">
-                                <div class="number-input-arrows">
-                                    <span class="arrow up-arrow"></span>
-                                    <span class="arrow down-arrow"></span>
-                                </div>
+                                <div class="number-input-arrows"><span class="arrow up-arrow"></span><span class="arrow down-arrow"></span></div>
                             </div>
                         </div>
                     </div>
-
                     <button type="button" class="reset-filters-button action-button">Сбросить фильтры</button>
                 </aside>
             </div>
@@ -111,22 +116,19 @@
     </div>
 
     <section class="hero" id="hero-section">
-        <video class="hero-video" autoplay muted playsinline>
-            <source src="/videos/FightClubG.mp4" type="video/mp4">
-            Ваш браузер не поддерживает видео.
-        </video>
-        <div class="hero-fallback">
-            <img src="/images/FightClub.jpg" alt="Fallback Poster">
+        <div class="hero-video-container">
+            {/* Сюда будет вставлен iframe YouTube или HTML5 video */}
         </div>
-        <button class="sound-button"><i class="fas fa-volume-mute"></i></button>
+        <div class="hero-fallback">
+            <img src="https://placehold.co/1920x1080/0D0D0D/333333?text=Загрузка..." alt="Задник фильма/сериала">
+        </div>
+        <button class="sound-button" style="display: none;"><i class="fas fa-volume-mute"></i></button>
         <div class="hero-overlay">
-            <div class="hero-content-video-playing">
-                <h1 class="hero-title">Название фильма</h1>
-                <button class="hero-button action-button">Смотреть</button> </div>
-            <div class="hero-content-poster-active">
-                <h1 class="hero-title">Название фильма</h1>
-                <p class="hero-description">Краткое описание фильма. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-                <button class="hero-button action-button">Смотреть</button> </div>
+            <div class="hero-content-display">
+                <h1 class="hero-title">Загрузка названия...</h1>
+                <p class="hero-description">Загрузка описания...</p>
+                <button class="hero-button action-button" data-tmdb-id="" data-media-type="">Смотреть</button>
+            </div>
         </div>
     </section>
 

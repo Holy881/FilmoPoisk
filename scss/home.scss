@@ -236,12 +236,30 @@ input[type="number"] {
                 box-shadow: 0 0 0 2px rgba($interactive-border-color, 0.2);
             }
         }
-        .search-results-placeholder { // Был объединен с loading-indicator, возвращаем к исходному
+        .search-results-placeholder {
             flex-grow: 1; display: flex; justify-content: center; align-items: center;
             text-align: center; color: $text-secondary-color; font-size: 1.1em;
+            padding: 20px 0;
             p { margin: 0; }
         }
-        // Если был текстовый индикатор, его стили можно вернуть сюда или оставить как есть, если JS его не использует
+        .search-loading-indicator {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 0;
+
+            &::after {
+                content: "";
+                display: block;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                border: 4px solid $border-color;
+                border-top-color: $interactive-text-color;
+                animation: spinner 0.8s linear infinite;
+            }
+        }
     }
     .search-modal-sidebar {
         flex: 1; background-color: $sidebar-bg-color; padding: 25px 30px;
@@ -280,13 +298,17 @@ input[type="number"] {
                         text-overflow: ellipsis; flex-grow: 1;
                     }
                     .dropdown-arrow {
-                        transition: transform 0.3s ease; // Оставляем анимацию стрелки
+                        transition: transform 0.3s ease;
                         color: $text-secondary-color;
                         margin-left: 8px; flex-shrink: 0;
                     }
                 }
                 .dropdown-menu {
-                    display: none; // Убираем анимации opacity/transform/visibility
+                    visibility: hidden;
+                    opacity: 0;
+                    transform: translateY(-10px);
+                    transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s 0.2s;
+
                     position: absolute; top: calc(100% + 5px); left: 0; width: 100%;
                     background-color: $dropdown-bg-color; border: 1px solid $border-color;
                     border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
@@ -312,7 +334,12 @@ input[type="number"] {
                          border-color: $interactive-border-color;
                         .dropdown-arrow { transform: rotate(180deg); }
                     }
-                    .dropdown-menu { display: block; } // Просто показываем/скрываем
+                    .dropdown-menu {
+                        visibility: visible;
+                        opacity: 1;
+                        transform: translateY(0);
+                        transition-delay: 0s;
+                     }
                 }
             }
             .filter-range {
@@ -351,73 +378,125 @@ input[type="number"] {
 .hero {
     position: relative; width: 100%; height: calc(100vh - #{$navbar-height});
     overflow: hidden; margin-top: -$navbar-height;
+    background-color: $bg-color; // Фон на случай, если ни видео, ни fallback не загрузятся
 
-    .hero-video, .hero-fallback img { // Стили для статичного видео и fallback
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        object-fit: cover; z-index: 1;
+    .hero-video-container { // Контейнер для iframe или video тега
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        background-color: #000; // Черный фон под видео
+        opacity: 0; // Начально скрыт, JS сделает видимым
+        transition: opacity 0.5s ease-in-out;
+
+        iframe, video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; // Для <video>, для iframe может не сработать идеально без JS
+            border: none; // Убираем рамку у iframe
+        }
     }
+
     .hero-fallback {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        z-index: 0; opacity: 0; transition: opacity 0.5s ease;
-        &.active { opacity: 1; z-index: 1; }
+        z-index: 0; // Ниже чем видео контейнер
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+        &.active { // Показываем fallback, когда он активен
+            opacity: 1 !important; // Важно, чтобы перекрыть opacity контейнера видео, если он тоже 0
+            z-index: 2; // Выше чем контейнер видео, если видео не играет
+        }
     }
+    // Если видео играет, контейнер видео должен быть выше fallback
+    &.video-playing .hero-video-container {
+        opacity: 1;
+        z-index: 3;
+    }
+     &.video-playing .hero-fallback { // И скрываем fallback
+        opacity: 0;
+        z-index: 0;
+    }
+    // Когда активен постер (fallback)
+    &.poster-active .hero-fallback {
+        opacity: 1 !important;
+        z-index: 2;
+    }
+     &.poster-active .hero-video-container {
+        opacity: 0;
+        z-index: 1;
+    }
+
+
     .hero-overlay {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         display: flex; flex-direction: column; justify-content: flex-end;
         align-items: flex-start; padding: 0 5% 50px;
         background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 70%);
-        z-index: 2;
+        z-index: 4; // Выше видео и fallback, но ниже UI элементов, если они есть поверх
     }
-    .hero-content-video-playing, .hero-content-poster-active {
-        opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
-        z-index: 5;
-    }
-    .hero-content-video-playing {
-        .hero-title { font-size: 3.5em; margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-    }
-    .hero-content-poster-active {
-        .hero-title { font-size: 3.5em; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+
+    .hero-content-display { // Общий контейнер для информации
+        // Стили могут быть общими, или можно специфично управлять через .video-playing и .poster-active на .hero
+        .hero-title {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            color: #fff;
+        }
         .hero-description {
-            font-size: 1.2em; margin-bottom: 30px; line-height: 1.5;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5); display: -webkit-box;
-            -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;
-            -webkit-line-clamp: 4; line-clamp: 4;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            line-height: 1.5;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+            color: #e0e0e0;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            -webkit-line-clamp: 3; // Ограничиваем 3 строками
+            line-clamp: 3;
             max-width: 60%;
         }
-    }
-    .hero-button.action-button {
-        padding: 12px 25px; font-size: 1.1em; margin-right: 0;
-        background-color: rgba(255,255,255, 0.15);
-        border: 1px solid rgba(255,255,255, 0.5);
-        color: $text-color;
-        border-radius: 30px;
-        backdrop-filter: blur(3px);
-        &:hover {
-            background-color: rgba(255,255,255, 0.25);
-            border-color: rgba(255,255,255, 0.8);
+        .hero-button.action-button {
+            padding: 12px 25px; font-size: 1.1em; margin-right: 0;
+            background-color: rgba(255,255,255, 0.15);
+            border: 1px solid rgba(255,255,255, 0.5);
             color: $text-color;
-            transform: translateY(-2px);
+            border-radius: 30px;
+            backdrop-filter: blur(3px);
+            &:hover {
+                background-color: rgba(255,255,255, 0.25);
+                border-color: rgba(255,255,255, 0.8);
+                color: $text-color;
+                transform: translateY(-2px);
+            }
         }
     }
+
+
     .sound-button {
         @extend .action-button;
-        position: absolute; bottom: 160px; right: 20px;
+        position: absolute; bottom: 160px; right: 20px; // Положение может потребовать корректировки
         background-color: rgba($input-bg-color, 0.4);
         border: 1px solid rgba($border-color,0.3);
         border-radius: 50%; width: 40px; height: 40px;
-        font-size: 1.2em; z-index: 10; margin-right: 0; padding: 0;
+        font-size: 1.2em; z-index: 5; // Выше оверлея
+        margin-right: 0; padding: 0;
         color: $text-secondary-color;
         backdrop-filter: blur(3px);
+        display: none; // Начально скрыта, JS покажет при наличии видео
         &:hover {
             background-color: rgba($input-bg-color, 0.7);
             color: $text-color;
             border-color: rgba($border-color, 0.6);
         }
     }
-    &.video-playing .hero-content-video-playing { opacity: 1; pointer-events: auto; }
-    &.video-playing .hero-content-poster-active { opacity: 0; pointer-events: none; }
-    &.poster-active .hero-content-video-playing { opacity: 0; pointer-events: none; }
-    &.poster-active .hero-content-poster-active { opacity: 1; pointer-events: auto; }
 }
 
 /* --- Стили для секций с плитками фильмов --- */
@@ -488,19 +567,21 @@ input[type="number"] {
         width: 100%;
     }
 
-    .search-result-item { // Убираем анимации opacity/transform отсюда
+    .search-result-item {
         background-color: darken($surface-color, 3%);
         border-radius: 8px;
         padding: 15px;
         display: flex;
         gap: 15px;
         border: 1px solid $border-color;
-        transition: background-color 0.2s ease; // Оставляем только для hover
+        opacity: 0;
+        transform: translateY(15px);
+        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 
-        // &.visible { // Этот класс больше не нужен для базовой анимации
-        //     opacity: 1;
-        //     transform: translateY(0);
-        // }
+        &.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
         &:hover {
             background-color: lighten($surface-color, 2%);
@@ -596,21 +677,19 @@ input[type="number"] {
     }
 }
 
-// Убираем анимацию spinner, если она не нужна
-// @keyframes spinner {
-//     to {
-//         transform: rotate(360deg);
-//     }
-// }
+// Анимация для спиннера
+@keyframes spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
 
 
 // Медиа-запросы
 @media (max-width: 1024px) {
-    .hero-content-video-playing, .hero-content-poster-active {
-        .hero-title { font-size: 2.8em; }
-        .hero-description { font-size: 1.05em; max-width: 70%; }
-    }
-     .movie-list .movie-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .hero .hero-content-display .hero-title { font-size: 2.8em; }
+    .hero .hero-content-display .hero-description { font-size: 1.05em; max-width: 70%; }
+    .movie-list .movie-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 }
 
 @media (max-width: 768px) {
@@ -669,12 +748,10 @@ input[type="number"] {
         border-radius: 0;
 
         .hero-overlay { padding: 0 5% 15%; }
-        .hero-content-video-playing, .hero-content-poster-active {
-            position: static;
-            width: 100%; padding: 0;
+        .hero-content-display {
             .hero-title { font-size: 1.8em; margin-bottom: 10px; }
             .hero-description { font-size: 0.9em; -webkit-line-clamp: 3; line-clamp: 3; margin-bottom: 15px; max-width: 100%;}
-            .hero-button { padding: 10px 18px; font-size: 0.95em; }
+            .hero-button.action-button { padding: 10px 18px; font-size: 0.95em; }
         }
         .sound-button { bottom: 20px; right: 15px; width: 35px; height: 35px; font-size: 1em; }
     }
@@ -697,10 +774,10 @@ input[type="number"] {
     .search-result-item .search-result-main-info .search-result-title { font-size: 1.1em; }
     .search-result-item .search-result-overview { font-size: 0.85em; }
 
-    .hero-content-video-playing, .hero-content-poster-active {
+    .hero .hero-content-display {
         .hero-title { font-size: 1.6em; }
         .hero-description { font-size: 0.85em; -webkit-line-clamp: 2; line-clamp: 2; }
-         .hero-button { padding: 8px 15px; font-size: 0.9em; }
+        .hero-button.action-button { padding: 8px 15px; font-size: 0.9em; }
     }
      .movie-list .movie-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
 }

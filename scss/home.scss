@@ -8,15 +8,13 @@ $input-bg-color: #2C2C2C;
 $dropdown-bg-color: #222222;
 $text-color: #E0E0E0;
 $text-secondary-color: #A0A0A0;
-$border-color: #383838; // Цвет для рамок по умолчанию
+$border-color: #383838;
 
-// Акцентные цвета для интерактивных элементов (серые)
-$interactive-hover-bg-color: #2a2a2a; // Фон кнопок при наведении (темно-серый)
-$interactive-active-bg-color: #3a3a3a; // Фон для активных состояний
-$interactive-text-color: #FFFFFF; // Текст на активных/hover элементах
-$interactive-border-color: #5A5A5A; // Цвет рамки при наведении/активности
+$interactive-hover-bg-color: #2a2a2a;
+$interactive-active-bg-color: #3a3a3a;
+$interactive-text-color: #FFFFFF;
+$interactive-border-color: #5A5A5A;
 
-// Цвета для оценок
 $rating-red: #E53935;
 $rating-gray: #757575;
 $rating-green: #4CAF50;
@@ -24,27 +22,31 @@ $rating-green: #4CAF50;
 $navbar-height: 60px;
 $tile-details-height: 150px;
 
-// 2. Глобальные стили для кастомного скроллбара (WebKit-браузеры)
+// 2. Глобальные стили для кастомного скроллбара
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: darken($input-bg-color, 7%);
+    background: darken($input-bg-color, 10%);
     border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb {
-    background-color: $border-color;
+    background-color: lighten($border-color, 10%);
     border-radius: 10px;
-    border: 1px solid darken($input-bg-color, 7%);
+    border: 2px solid darken($input-bg-color, 10%);
     &:hover {
-        background-color: lighten($border-color, 15%);
+        background-color: lighten($border-color, 20%);
     }
 }
-// Для Firefox
 body, .dropdown-menu, .search-modal-sidebar, .search-modal-main {
   scrollbar-width: thin;
-  scrollbar-color: $border-color darken($input-bg-color, 7%);
+  scrollbar-color: lighten($border-color, 10%) darken($input-bg-color, 10%);
+}
+
+// Глобальный box-sizing
+*, *::before, *::after {
+    box-sizing: border-box;
 }
 
 body {
@@ -53,10 +55,10 @@ body {
     background-color: $bg-color;
     color: $text-color;
     overflow-x: hidden;
-    padding-top: $navbar-height; // Оставляем, так как navbar фиксированный
+    padding-top: $navbar-height;
 }
 
-// 3. Стилизация input[type="number"] для кастомных стрелок
+// Стилизация input[type="number"]
 input[type="number"] {
     -moz-appearance: textfield;
     appearance: textfield;
@@ -81,7 +83,8 @@ input[type="number"] {
         display: flex; flex-direction: column;
         justify-content: center; align-items: center;
         width: 24px;
-        border-top-right-radius: 5px; border-bottom-right-radius: 5px;
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
         .arrow {
             color: $text-secondary-color; font-size: 9px; line-height: 1;
             cursor: pointer; padding: 3px 4px; user-select: none;
@@ -96,11 +99,11 @@ input[type="number"] {
 /* --- Общий стиль для кнопок --- */
 .action-button {
     color: $text-secondary-color;
-    background-color: transparent; // Фон по умолчанию прозрачный
-    border: 1px solid $border-color; // Видимая рамка по умолчанию
+    background-color: transparent;
+    border: 1px solid $border-color;
     padding: 9px 14px;
     cursor: pointer;
-    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
     border-radius: 6px;
     font-weight: 500;
     text-decoration: none;
@@ -108,13 +111,16 @@ input[type="number"] {
     align-items: center;
     justify-content: center;
     line-height: 1.2;
+    user-select: none;
 
     &:hover {
         color: $interactive-text-color;
-        background-color: $interactive-hover-bg-color; // Серый фон при наведении
+        background-color: $interactive-hover-bg-color;
         border-color: $interactive-border-color;
     }
-
+    &:active {
+        transform: translateY(1px);
+    }
     &.active {
         color: $interactive-text-color;
         background-color: $interactive-active-bg-color;
@@ -124,33 +130,32 @@ input[type="number"] {
 
 /* --- Navbar --- */
 .navbar {
-    position: absolute; // Navbar не двигается при скролле
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: $navbar-height;
-    background-color: transparent; // Полностью прозрачный фон по умолчанию
+    background-color: transparent;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
     box-sizing: border-box;
-    z-index: 100;
-    // border-bottom: 1px solid $border-color; // Убрана линия у нижней границы
-    transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; // Плавный переход для .scrolled
+    z-index: 1000;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, border-bottom-color 0.3s ease;
+    border-bottom: 1px solid transparent;
 
-    // Класс для добавления фона и тени при прокрутке (управляется через JS)
     &.scrolled {
-         background-color: rgba($bg-color, 0.85); // Появляется фон при скролле
-         border-bottom: 1px solid $border-color; // Появляется граница при скролле
-         box-shadow: 0 2px 10px rgba(0,0,0,0.2); // Тень для "отрыва" от контента
+         background-color: rgba(darken($bg-color, 2%), 0.9);
+         border-bottom-color: $border-color;
+         box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+         backdrop-filter: blur(5px);
     }
 
     .navbar-left, .navbar-right {
         display: flex;
         align-items: center;
     }
-
     .navbar-brand {
         color: $text-color;
         text-decoration: none;
@@ -158,26 +163,22 @@ input[type="number"] {
         margin-right: 20px;
         font-weight: 600;
     }
-
     .navbar-button {
         @extend .action-button;
         margin-right: 10px;
-        border-color: transparent; // У кнопок в навбаре нет рамки по умолчанию
-        background-color: transparent; // Явно прозрачный фон
+        border-color: transparent;
+        background-color: transparent;
         color: $text-secondary-color;
-
+        padding: 8px 12px;
         &:hover {
-            border-color: $interactive-border-color; // Рамка появляется при наведении
-            background-color: $interactive-hover-bg-color; // Фон при наведении
+            background-color: $interactive-hover-bg-color;
             color: $interactive-text-color;
         }
         &.active {
-             border-color: $interactive-border-color;
              background-color: $interactive-active-bg-color;
              color: $interactive-text-color;
         }
     }
-
     .navbar-icon {
         @extend .action-button;
         background-color: transparent;
@@ -186,7 +187,8 @@ input[type="number"] {
         font-size: 1.3em;
         margin-left: 5px;
         color: $text-secondary-color;
-
+        width: 40px;
+        height: 40px;
         &:hover {
             background-color: $interactive-hover-bg-color;
             color: $interactive-text-color;
@@ -197,21 +199,34 @@ input[type="number"] {
 /* --- Модальное окно поиска --- */
 .search-modal {
     visibility: hidden; opacity: 0; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(0,0,0,0.85); z-index: 101; display: flex; justify-content: center;
-    align-items: center; transition: opacity 0.3s ease, visibility 0.3s ease; padding: 20px;
-    &.active { visibility: visible; opacity: 1; }
+    background-color: rgba(0,0,0,0.85); z-index: 1010; display: flex; justify-content: center; align-items: center;
+    transition: opacity 0.3s ease, visibility 0s 0.3s; padding: 20px; box-sizing: border-box;
+
+    &.active {
+        visibility: visible; opacity: 1;
+        transition: opacity 0.3s ease, visibility 0s 0s;
+        .search-modal-content {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+    }
 
     .search-modal-content {
         background-color: $surface-color; border-radius: 10px; width: 100%;
-        max-width: 1000px; height: 750px; position: relative;
+        max-width: 1000px; height: 90vh; max-height: 750px; position: relative;
         box-shadow: 0 8px 30px rgba(0,0,0,0.5); display: flex; overflow: hidden;
+        transform: scale(0.95) translateY(20px); opacity: 0;
+        transition: transform 0.3s ease, opacity 0.3s ease;
     }
     .search-modal-layout { display: flex; width: 100%; height: 100%; box-sizing: border-box; }
+
     .search-modal-main {
         flex: 2; padding: 25px 30px; display: flex; flex-direction: column;
         background-color: $surface-color; box-sizing: border-box;
+        overflow-y: auto;
+
         .search-modal-input {
-            width: 100%; padding: 14px 18px; margin-bottom: 25px;
+            width: 100%; padding: 14px 18px; margin-bottom: 20px;
             background-color: $input-bg-color; color: $text-color;
             border: 1px solid $border-color; border-radius: 6px;
             font-size: 1.15em; box-sizing: border-box; flex-shrink: 0;
@@ -221,16 +236,18 @@ input[type="number"] {
                 box-shadow: 0 0 0 2px rgba($interactive-border-color, 0.2);
             }
         }
-        .search-results-placeholder {
+        .search-results-placeholder { // Был объединен с loading-indicator, возвращаем к исходному
             flex-grow: 1; display: flex; justify-content: center; align-items: center;
             text-align: center; color: $text-secondary-color; font-size: 1.1em;
             p { margin: 0; }
         }
+        // Если был текстовый индикатор, его стили можно вернуть сюда или оставить как есть, если JS его не использует
     }
     .search-modal-sidebar {
         flex: 1; background-color: $sidebar-bg-color; padding: 25px 30px;
         border-left: 1px solid $border-color; display: flex; flex-direction: column;
-        box-sizing: border-box;
+        box-sizing: border-box; overflow-y: auto;
+
         .filters-title {
             font-size: 1.3em; color: $text-color; margin-bottom: 25px;
             font-weight: 600; text-align: left; flex-shrink: 0;
@@ -250,22 +267,27 @@ input[type="number"] {
                     margin-right: 0;
                     padding: 10px 15px;
                     font-size: 0.95em;
+                    text-align: left;
+                    background-color: $input-bg-color;
+                    border-color: $border-color;
 
-                    &.open { // Стиль для открытого состояния, если нужен, уже покрывается :hover
-                        // background-color: $interactive-hover-bg-color;
-                        // border-color: $interactive-border-color;
-                        // color: $interactive-text-color;
-                        .dropdown-arrow { color: $interactive-text-color; }
+                    &:hover {
+                        border-color: $interactive-border-color;
+                        background-color: lighten($input-bg-color, 5%);
                     }
-
+                    span {
+                        white-space: nowrap; overflow: hidden;
+                        text-overflow: ellipsis; flex-grow: 1;
+                    }
                     .dropdown-arrow {
-                        transition: transform 0.3s ease, color 0.2s ease;
+                        transition: transform 0.3s ease; // Оставляем анимацию стрелки
                         color: $text-secondary-color;
-                        margin-left: 8px;
+                        margin-left: 8px; flex-shrink: 0;
                     }
                 }
                 .dropdown-menu {
-                    display: none; position: absolute; top: calc(100% + 5px); left: 0; width: 100%;
+                    display: none; // Убираем анимации opacity/transform/visibility
+                    position: absolute; top: calc(100% + 5px); left: 0; width: 100%;
                     background-color: $dropdown-bg-color; border: 1px solid $border-color;
                     border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
                     z-index: 10; padding: 10px; max-height: 200px; overflow-y: auto;
@@ -273,17 +295,24 @@ input[type="number"] {
                         display: block; color: $text-secondary-color; padding: 8px 10px;
                         font-size: 0.9em; cursor: pointer; border-radius: 3px;
                         transition: background-color 0.2s ease, color 0.2s ease;
-                        &:hover { background-color: lighten($dropdown-bg-color, 5%); color: $text-color; }
+                        &:hover { background-color: lighten($dropdown-bg-color, 7%); color: $text-color; }
                         input[type="checkbox"] {
                             margin-right: 10px;
                             accent-color: $interactive-border-color;
                             vertical-align: middle;
                         }
                     }
+                    .genres-loading-placeholder {
+                        padding: 8px 10px; color: $text-secondary-color;
+                        font-size: 0.9em; font-style: italic;
+                    }
                 }
                 &.open {
-                    .dropdown-toggle .dropdown-arrow { transform: rotate(180deg); }
-                    .dropdown-menu { display: block; }
+                    .dropdown-toggle {
+                         border-color: $interactive-border-color;
+                        .dropdown-arrow { transform: rotate(180deg); }
+                    }
+                    .dropdown-menu { display: block; } // Просто показываем/скрываем
                 }
             }
             .filter-range {
@@ -308,77 +337,81 @@ input[type="number"] {
             width: 100%;
             margin-top: auto;
             margin-right: 0;
+            background-color: darken($interactive-hover-bg-color, 5%);
+            border-color: darken($interactive-border-color, 5%);
+             &:hover {
+                background-color: $interactive-hover-bg-color;
+                border-color: $interactive-border-color;
+            }
         }
     }
 }
 
-/* --- Стили для Hero секции и плиток фильмов --- */
+/* --- Стили для Hero секции --- */
 .hero {
     position: relative; width: 100%; height: calc(100vh - #{$navbar-height});
     overflow: hidden; margin-top: -$navbar-height;
 
-    .hero-video, .hero-fallback img {
+    .hero-video, .hero-fallback img { // Стили для статичного видео и fallback
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        object-fit: cover; z-index: -1;
+        object-fit: cover; z-index: 1;
     }
     .hero-fallback {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        object-fit: cover; z-index: -2; opacity: 0; transition: opacity 0.5s ease;
-        &.active { opacity: 1; }
+        z-index: 0; opacity: 0; transition: opacity 0.5s ease;
+        &.active { opacity: 1; z-index: 1; }
     }
     .hero-overlay {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         display: flex; flex-direction: column; justify-content: flex-end;
         align-items: flex-start; padding: 0 5% 50px;
-        background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.0) 60%);
-        z-index: 1;
+        background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 70%);
+        z-index: 2;
     }
     .hero-content-video-playing, .hero-content-poster-active {
         opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
-        position: absolute; left: 5%; width: 90%; box-sizing: border-box; z-index: 5;
+        z-index: 5;
     }
     .hero-content-video-playing {
-        bottom: 200px;
         .hero-title { font-size: 3.5em; margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
     }
     .hero-content-poster-active {
-        bottom: 70px;
         .hero-title { font-size: 3.5em; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
         .hero-description {
             font-size: 1.2em; margin-bottom: 30px; line-height: 1.5;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.5); display: -webkit-box;
             -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;
-            line-clamp: 4; -webkit-line-clamp: 4;
+            -webkit-line-clamp: 4; line-clamp: 4;
+            max-width: 60%;
         }
     }
-    .hero-content-video-playing .hero-button,
-    .hero-content-poster-active .hero-button {
-        @extend .action-button;
+    .hero-button.action-button {
         padding: 12px 25px; font-size: 1.1em; margin-right: 0;
-        background-color: transparent; // Прозрачный фон
-        border: 1px solid rgba($text-color, 0.6); // Видимая белая рамка (чуть менее прозрачная)
+        background-color: rgba(255,255,255, 0.15);
+        border: 1px solid rgba(255,255,255, 0.5);
         color: $text-color;
-        border-radius: 30px; // Сильно скругленные углы
-
+        border-radius: 30px;
+        backdrop-filter: blur(3px);
         &:hover {
-            background-color: rgba($text-color, 0.1);
-            border-color: $text-color;
-            color: $text-color; // Текст остается белым
+            background-color: rgba(255,255,255, 0.25);
+            border-color: rgba(255,255,255, 0.8);
+            color: $text-color;
             transform: translateY(-2px);
         }
     }
     .sound-button {
         @extend .action-button;
-        position: absolute; top: auto; bottom: 160px; right: 20px;
-        background-color: rgba($input-bg-color, 0.3);
-        border: 1px solid rgba($border-color,0.2);
+        position: absolute; bottom: 160px; right: 20px;
+        background-color: rgba($input-bg-color, 0.4);
+        border: 1px solid rgba($border-color,0.3);
         border-radius: 50%; width: 40px; height: 40px;
-        font-size: 1.2em; z-index: 100; margin-right: 0; padding: 0;
+        font-size: 1.2em; z-index: 10; margin-right: 0; padding: 0;
         color: $text-secondary-color;
+        backdrop-filter: blur(3px);
         &:hover {
-            background-color: rgba($input-bg-color, 0.6);
+            background-color: rgba($input-bg-color, 0.7);
             color: $text-color;
-            border-color: rgba($border-color, 0.5);
+            border-color: rgba($border-color, 0.6);
         }
     }
     &.video-playing .hero-content-video-playing { opacity: 1; pointer-events: auto; }
@@ -387,10 +420,10 @@ input[type="number"] {
     &.poster-active .hero-content-poster-active { opacity: 1; pointer-events: auto; }
 }
 
+/* --- Стили для секций с плитками фильмов --- */
 .content-area {
     background-color: $bg-color; position: relative; z-index: 2; padding-top: 20px;
 }
-
 .movie-list {
     padding: 20px; margin-bottom: 40px;
     h2 { font-size: 2em; margin-bottom: 20px; text-align: center; font-weight: 600; }
@@ -406,7 +439,8 @@ input[type="number"] {
         transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         &:hover { transform: scale(1.03); box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
         img {
-            width: 100%; height: auto; display: block;
+            width: 100%; height: auto; aspect-ratio: 2/3;
+            object-fit: cover; display: block;
             border-top-left-radius: 10px; border-top-right-radius: 10px;
         }
         .movie-rating {
@@ -414,65 +448,192 @@ input[type="number"] {
             color: #FFFFFF; padding: 5px 8px; border-radius: 5px;
             font-size: 0.9em; font-weight: bold;
             text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+            z-index: 3;
             &.rating-red { background-color: $rating-red; }
             &.rating-gray { background-color: $rating-gray; }
             &.rating-green { background-color: $rating-green; }
         }
         .movie-details {
             position: absolute; bottom: 0; left: 0; width: 100%;
-            background-color: rgba($surface-color, 0.97);
-            backdrop-filter: blur(3px);
+            background-color: rgba(darken($surface-color, 5%), 0.97);
+            backdrop-filter: blur(4px);
             color: $text-color; padding: 15px;
             transform: translateY(100%); transition: transform 0.3s ease-in-out;
             height: $tile-details-height; box-sizing: border-box;
             border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;
-            h3 { font-size: 1.3em; margin-bottom: 8px; color: $text-color; }
+            display: flex; flex-direction: column;
+            h3 { font-size: 1.2em; margin-top:0; margin-bottom: 8px; color: $text-color; line-height: 1.3; }
             p {
-                font-size: 0.95em; margin-bottom: 15px; color: $text-secondary-color;
+                font-size: 0.9em; margin-bottom: 10px; color: $text-secondary-color;
                 display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
-                text-overflow: ellipsis; line-clamp: 3; -webkit-line-clamp: 3;
+                text-overflow: ellipsis; -webkit-line-clamp: 3; line-clamp: 3;
+                flex-grow: 1;
             }
-            button {
-                 @extend .action-button;
+            button.action-button {
                  padding: 8px 15px; font-size: 0.9em; margin-right: 0;
-                 // Стили фона и рамки уже наследуются от .action-button
-                 // Hover эффект также наследуется
+                 width: 100%; margin-top: auto;
             }
         }
         &.active-details .movie-details { transform: translateY(0); }
     }
 }
 
+// --- Стили для результатов поиска ---
+.search-modal-main {
+    .search-results-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        padding-top: 15px;
+        width: 100%;
+    }
+
+    .search-result-item { // Убираем анимации opacity/transform отсюда
+        background-color: darken($surface-color, 3%);
+        border-radius: 8px;
+        padding: 15px;
+        display: flex;
+        gap: 15px;
+        border: 1px solid $border-color;
+        transition: background-color 0.2s ease; // Оставляем только для hover
+
+        // &.visible { // Этот класс больше не нужен для базовой анимации
+        //     opacity: 1;
+        //     transform: translateY(0);
+        // }
+
+        &:hover {
+            background-color: lighten($surface-color, 2%);
+        }
+
+        .search-result-poster {
+            width: 100px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+            flex-shrink: 0;
+            background-color: $input-bg-color;
+        }
+
+        .search-result-details {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .search-result-main-info {
+            margin-bottom: 8px;
+            .search-result-title {
+                font-size: 1.2em;
+                font-weight: 600;
+                color: $text-color;
+                margin: 0 0 5px 0;
+                line-height: 1.3;
+            }
+
+            .search-result-meta {
+                font-size: 0.85em;
+                color: $text-secondary-color;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+
+                span {
+                    display: inline-flex;
+                    align-items: center;
+                }
+
+                .search-result-rating {
+                    i {
+                        color: #f5c518;
+                        margin-right: 4px;
+                    }
+                }
+            }
+            .search-result-genres {
+                font-size: 0.8em;
+                color: darken($text-secondary-color, 10%);
+                margin-top: 4px;
+                line-height: 1.3;
+                display: -webkit-box;
+                line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        .search-result-overview {
+            font-size: 0.9em;
+            color: $text-secondary-color;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .search-result-watch-btn {
+            margin-top: auto;
+            align-self: flex-start;
+            padding: 7px 15px;
+            font-size: 0.9em;
+            text-decoration: none;
+            i { margin-right: 6px; }
+        }
+    }
+
+    .no-results,
+    .search-error-message {
+        text-align: center;
+        color: $text-secondary-color;
+        font-size: 1.1em;
+        padding: 30px 15px;
+        width: 100%;
+    }
+}
+
+// Убираем анимацию spinner, если она не нужна
+// @keyframes spinner {
+//     to {
+//         transform: rotate(360deg);
+//     }
+// }
+
+
 // Медиа-запросы
 @media (max-width: 1024px) {
     .hero-content-video-playing, .hero-content-poster-active {
         .hero-title { font-size: 2.8em; }
-        .hero-description { font-size: 1.05em; }
+        .hero-description { font-size: 1.05em; max-width: 70%; }
     }
-     .movie-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+     .movie-list .movie-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 }
 
 @media (max-width: 768px) {
-    body { padding-top: 0; } // Убираем отступ, так как навбар будет в потоке на мобильных
+    body { padding-top: 0; }
     .navbar {
-        position: relative; // Навбар в потоке документа на мобильных
+        position: relative;
         flex-direction: column; height: auto; align-items: stretch; padding: 0;
-        background-color: $bg-color; // Непрозрачный фон для мобильного навбара
-        border-bottom: 1px solid $border-color; // Возвращаем границу, так как он не над видео
+        background-color: darken($bg-color, 3%);
+        border-bottom: 1px solid $border-color;
 
         .navbar-left {
             flex-direction: column; align-items: stretch; margin-bottom: 0; width: 100%;
             .navbar-brand {
-                font-size: 1.3em; padding: 10px 15px; text-align: center;
-                border-bottom: 1px solid $border-color;
+                font-size: 1.3em; padding: 12px 15px; text-align: center;
+                border-bottom: 1px solid $border-color; margin-right: 0;
             }
             .navbar-button {
                 width: 100%; margin: 0; border-radius: 0;
                 justify-content: center; padding: 12px 15px;
                 border-bottom: 1px solid $border-color;
-                background-color: $surface-color; // Фон для кнопок в мобильном меню
-                border-color: $border-color; // Явная рамка для мобильных кнопок меню
-                color: $text-color; // Текст кнопок светлее на мобильных
+                background-color: $surface-color;
+                border-color: $border-color;
+                color: $text-color;
                 &:hover { background-color: $interactive-hover-bg-color; }
                 &:last-child { border-bottom: none; }
             }
@@ -491,34 +652,38 @@ input[type="number"] {
         }
     }
     .search-modal {
-        .search-modal-content { max-width: 95%; height: auto; max-height: 90vh; flex-direction: column; }
+        padding: 10px;
+        .search-modal-content { max-width: 100%; height: auto; max-height: 95vh; flex-direction: column; }
         .search-modal-layout { flex-direction: column; height: auto; }
-        .search-modal-main { padding: 20px; border-bottom: 1px solid $border-color; height: auto; }
-        .search-modal-sidebar { padding: 20px; border-left: none; height: auto; max-height: none; overflow-y: visible; }
+        .search-modal-main { padding: 15px; border-bottom: 1px solid $border-color; height: auto; min-height: 200px; }
+        .search-modal-sidebar { padding: 15px; border-left: none; height: auto; max-height: none; overflow-y: visible; }
+        .search-modal-main .search-results-grid { gap: 10px; }
+        .search-result-item { flex-direction: column; padding: 10px; gap: 10px;}
+        .search-result-poster { width: 120px; height: 180px; align-self: center; }
+        .search-result-watch-btn { align-self: stretch; text-align: center; }
     }
      .hero {
-        margin-top: 0; // Убираем отрицательный отступ, так как навбар в потоке
-        height: auto; // Автоматическая высота для hero
-        min-height: 50vh; // Минимальная высота
-        padding-bottom: 30%; // Пропорциональный отступ снизу для контента
-        border-radius: 0; // Убираем скругление на мобильных, если навбар сверху
-        .hero-video, .hero-fallback img { border-radius: 0; }
+        margin-top: 0;
+        height: auto;
+        min-height: 60vh;
+        border-radius: 0;
 
-        .hero-overlay { padding: 0 5% 10%; }
+        .hero-overlay { padding: 0 5% 15%; }
         .hero-content-video-playing, .hero-content-poster-active {
-            position: relative; bottom: auto; left: auto; width: 100%; padding: 20px 0;
+            position: static;
+            width: 100%; padding: 0;
             .hero-title { font-size: 1.8em; margin-bottom: 10px; }
-            .hero-description { font-size: 0.9em; -webkit-line-clamp: 3; line-clamp: 3; margin-bottom: 15px;}
+            .hero-description { font-size: 0.9em; -webkit-line-clamp: 3; line-clamp: 3; margin-bottom: 15px; max-width: 100%;}
             .hero-button { padding: 10px 18px; font-size: 0.95em; }
         }
-        .sound-button { bottom: 15px; right: 15px; width: 35px; height: 35px; font-size: 1em; }
+        .sound-button { bottom: 20px; right: 15px; width: 35px; height: 35px; font-size: 1em; }
     }
     .content-area { padding-top: 0;}
     .movie-list {
         padding: 15px;
         h2 { font-size: 1.6em; }
         .movie-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
-        .movie-tile .movie-details { height: auto; }
+        .movie-tile .movie-details { height: auto; min-height: $tile-details-height - 30px; }
     }
 }
 
@@ -528,11 +693,14 @@ input[type="number"] {
         .navbar-left .navbar-button { padding: 10px; font-size: 0.9em;}
         .navbar-right .navbar-icon { font-size: 1.2em; }
     }
+    .search-modal-main .search-modal-input { font-size: 1em; padding: 12px 15px; }
+    .search-result-item .search-result-main-info .search-result-title { font-size: 1.1em; }
+    .search-result-item .search-result-overview { font-size: 0.85em; }
+
     .hero-content-video-playing, .hero-content-poster-active {
         .hero-title { font-size: 1.6em; }
         .hero-description { font-size: 0.85em; -webkit-line-clamp: 2; line-clamp: 2; }
          .hero-button { padding: 8px 15px; font-size: 0.9em; }
     }
-     .movie-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+     .movie-list .movie-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
 }
-

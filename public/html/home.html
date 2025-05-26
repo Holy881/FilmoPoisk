@@ -26,6 +26,7 @@
              <div class="search-modal-layout">
                 <div class="search-modal-main">
                     <input type="text" placeholder="Поиск фильмов, сериалов, аниме..." class="search-modal-input">
+                    <div class="search-loading-indicator" style="display: none;"></div>
                     <div class="search-results-placeholder">
                         <p>Введите ваш запрос для поиска...</p>
                     </div>
@@ -36,27 +37,13 @@
 
                     <div class="filter-group">
                         <h4 class="filter-group-title">Жанры</h4>
-                        <div class="custom-dropdown" data-dropdown-id="genres">
+                        <div class="custom-dropdown" data-dropdown-id="genres-movie">
                             <button type="button" class="dropdown-toggle">
                                 <span>Выберите жанр(ы)</span>
                                 <i class="fas fa-chevron-down dropdown-arrow"></i>
                             </button>
                             <div class="dropdown-menu">
-                                <label><input type="checkbox" name="genre" value="action"> Боевик</label>
-                                <label><input type="checkbox" name="genre" value="comedy"> Комедия</label>
-                                <label><input type="checkbox" name="genre" value="drama"> Драма</label>
-                                <label><input type="checkbox" name="genre" value="fantasy"> Фэнтези</label>
-                                <label><input type="checkbox" name="genre" value="horror"> Ужасы</label>
-                                <label><input type="checkbox" name="genre" value="sci-fi"> Фантастика</label>
-                                <label><input type="checkbox" name="genre" value="thriller"> Триллер</label>
-                                <label><input type="checkbox" name="genre" value="anime"> Аниме</label>
-                                <label><input type="checkbox" name="genre" value="adventure"> Приключения</label>
-                                <label><input type="checkbox" name="genre" value="romance"> Мелодрама</label>
-                                <label><input type="checkbox" name="genre" value="detective"> Детектив</label>
-                                <label><input type="checkbox" name="genre" value="historical"> Исторический</label>
-                                <!-- <div class="dropdown-actions">
-                                    <button type="button" class="dropdown-apply-btn">Применить</button>
-                                </div> -->
+                                <p class="genres-loading-placeholder" style="padding: 8px 10px; color: #A0A0A0; font-size: 0.9em; font-style: italic;">Загрузка жанров...</p>
                             </div>
                         </div>
                     </div>
@@ -69,31 +56,8 @@
                                 <i class="fas fa-chevron-down dropdown-arrow"></i>
                             </button>
                             <div class="dropdown-menu">
-                                <label><input type="checkbox" name="type_filter" value="movie"> Фильм</label>
-                                <label><input type="checkbox" name="type_filter" value="series"> Сериал</label>
-                                 <!-- <div class="dropdown-actions">
-                                    <button type="button" class="dropdown-apply-btn">Применить</button>
-                                </div> -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="filter-group">
-                        <h4 class="filter-group-title">Возрастное ограничение</h4>
-                        <div class="custom-dropdown" data-dropdown-id="rating-age">
-                            <button type="button" class="dropdown-toggle">
-                                <span>Выберите рейтинг</span>
-                                <i class="fas fa-chevron-down dropdown-arrow"></i>
-                            </button>
-                            <div class="dropdown-menu">
-                                <label><input type="checkbox" name="age_rating" value="0+"> 0+</label>
-                                <label><input type="checkbox" name="age_rating" value="6+"> 6+</label>
-                                <label><input type="checkbox" name="age_rating" value="12+"> 12+</label>
-                                <label><input type="checkbox" name="age_rating" value="16+"> 16+</label>
-                                <label><input type="checkbox" name="age_rating" value="18+"> 18+</label>
-                                 <!-- <div class="dropdown-actions">
-                                    <button type="button" class="dropdown-apply-btn">Применить</button>
-                                </div> -->
+                                <label><input type="checkbox" name="type_filter" value="movie" data-genre-name="Фильм"> Фильм</label>
+                                <label><input type="checkbox" name="type_filter" value="tv" data-genre-name="Сериал"> Сериал</label>
                             </div>
                         </div>
                     </div>
@@ -140,7 +104,8 @@
                         </div>
                     </div>
 
-                    <button type="button" class="reset-filters-button action-button">Сбросить фильтры</button> </aside>
+                    <button type="button" class="reset-filters-button action-button">Сбросить фильтры</button>
+                </aside>
             </div>
         </div>
     </div>

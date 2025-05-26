@@ -1,2 +1,45 @@
-.env
+# Зависимости
 node_modules/
+
+# Переменные окружения
+.env
+*.env
+.env.*
+!*.env.example # Если у вас есть пример файла .env
+
+# Логи
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# Файлы операционной системы
+.DS_Store
+Thumbs.db
+
+# Файлы IDE
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Папка для загрузок (игнорировать содержимое)
+uploads/*
+!uploads/.gitkeep
+
+# Папка BUP (если это временные/бэкап файлы)
+BUP/
+
+# Файл базы данных SQLite (если вы НЕ хотите его в репозитории)
+# database.db
+
+# Папки сборок
+dist/
+build/
+out/
+
+# Другие специфичные для проекта временные файлы или папки
+# tmp/

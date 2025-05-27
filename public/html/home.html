@@ -24,10 +24,11 @@
         .hero-video-container video {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Для <video>, для iframe может понадобиться JS для aspect ratio */
+            object-fit: cover; 
+            border: none;
         }
         .hero-fallback.active {
-            opacity: 1 !important; /* Убедимся, что fallback виден, когда активен */
+            opacity: 1 !important; 
         }
     </style>
 </head>
@@ -124,7 +125,7 @@
         </div>
         <button class="sound-button" style="display: none;"><i class="fas fa-volume-mute"></i></button>
         <div class="hero-overlay">
-            <div class="hero-content-display">
+            <div class="hero-content-display"> 
                 <h1 class="hero-title">Загрузка названия...</h1>
                 <p class="hero-description">Загрузка описания...</p>
                 <button class="hero-button action-button" data-tmdb-id="" data-media-type="">Смотреть</button>

@@ -171,7 +171,7 @@ app.post('/api/user/:id/avatar', upload.single('avatar'), (req, res) => {
         fs.rename(file.path, newPathInUploads, (renameErr) => {
             if (renameErr) {
                 console.error('Ошибка перемещения загруженного файла:', renameErr);
-                fs.unlink(file.path, (tempUnlinkErr) => { // Удаляем временный файл multer в случае ошибки
+                fs.unlink(file.path, (tempUnlinkErr) => { 
                     if (tempUnlinkErr) console.error('Ошибка удаления временного файла multer:', tempUnlinkErr);
                 });
                 return res.status(500).json({ error: 'Ошибка сохранения файла аватара' });
@@ -328,7 +328,7 @@ app.post('/api/user/:id/lists', (req, res) => {
             return res.status(500).json({ error: 'Ошибка сервера при добавлении в список' });
         }
         if (existingItem) {
-            return res.status(409).json({ error: 'Этот элемент уже есть в одном из ваших списков. Вы можете изменить его категорию или оценку в профиле.' });
+            return res.status(409).json({ error: 'Этот элемент уже есть в одном из ваших списков.' });
         }
 
         const sql = 'INSERT INTO user_lists (user_id, tmdb_id, media_type, category, title, poster_path, rating) VALUES (?, ?, ?, ?, ?, ?, ?)';
@@ -380,16 +380,16 @@ app.put('/api/user/:id/lists/:item_id', (req, res) => {
         params.push(category);
     }
     if (rating !== undefined) {
-        const ratingValue = (rating === null || String(rating).trim() === '') ? null : parseInt(rating, 10);
+        const ratingValue = (rating === null || String(rating).trim() === '') ? null : parseInt(rating);
         if (ratingValue !== null && (isNaN(ratingValue) || ratingValue < 0 || ratingValue > 10)) {
-             return res.status(400).json({ error: 'Рейтинг должен быть числом от 0 до 10 или отсутствовать (null)' });
+             return res.status(400).json({ error: 'Рейтинг должен быть числом от 0 до 10 или отсутствовать' });
         }
         updates.push('rating = ?');
         params.push(ratingValue);
     }
 
     if (updates.length === 0) {
-        return res.status(400).json({ error: 'Не указаны данные для обновления (категория или рейтинг)' });
+        return res.status(400).json({ error: 'Не указаны данные для обновления' });
     }
 
     query += updates.join(', ') + ' WHERE user_id = ? AND item_id = ?';
@@ -416,84 +416,104 @@ app.put('/api/user/:id/lists/:item_id', (req, res) => {
     });
 });
 
+const LOCAL_HERO_TRAILERS = {
+    '550': '/videos/hero_trailers/fight_club.mp4',
+    '46648-true-detective': '/videos/hero_trailers/true_detective_season_1.mp4',
+    '20526': '/videos/hero_trailers/tron_legacy.mp4',
+    '122917': '/videos/hero_trailers/the_hobbit_battle_of_the_five_armies.mp4',
+    '157336': '/videos/hero_trailers/interstellar.mp4',
+    '522627': '/videos/hero_trailers/gentlemens.mp4',
+    '70523-dark': '/videos/hero_trailers/dark.mp4',
+    '411': '/videos/hero_trailers/chronicles_of_narnia.mp4',
+    '1396-breaking-bad': '/videos/hero_trailers/breaking_bad.mp4',
+    '335984': '/videos/hero_trailers/blade_runner_2049.mp4',
+};
 
-// --- TMDB API МАРШРУТЫ ---
 app.get('/api/tmdb/hero-content', async (req, res) => {
     if (!TMDB_API_KEY) {
         return res.status(500).json({ error: 'Ошибка конфигурации сервера: API ключ TMDB не найден.' });
     }
     const language = 'ru-RU';
     try {
-        const popularMoviesUrl = `${TMDB_BASE_URL}/movie/popular`;
-        const popularResponse = await axios.get(popularMoviesUrl, {
-            params: { api_key: TMDB_API_KEY, language: language, page: 1 }
-        });
+        const localTmdbKeys = Object.keys(LOCAL_HERO_TRAILERS);
 
-        if (!popularResponse.data.results || popularResponse.data.results.length === 0) {
-            return res.status(404).json({ error: 'Не найдены популярные фильмы для hero секции.' });
+        if (localTmdbKeys.length === 0) {
+            return res.status(404).json({ error: 'Список локальных трейлеров для hero пуст.' });
         }
-        
-        const topN = Math.min(5, popularResponse.data.results.length);
-        const randomIndex = Math.floor(Math.random() * topN);
-        const heroMovieCandidate = popularResponse.data.results[randomIndex];
 
-        const movieDetailsUrl = `${TMDB_BASE_URL}/movie/${heroMovieCandidate.id}`;
-        const detailsResponse = await axios.get(movieDetailsUrl, {
+        const randomIndex = Math.floor(Math.random() * localTmdbKeys.length);
+        const randomKey = localTmdbKeys[randomIndex];
+        const localTrailerPath = LOCAL_HERO_TRAILERS[randomKey];
+        // DEBUG LOG: Показываем какой трейлер был выбран сервером
+        console.log(`[SERVER DEBUG] Выбран локальный трейлер: ${localTrailerPath} для ключа ${randomKey}`);
+
+
+        let itemTmdbId;
+        let itemType;
+
+        if (randomKey.includes('-')) {
+            itemTmdbId = randomKey.split('-')[0];
+            itemType = 'tv';
+        } else {
+            itemTmdbId = randomKey;
+            itemType = 'movie';
+        }
+
+        console.log(`Выбран контент для Hero: Ключ ${randomKey}, Тип ${itemType}, TMDB ID ${itemTmdbId}, трейлер: ${localTrailerPath}`);
+
+        const detailsUrl = `${TMDB_BASE_URL}/${itemType}/${itemTmdbId}`;
+        
+        const detailsResponse = await axios.get(detailsUrl, {
             params: {
                 api_key: TMDB_API_KEY,
                 language: language,
-                append_to_response: 'videos,images'
+                append_to_response: 'images'
             }
         });
-        const movieDetails = detailsResponse.data;
+        const itemDetails = detailsResponse.data;
 
-        let videoInfo = { type: 'none', key_or_url: null };
-
-        if (movieDetails.videos && movieDetails.videos.results) {
-            let officialYouTubeTrailer = movieDetails.videos.results.find(
-                video => video.site === 'YouTube' && video.type === 'Trailer' && video.official === true
-            );
-            if (officialYouTubeTrailer) {
-                videoInfo.type = 'youtube';
-                videoInfo.key_or_url = officialYouTubeTrailer.key;
-            } else {
-                let anyYouTubeTrailer = movieDetails.videos.results.find(
-                    video => video.site === 'YouTube' && video.type === 'Trailer'
-                );
-                if (anyYouTubeTrailer) {
-                    videoInfo.type = 'youtube';
-                    videoInfo.key_or_url = anyYouTubeTrailer.key;
-                }
-            }
-        }
+        const videoInfo = {
+            type: 'html5_local', 
+            key_or_url: localTrailerPath 
+        };
+        // DEBUG LOG: Показываем, какой videoInfo будет отправлен клиенту
+        console.log(`[SERVER DEBUG] Отправляем клиенту video_info:`, videoInfo);
         
-        let backdropPath = movieDetails.backdrop_path;
-        if (movieDetails.images && movieDetails.images.backdrops && movieDetails.images.backdrops.length > 0) {
-            const russianBackdrop = movieDetails.images.backdrops.find(b => b.iso_639_1 === 'ru');
+        let backdropPath = itemDetails.backdrop_path;
+        if (itemDetails.images && itemDetails.images.backdrops && itemDetails.images.backdrops.length > 0) {
+            const russianBackdrop = itemDetails.images.backdrops.find(b => b.iso_639_1 === 'ru');
             if (russianBackdrop) {
                 backdropPath = russianBackdrop.file_path;
-            } else if (movieDetails.images.backdrops[0]) {
-                backdropPath = movieDetails.images.backdrops[0].file_path;
+            } else if (itemDetails.images.backdrops[0]) {
+                backdropPath = itemDetails.images.backdrops[0].file_path;
             }
         }
 
+        const title = itemType === 'movie' ? itemDetails.title : itemDetails.name;
+        const release_date = itemType === 'movie' ? itemDetails.release_date : itemDetails.first_air_date;
+
         res.status(200).json({
-            id: movieDetails.id,
-            title: movieDetails.title,
-            overview: movieDetails.overview,
+            id: itemDetails.id,
+            title: title,
+            overview: itemDetails.overview,
             backdrop_path: backdropPath,
-            poster_path: movieDetails.poster_path,
-            vote_average: movieDetails.vote_average,
-            release_date: movieDetails.release_date,
+            poster_path: itemDetails.poster_path,
+            vote_average: itemDetails.vote_average,
+            release_date: release_date,
             video_info: videoInfo,
-            media_type: 'movie'
+            media_type: itemType
         });
 
     } catch (error) {
-        console.error('Ошибка при получении контента для Hero из TMDB:',
-            error.response ? { status: error.response.status, data: error.response.data } : error.message);
+        console.error('Ошибка при получении контента для Hero:',
+            error.response ? { status: error.response.status, data: error.response.data, config_url: error.config ? error.config.url : 'N/A' } : error.message
+        );
         res.status(error.response ? error.response.status : 500)
-           .json({ error: 'Ошибка при получении контента для hero от TMDB.', details: error.response ? error.response.data : null });
+           .json({ 
+               error: 'Ошибка при получении контента для hero.', 
+               details: error.response ? error.response.data : null,
+               requested_url: error.config ? error.config.url : 'N/A'
+            });
     }
 });
 

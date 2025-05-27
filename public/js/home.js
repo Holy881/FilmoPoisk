@@ -92,6 +92,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             
+            // DEBUG LOG: Показываем, какой путь к видео получен от сервера
+            console.log('[CLIENT DEBUG] Получено от сервера video_info:', data.video_info);
+
             heroTitleElement.textContent = data.title || 'Название не найдено';
             heroDescriptionElement.textContent = data.overview || 'Описание отсутствует.';
             heroWatchButton.dataset.tmdbId = data.id;
@@ -119,10 +122,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }, 7000);
                 }
-            } else if (data.video_info.type === 'html5' && data.video_info.key_or_url) {
+            } else if (data.video_info.type === 'html5_local' && data.video_info.key_or_url) {
+                 // DEBUG LOG: Передаем videoSrc в createHtml5Player
+                console.log('[CLIENT DEBUG] Попытка создать HTML5 плеер с src:', data.video_info.key_or_url);
                 createHtml5Player(data.video_info.key_or_url);
             }
             else {
+                console.warn('[CLIENT DEBUG] Не удалось определить тип видео или отсутствует ключ/URL. Переключение на fallback.');
                 switchToHeroFallback(backdropUrl, true);
             }
         } catch (error) {
@@ -135,16 +141,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!heroVideoContainer) return;
         heroVideoContainer.innerHTML = '';
         const videoElement = document.createElement('video');
-        videoElement.src = videoSrc;
+        videoElement.src = videoSrc; // Путь к видео
         videoElement.autoplay = true;
         videoElement.muted = true;
-        videoElement.loop = false;
-        videoElement.controls = false;
+        videoElement.loop = false; 
+        videoElement.controls = false; 
         videoElement.style.width = '100%';
         videoElement.style.height = '100%';
         videoElement.style.objectFit = 'cover';
 
+        console.log(`[CLIENT DEBUG] HTML5 Video Element создан. SRC установлен на: ${videoElement.src}`);
+
+
         videoElement.addEventListener('canplay', () => {
+            console.log(`[CLIENT DEBUG] HTML5 Video: Событие 'canplay' для ${videoSrc}`);
             heroVideoContainer.style.opacity = '1';
             if(heroFallback) heroFallback.classList.remove('active');
             heroSection.classList.add('video-playing');
@@ -152,10 +162,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (soundButton) soundButton.style.display = 'flex';
         });
         videoElement.addEventListener('ended', () => {
+            console.log(`[CLIENT DEBUG] HTML5 Video: Событие 'ended' для ${videoSrc}. Переключение на fallback.`);
             switchToHeroFallback(heroFallbackImg ? heroFallbackImg.src : null, false);
         });
         videoElement.addEventListener('error', (e) => {
-            console.error("Ошибка HTML5 video:", e);
+            // DEBUG LOG: Более детальная информация об ошибке
+            console.error(`[CLIENT DEBUG] Ошибка HTML5 video при загрузке ${videoSrc}:`, e);
+            if (videoElement.error) {
+                console.error(`[CLIENT DEBUG] Код ошибки видео: ${videoElement.error.code}`);
+                switch (videoElement.error.code) {
+                    case MediaError.MEDIA_ERR_ABORTED:
+                        console.error('[CLIENT DEBUG] Загрузка видео прервана пользователем или скриптом.');
+                        break;
+                    case MediaError.MEDIA_ERR_NETWORK:
+                        console.error('[CLIENT DEBUG] Ошибка сети при загрузке видео. Проверьте путь и доступность файла.');
+                        break;
+                    case MediaError.MEDIA_ERR_DECODE:
+                        console.error('[CLIENT DEBUG] Ошибка декодирования видео. Возможно, файл поврежден или формат не поддерживается.');
+                        break;
+                    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                        console.error('[CLIENT DEBUG] Источник видео не поддерживается (например, неверный URL или тип MIME). Убедитесь, что путь к видео правильный: ' + videoSrc);
+                        break;
+                    default:
+                        console.error('[CLIENT DEBUG] Неизвестная ошибка видео.');
+                        break;
+                }
+            }
             switchToHeroFallback(heroFallbackImg ? heroFallbackImg.src : null, true);
         });
         heroVideoContainer.appendChild(videoElement);
@@ -168,21 +200,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function initializePlayer(videoId, playerId) { // Изменено название функции для ясности
-         heroYouTubePlayer = new YT.Player(playerId, { // Используем переданный playerId
+    function initializePlayer(videoId, playerId) { 
+         heroYouTubePlayer = new YT.Player(playerId, { 
             height: '100%',
             width: '100%',
             videoId: videoId,
             playerVars: {
-                'autoplay': 1,       // Автовоспроизведение
-                'controls': 0,       // Скрыть стандартные контролы YouTube
-                // 'showinfo': 0,    // Устарело и не работает
-                'rel': 0,            // Не показывать похожие видео в конце
-                'iv_load_policy': 3, // Скрыть аннотации
-                'modestbranding': 1, // Уменьшить брендинг YouTube (показывает маленький логотип YT)
-                'loop': 0,           // Не зацикливать
-                'mute': 1,           // Начинаем без звука!
-                'vq': 'hd1080',      // <<< ДОБАВЛЕНО: Попытка установить качество 1080p
+                'autoplay': 1,       
+                'controls': 0,       
+                'rel': 0,            
+                'iv_load_policy': 3, 
+                'modestbranding': 1, 
+                'loop': 0,          
+                'mute': 1,          
+                'vq': 'hd1080',      
                 'origin': window.location.origin 
             },
             events: { 
@@ -203,12 +234,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         heroVideoContainer.innerHTML = '';
         const playerDiv = document.createElement('div');
-        // Важно: ID для YT.Player должен быть уникальным, если на странице может быть несколько плееров.
-        // Для одного hero-плеера 'youtube-player-hero' подойдет.
         playerDiv.id = 'youtube-player-hero'; 
         heroVideoContainer.appendChild(playerDiv);
 
-        // Вызываем initializePlayer с ID созданного div
         initializePlayer(videoId, playerDiv.id); 
     }
     

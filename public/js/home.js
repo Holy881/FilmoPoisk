@@ -18,7 +18,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Остальные элементы DOM ---
     const navbarButtons = document.querySelectorAll('.navbar-button');
-    const profileButton = document.querySelector('.navbar-right a[href="profile"]');
+    const userProfileLink = document.getElementById('user-profile-link'); 
+    const userProfileIconContainer = document.getElementById('user-profile-icon-container'); 
     
     const newSearchButton = document.getElementById('search-button');
     const newSearchModal = document.getElementById('search-modal');
@@ -52,6 +53,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     let isHeroSoundActive = false; 
     let currentHeroVideoElement = null;
     let isInfoPinned = false; 
+
+    const DEFAULT_AVATAR_PATH = '/images/default-avatar.png'; // Путь к дефолтному аватару, если он есть на сервере
+
+    function setDefaultUserIcon() {
+        if (!userProfileIconContainer) return;
+        userProfileIconContainer.innerHTML = '<i class="fas fa-user"></i>';
+    }
+
+    async function updateUserProfileDisplay() {
+        if (!userProfileIconContainer) {
+            console.error('User profile icon container not found');
+            return;
+        }
+
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+            try {
+                // Запрос данных пользователя с сервера
+                const response = await fetch(`/api/user/${userId}`); // Используем относительный путь
+                if (!response.ok) {
+                    console.error('Ошибка при получении данных пользователя:', response.status);
+                    setDefaultUserIcon();
+                    return;
+                }
+                const userData = await response.json();
+                // Проверяем, есть ли аватар и не является ли он путем к дефолтному аватару (если такая логика есть)
+                if (userData.avatar && userData.avatar !== DEFAULT_AVATAR_PATH) {
+                    const avatarImg = document.createElement('img');
+                    // Убедимся, что URL аватара полный, если он относительный
+                    avatarImg.src = userData.avatar.startsWith('/') ? userData.avatar : `/${userData.avatar}`;
+                    avatarImg.alt = 'Аватар пользователя';
+                    avatarImg.className = 'navbar-avatar';
+                    avatarImg.onerror = () => {
+                        console.warn('Не удалось загрузить аватар, используется иконка по умолчанию.');
+                        setDefaultUserIcon();
+                    };
+                    userProfileIconContainer.innerHTML = ''; 
+                    userProfileIconContainer.appendChild(avatarImg);
+                } else {
+                    setDefaultUserIcon();
+                }
+            } catch (error) {
+                console.error('Сетевая ошибка или ошибка парсинга JSON при получении данных пользователя:', error);
+                setDefaultUserIcon();
+            }
+        } else {
+            // Пользователь не вошел в систему
+            setDefaultUserIcon();
+        }
+    }
+
 
     function animateVolume(media, targetVolumeRatio, duration) { 
         let startVolumeRatio;
@@ -150,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             isHeroSoundActive = false; 
             isInfoPinned = false; 
-            heroSection.classList.remove('info-pinned');
+            if(heroSection) heroSection.classList.remove('info-pinned');
             updateInfoToggleButtonState(); 
 
             if (data.video_info.type === 'html5_local' && data.video_info.key_or_url) {
@@ -188,8 +240,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log(`[CLIENT DEBUG] HTML5 Video: Событие 'playing' для ${videoSrc}. Видео воспроизводится (звук выключен).`);
             heroVideoContainer.style.opacity = '1';
             if (heroFallback) heroFallback.classList.remove('active');
-            heroSection.classList.add('video-playing');
-            heroSection.classList.remove('poster-active');
+            if(heroSection) {
+                heroSection.classList.add('video-playing');
+                heroSection.classList.remove('poster-active');
+            }
             
             if (heroActionButtonsContainer) {
                 heroActionButtonsContainer.classList.add('visible');
@@ -201,13 +255,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateSoundButtonIcon();    
             updateInfoToggleButtonState(); 
     
-            currentHeroVideoElement.removeEventListener('playing', onPlayingHandler); 
+            if(currentHeroVideoElement) currentHeroVideoElement.removeEventListener('playing', onPlayingHandler); 
         };
         currentHeroVideoElement.addEventListener('playing', onPlayingHandler);
     
         const onCanPlayHandler = () => {
             console.log(`[CLIENT DEBUG] HTML5 Video: Событие 'canplay' для ${videoSrc}. Готово к воспроизведению.`);
-            if (currentHeroVideoElement.paused) { 
+            if (currentHeroVideoElement && currentHeroVideoElement.paused) { 
                  currentHeroVideoElement.play().catch(e => {
                     console.warn(`[CLIENT DEBUG] HTML5 Video: Дополнительная попытка play() в 'canplay' не удалась. Ошибка:`, e);
                 });
@@ -215,7 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             isHeroSoundActive = false; 
             updateSoundButtonIcon(); 
             updateInfoToggleButtonState();
-            currentHeroVideoElement.removeEventListener('canplay', onCanPlayHandler);
+            if(currentHeroVideoElement) currentHeroVideoElement.removeEventListener('canplay', onCanPlayHandler);
         };
         currentHeroVideoElement.addEventListener('canplay', onCanPlayHandler);
         
@@ -225,7 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         currentHeroVideoElement.addEventListener('error', (e) => {
             console.error(`[CLIENT DEBUG] Ошибка HTML5 video при загрузке ${videoSrc}:`, e);
-            if (currentHeroVideoElement.error) {
+            if (currentHeroVideoElement && currentHeroVideoElement.error) {
                 console.error(`[CLIENT DEBUG] Код ошибки видео: ${currentHeroVideoElement.error.code}, Сообщение: ${currentHeroVideoElement.error.message}`);
                  switch (currentHeroVideoElement.error.code) {
                     case MediaError.MEDIA_ERR_ABORTED:
@@ -265,8 +319,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             heroFallback.classList.add('active');
         }
-        heroSection.classList.remove('video-playing');
-        heroSection.classList.add('poster-active');
+        if(heroSection) {
+            heroSection.classList.remove('video-playing');
+            heroSection.classList.add('poster-active');
+        }
         
         if (heroActionButtonsContainer) heroActionButtonsContainer.classList.remove('visible');
         if(soundButton) soundButton.style.display = 'none';
@@ -276,7 +332,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateSoundButtonIcon(); 
         
         isInfoPinned = false; 
-        heroSection.classList.remove('info-pinned'); 
+        if(heroSection) heroSection.classList.remove('info-pinned'); 
         if(heroContentDisplay) heroContentDisplay.classList.remove('visible');
         updateInfoToggleButtonState();
     }
@@ -299,7 +355,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 animateVolume(activeMedia, targetVolumeOff, VOLUME_ANIMATION_DURATION);
                 isHeroSoundActive = false;
             } else { 
-                if (isHtml5 && currentHeroVideoElement.paused) {
+                if (isHtml5 && currentHeroVideoElement && currentHeroVideoElement.paused) {
                     console.log("[CLIENT DEBUG] HTML5 video was paused, attempting to play on sound toggle ON.");
                     currentHeroVideoElement.play().then(() => {
                         console.log("[CLIENT DEBUG] Play successful after sound button click for paused video.");
@@ -337,10 +393,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     loadAndDisplayHeroContent();
+    updateUserProfileDisplay(); // Обновляем иконку/аватар при загрузке
 
     // --- Логика поиска и фильтров ---
     if (newSearchButton && newSearchModal) {
         function openSearchModalWindow() {
+            if(!newSearchModal) return;
             newSearchModal.classList.add('active');
             document.body.style.overflow = 'hidden';
             if (genreDropdownMovieMenu && genreDropdownMovieMenu.querySelectorAll('label').length === 0 && !genreDropdownMovieMenu.querySelector('.genres-loading-placeholder')) {
@@ -355,6 +413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
         function closeSearchModalWindow() {
+            if(!newSearchModal) return;
             newSearchModal.classList.remove('active');
             document.body.style.overflow = '';
         }
@@ -604,6 +663,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function displayResults(items, searchedMediaTypeContext) {
         clearSearchResults(false);
+        if(!searchResultsContainer) return;
+
         const resultsGrid = document.createElement('div');
         resultsGrid.className = 'search-results-grid';
 
@@ -680,23 +741,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
         }
-        if (searchResultsContainer) {
-            const oldGrid = searchResultsContainer.querySelector('.search-results-grid');
-            if (oldGrid) oldGrid.remove();
-            searchResultsContainer.appendChild(resultsGrid);
-        }
+        
+        const oldGrid = searchResultsContainer.querySelector('.search-results-grid');
+        if (oldGrid) oldGrid.remove();
+        searchResultsContainer.appendChild(resultsGrid);
+        
     }
 
     function displayError(message) {
         clearSearchResults(false); 
+        if(!searchResultsContainer) return;
         const errorElement = document.createElement('p');
         errorElement.className = 'search-error-message';
         errorElement.textContent = `Ошибка: ${message}`;
-        if (searchResultsContainer) {
-            const oldGrid = searchResultsContainer.querySelector('.search-results-grid');
-            if (oldGrid) oldGrid.remove(); 
-            searchResultsContainer.appendChild(errorElement);
-        }
+        
+        const oldGrid = searchResultsContainer.querySelector('.search-results-grid');
+        if (oldGrid) oldGrid.remove(); 
+        searchResultsContainer.appendChild(errorElement);
+        
         if (loadingIndicator) loadingIndicator.style.display = 'none';
         if (initialPlaceholder) initialPlaceholder.style.display = 'none';
     }
@@ -852,10 +914,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    if (profileButton) {
-        profileButton.addEventListener('click', (event) => {
+    if (userProfileLink) { 
+        userProfileLink.addEventListener('click', (event) => {
             event.preventDefault(); 
-            window.location.href = profileButton.getAttribute('href');
+            const userId = localStorage.getItem('userId');
+            if (userId) {
+                window.location.href = userProfileLink.getAttribute('href'); // или `/profile/${userId}` если так настроен роутинг
+            } else {
+                window.location.href = '/auth'; // Перенаправляем на страницу входа, если ID нет
+            }
         });
     }
 
@@ -879,7 +946,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         tile.classList.toggle('active-details');
-        details.style.transform = tile.classList.contains('active-details') ? 'translateY(0)' : 'translateY(100%)';
+        if(details) details.style.transform = tile.classList.contains('active-details') ? 'translateY(0)' : 'translateY(100%)';
     }
     
     function setRatingColor(ratingElement, ratingValue) {

@@ -45,7 +45,7 @@ body {
     font-family: 'Inter', Arial, sans-serif;
     background-color: $bg-color;
     color: $text-color;
-    overflow-x: hidden;
+    overflow-x: hidden; // Важно для предотвращения горизонтальной прокрутки всего документа
     padding-top: $navbar-height;
 }
 
@@ -74,7 +74,6 @@ input[type="number"] {
         display: flex; flex-direction: column;
         justify-content: center; align-items: center;
         width: 24px;
-        // background-color: lighten($input-bg-color, 3%);
         border-top-right-radius: 5px;
         border-bottom-right-radius: 5px;
         .arrow {
@@ -369,10 +368,10 @@ input[type="number"] {
 .hero {
     position: relative; width: 100%;
     height: $hero-height-value;
-    overflow: hidden; // Важно, чтобы .hero-overlay не вылезал за пределы
+    overflow: hidden;
     margin-top: -$navbar-height;
     background-color: $bg-color;
-    z-index: 1; // Базовый z-index для hero
+    z-index: 1;
 
     .hero-video-container, .hero-fallback {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -381,9 +380,9 @@ input[type="number"] {
     .hero-video-container { z-index: 1; background-color: #000; opacity: 0; transition: opacity 0.5s ease-in-out; }
     .hero-fallback { z-index: 0; opacity: 0; transition: opacity 0.5s ease-in-out; }
 
-    &.video-playing .hero-video-container { opacity: 1; z-index: 2; } // Видео под оверлеем и контентом
+    &.video-playing .hero-video-container { opacity: 1; z-index: 2; }
     &.video-playing .hero-fallback { opacity: 0; z-index: 0; }
-    &.poster-active .hero-fallback { opacity: 1 !important; z-index: 1; } // Фолбэк над пустым видео контейнером
+    &.poster-active .hero-fallback { opacity: 1 !important; z-index: 1; }
     &.poster-active .hero-video-container { opacity: 0; z-index: 0; }
 
     .hero-overlay {
@@ -392,16 +391,15 @@ input[type="number"] {
         align-items: flex-start;
         padding: 0 5% calc(#{$content-area-overlap} + 80px);
         background: linear-gradient(to top, rgba($bg-color,1) 5%, rgba($bg-color,0.85) 10%, rgba($bg-color,0.0) 25%);
-        z-index: 3; // Над видео/фолбэком
-        // pointer-events: none; // Убираем, чтобы .hero-content-display внутри был интерактивен
+        z-index: 3;
     }
 
     .hero-content-display {
         max-width: 60%;
-        z-index: 4; // Выше .hero-overlay
+        z-index: 4;
         position: relative;
         opacity: 0; visibility: hidden; transform: translateY(20px);
-        transition: opacity 0.3s ease-out 0.1s, visibility 0s 0.4s, transform 0.3s ease-out 0.1s; // Добавил задержку для плавности
+        transition: opacity 0.3s ease-out 0.1s, visibility 0s 0.4s, transform 0.3s ease-out 0.1s;
         pointer-events: auto;
 
         &.visible { opacity: 1; visibility: visible; transform: translateY(0); transition-delay: 0s; }
@@ -418,7 +416,7 @@ input[type="number"] {
         position: absolute;
         bottom: calc(#{$content-area-overlap} + 40px);
         right: $shelf-padding + 10px;
-        z-index: 5; // Выше всего в hero
+        z-index: 5;
         display: flex; flex-direction: column; gap: 12px;
         opacity: 0; visibility: hidden; transform: translateY(10px);
         transition: opacity 0.3s ease-out 0.1s, visibility 0s 0.4s, transform 0.3s ease-out 0.1s;
@@ -446,55 +444,55 @@ input[type="number"] {
 /* --- Новые стили для .content-area и "полок" --- */
 .content-area {
     position: relative;
-    z-index: 3;
+    z-index: 3; 
     margin-top: -$content-area-overlap;
-    background: transparent;
-    padding-top: 0;
+    background: transparent; 
+    padding-top: 0; 
 
-    &::before {
+    &::before { 
         content: '';
         position: absolute;
-        top: 0;
+        top: 0; 
         left: 0;
         width: 100%;
-        height: $content-area-overlap + 100px;
+        height: $content-area-overlap + 100px; 
         background: linear-gradient(to bottom, rgba($bg-color, 0) 0%, rgba($bg-color, 0.6) 40%, $bg-color 80%);
-        z-index: -1;
-        pointer-events: none;
+        z-index: -1; 
+        pointer-events: none; 
     }
 }
 
 .movie-shelf {
     padding: $shelf-padding $shelf-padding 30px $shelf-padding;
-    position: relative;
+    position: relative; 
 
     h2 {
         font-size: 1.8em;
         margin-bottom: 15px;
         color: $text-light-emphasis;
         font-weight: 600;
-        padding-left: 5px;
+        padding-left: 5px; 
         text-shadow: 0 1px 2px rgba(0,0,0,0.7);
     }
 
     .shelf-grid {
         display: flex;
         overflow-x: auto;
-        overflow-y: hidden;
+        overflow-y: hidden; 
         gap: 15px;
-        padding-bottom: 15px;
+        padding-bottom: 15px; 
 
         &::-webkit-scrollbar { height: 6px; }
         &::-webkit-scrollbar-thumb { background-color: lighten($border-color, 5%); border-radius: 3px; }
         &::-webkit-scrollbar-track { background: darken($surface-color, 5%); border-radius: 3px; }
     }
 
-    &#popular {
+    &#popular { 
         opacity: 1;
         transform: translateY(0);
         transition: opacity 0.4s ease-out, transform 0.4s ease-out;
 
-        &.hidden-on-scroll {
+        &.hidden-on-scroll { 
             opacity: 0;
             transform: translateY(50px);
             pointer-events: none;
@@ -553,34 +551,68 @@ input[type="number"] {
     }
 }
 
-/* Стили для выдвигаемой панели */
+/* --- ИЗМЕНЕННЫЕ СТИЛИ для выдвигаемой панели --- */
 .detailed-info-panel {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 2000; display: none; align-items: center; justify-content: center;
-    &.active { display: flex; }
+    position: relative; 
+    width: 100%; 
+    background-color: darken($surface-color, 5%); 
+    color: $text-color;
+    border-radius: 0 0 12px 12px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    margin-top: 0; 
+    margin-bottom: 20px; 
+    overflow: hidden; 
+    display: none; 
 
-    .detailed-info-backdrop {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 1;
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    transition: max-height 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), 
+                opacity 0.3s ease-in-out 0.1s, 
+                padding-top 0.5s cubic-bezier(0.25, 0.1, 0.25, 1),
+                padding-bottom 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+
+    &.expanded {
+        display: block; 
+        max-height: 3000px; 
+        opacity: 1;
+        padding-top: 25px; 
+        padding-bottom: 25px;
     }
 
     .detailed-info-content-wrapper {
-        position: relative; z-index: 2; background-color: darken($surface-color, 5%);
-        color: $text-color; width: 90%; max-width: 800px; max-height: 90vh;
-        border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        overflow-y: auto; display: flex; flex-direction: column;
+        position: relative; 
+        z-index: 2;
+        max-width: 90%; 
+        margin: 0 auto;
     }
 
     .detailed-info-close-btn {
-        position: absolute; top: 15px; right: 15px; background: transparent; border: none;
-        color: $text-secondary-color; font-size: 1.8em; cursor: pointer; padding: 5px;
-        line-height: 1; z-index: 3; transition: color 0.2s ease;
+        position: absolute;
+        top: 15px; 
+        right: 15px;
+        background: transparent;
+        border: none;
+        color: $text-secondary-color;
+        font-size: 1.8em;
+        cursor: pointer;
+        padding: 5px;
+        line-height: 1;
+        z-index: 3; 
+        transition: color 0.2s ease;
         &:hover { color: $text-light-emphasis; }
     }
 
+    .detailed-info-backdrop {
+        display: none !important;
+    }
+
     .detailed-info-header {
-        display: flex; padding: 25px; gap: 25px; border-bottom: 1px solid $border-color;
+        display: flex; padding: 0; 
+        gap: 25px; border-bottom: 1px solid $border-color;
         align-items: flex-start;
+        margin-bottom: 20px; 
 
         .detailed-info-poster {
             width: 180px; height: auto; aspect-ratio: 2/3; object-fit: cover;
@@ -607,6 +639,7 @@ input[type="number"] {
     .detailed-info-tabs {
         display: flex; padding: 0 $shelf-padding; border-bottom: 1px solid $border-color;
         background-color: darken($surface-color, 2%);
+        margin-bottom: 20px; 
 
         .tab-button {
             background: transparent; border: none; color: $text-secondary-color;
@@ -624,12 +657,14 @@ input[type="number"] {
     }
 
     .detailed-info-tab-content {
-        padding: 25px; flex-grow: 1;
+        padding: 0; 
+        flex-grow: 1;
         .tab-pane { display: none; &.active { display: block; }
             .detailed-info-overview { font-size: 1em; line-height: 1.7; color: $text-color; }
         }
     }
 }
+
 
 /* --- Стили для результатов поиска (остаются как были) --- */
 .search-modal-main {
@@ -663,20 +698,29 @@ input[type="number"] {
 @media (max-width: 1024px) {
     .hero .hero-content-display .hero-title { font-size: 2.8em; }
     .hero .hero-content-display .hero-description { font-size: 1.05em; max-width: 70%; }
-    // .movie-list .movie-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); } // Старый стиль, заменяется на shelf
     .content-area { margin-top: -$content-area-overlap + 80px; }
     .movie-shelf h2 { font-size: 1.6em; }
     .movie-tile { width: 160px; img.movie-poster-img { height: 240px; } }
-    .detailed-info-panel .detailed-info-content-wrapper { max-width: 95%; }
-    .detailed-info-panel .detailed-info-header { flex-direction: column; align-items: center; text-align: center; .detailed-info-poster { margin-bottom: 20px; } .detailed-info-actions { justify-content: center; } }
+    
+    .detailed-info-panel {
+        .detailed-info-content-wrapper { max-width: 95%; }
+        .detailed-info-header { 
+            flex-direction: column; 
+            align-items: center; 
+            text-align: center; 
+            .detailed-info-poster { margin-bottom: 20px; } 
+            .detailed-info-actions { justify-content: center; } 
+        }
+    }
 }
 
 @media (max-width: 768px) {
-    body { padding-top: 0; }
+    body { padding-top: 0; } 
     .navbar {
-        position: relative; flex-direction: column; height: auto; align-items: stretch; padding: 0;
+        position: relative; 
+        flex-direction: column; height: auto; align-items: stretch; padding: 0;
         background-color: darken($bg-color, 3%); border-bottom: 1px solid $border-color; z-index: 1000;
-        .navbar-left {
+         .navbar-left {
             flex-direction: column; align-items: stretch; margin-bottom: 0; width: 100%;
             .navbar-brand { font-size: 1.3em; padding: 12px 15px; text-align: center; border-bottom: 1px solid $border-color; margin-right: 0; }
             .navbar-button { width: 100%; margin: 0; border-radius: 0; justify-content: center; padding: 12px 15px; border-bottom: 1px solid $border-color; background-color: $surface-color; border-color: $border-color; color: $text-color;
@@ -709,7 +753,8 @@ input[type="number"] {
         .search-result-watch-btn { align-self: stretch; text-align: center; }
     }
      .hero {
-        margin-top: 0; height: auto; min-height: 60vh;
+        margin-top: 0; 
+        height: auto; min-height: 60vh;
         .hero-overlay { padding: 0 5% calc(#{$content-area-overlap} - 80px); }
         .hero-action-buttons-container { bottom: calc(#{$content-area-overlap} - 100px); }
         .hero-content-display {
@@ -729,14 +774,22 @@ input[type="number"] {
         &#popular {
             margin-top: 0;
             padding-top: 10px;
-            &::before { height: 80px; top: -($content-area-overlap + 100px); }
+            &::before { height: 80px; top: -($content-area-overlap + 100px); } 
             &.hidden-on-scroll { transform: translateY(20px); }
         }
     }
     .movie-tile { width: 140px; img.movie-poster-img { height: 210px; } }
-    .detailed-info-panel .detailed-info-header { padding: 20px; .detailed-info-title { font-size: 1.8em; } .detailed-info-meta { font-size: 0.8em; } .detailed-info-actions .action-button { font-size: 0.9em; padding: 8px 15px; } }
-    .detailed-info-panel .detailed-info-tabs .tab-button { padding: 12px 15px; font-size: 0.9em; }
-    .detailed-info-panel .detailed-info-tab-content { padding: 20px; }
+    
+    .detailed-info-panel {
+        .detailed-info-header { 
+            padding: 20px; 
+            .detailed-info-title { font-size: 1.8em; } 
+            .detailed-info-meta { font-size: 0.8em; } 
+            .detailed-info-actions .action-button { font-size: 0.9em; padding: 8px 15px; } 
+        }
+        .detailed-info-tabs .tab-button { padding: 12px 15px; font-size: 0.9em; }
+        .detailed-info-tab-content { padding: 20px; } 
+    }
 }
 
 @media (max-width: 480px) {
@@ -755,15 +808,19 @@ input[type="number"] {
         .hero-button.action-button { padding: 8px 15px; font-size: 0.9em; }
     }
     .content-area { margin-top: -$content-area-overlap + 150px; }
-    // .movie-list .movie-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); } // Старый стиль
     .movie-shelf h2 {font-size: 1.3em;}
     .movie-tile { width: 120px; img.movie-poster-img { height: 180px; } .movie-hover-details { min-height: 70px; h3 {font-size: 0.9em;} p {font-size: 0.75em; line-clamp: 2;} } }
     .hero .hero-overlay { padding: 0 5% calc(#{$content-area-overlap} - 120px); }
     .hero .hero-action-buttons-container { bottom: calc(#{$content-area-overlap} - 140px); }
-    .detailed-info-panel .detailed-info-content-wrapper { max-height: 95vh; }
-    .detailed-info-panel .detailed-info-header { .detailed-info-poster { width: 150px; } .detailed-info-title { font-size: 1.6em; } }
+    
+    .detailed-info-panel {
+        .detailed-info-content-wrapper { max-height: none; }
+        .detailed-info-header { 
+            .detailed-info-poster { width: 150px; } 
+            .detailed-info-title { font-size: 1.6em; } 
+        }
+    }
     .movie-shelf#popular {
-       &::before { top: -($content-area-overlap + 150px); }
+       &::before { top: -($content-area-overlap + 150px); } 
     }
 }
-

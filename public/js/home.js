@@ -46,6 +46,82 @@ document.addEventListener('DOMContentLoaded', async () => {
     let heroYouTubePlayer;
     let ytApiLoaded = false;
     let ytApiLoading = false;
+    let isHeroSoundActive = false; 
+    let currentHeroVideoElement = null; 
+
+    function animateVolume(media, targetVolumeRatio, duration) { 
+        const isYouTube = typeof media.setVolume === 'function';
+        let startVolumeRatio;
+        let startTime = null;
+    
+        if (isYouTube) {
+            startVolumeRatio = media.isMuted() ? 0 : media.getVolume() / 100;
+            if (targetVolumeRatio > 0 && media.isMuted()) {
+                media.unMute(); 
+            }
+        } else { // HTML5 Video
+            startVolumeRatio = media.muted ? 0 : media.volume;
+            if (targetVolumeRatio > 0 && media.muted) { 
+                media.muted = false; // Unmute before setting volume if target is > 0
+            }
+        }
+    
+        if (Math.abs(startVolumeRatio - targetVolumeRatio) < 0.01) { 
+            if (isYouTube) {
+                media.setVolume(targetVolumeRatio * 100);
+                if (targetVolumeRatio === 0 && !media.isMuted()) media.mute();
+                else if (targetVolumeRatio > 0 && media.isMuted()) media.unMute();
+            } else {
+                media.volume = targetVolumeRatio;
+                media.muted = (targetVolumeRatio === 0);
+            }
+            updateSoundButtonIcon();
+            console.log(`[CLIENT DEBUG] Volume already at target. Target: ${targetVolumeRatio.toFixed(2)}`);
+            return;
+        }
+    
+        console.log(`[CLIENT DEBUG] Animating volume. From: ${startVolumeRatio.toFixed(2)}, To: ${targetVolumeRatio.toFixed(2)}, Duration: ${duration}ms`);
+    
+        function animationStep(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const progress = Math.min((timestamp - startTime) / duration, 1);
+            const currentVolumeRatio = startVolumeRatio + (targetVolumeRatio - startVolumeRatio) * progress;
+    
+            if (isYouTube) {
+                media.setVolume(Math.round(currentVolumeRatio * 100));
+            } else {
+                media.volume = currentVolumeRatio;
+            }
+    
+            if (progress < 1) {
+                requestAnimationFrame(animationStep);
+            } else { // Animation finished
+                if (isYouTube) {
+                    media.setVolume(Math.round(targetVolumeRatio * 100));
+                    if (targetVolumeRatio === 0 && !media.isMuted()) media.mute();
+                    else if (targetVolumeRatio > 0 && media.isMuted()) media.unMute();
+                } else {
+                    media.volume = targetVolumeRatio;
+                    media.muted = (targetVolumeRatio === 0); // Mute if target volume is 0
+                }
+                console.log(`[CLIENT DEBUG] Volume animation finished. Final volume ratio: ${targetVolumeRatio.toFixed(2)}`);
+                updateSoundButtonIcon();
+            }
+        }
+        requestAnimationFrame(animationStep);
+    }
+
+    function updateSoundButtonIcon() {
+        if (!soundButton || !soundIcon) return;
+        
+        soundIcon.classList.remove('fa-volume-mute', 'fa-volume-off', 'fa-volume-low', 'fa-volume-up');
+        if (isHeroSoundActive) { // If sound is intended to be on (10%)
+            soundIcon.classList.add('fa-volume-low'); 
+        } else { // Sound is intended to be off (muted or 0%)
+            soundIcon.classList.add('fa-volume-mute');
+        }
+        console.log(`[CLIENT DEBUG] Updated sound icon. isHeroSoundActive: ${isHeroSoundActive}`);
+    }
 
     function loadYouTubeAPI() {
         if (ytApiLoaded || ytApiLoading) return;
@@ -92,7 +168,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             
-            // DEBUG LOG: Показываем, какой путь к видео получен от сервера
             console.log('[CLIENT DEBUG] Получено от сервера video_info:', data.video_info);
 
             heroTitleElement.textContent = data.title || 'Название не найдено';
@@ -107,6 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             heroFallbackImg.src = backdropUrl;
             heroFallbackImg.alt = `Задник для ${data.title}`;
             heroSection.dataset.videoType = data.video_info.type;
+            isHeroSoundActive = false; // Сбрасываем состояние звука при загрузке нового контента
 
             if (data.video_info.type === 'youtube' && data.video_info.key_or_url) {
                 heroSection.dataset.waitingForYt = 'true';
@@ -123,7 +199,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }, 7000);
                 }
             } else if (data.video_info.type === 'html5_local' && data.video_info.key_or_url) {
-                 // DEBUG LOG: Передаем videoSrc в createHtml5Player
                 console.log('[CLIENT DEBUG] Попытка создать HTML5 плеер с src:', data.video_info.key_or_url);
                 createHtml5Player(data.video_info.key_or_url);
             }
@@ -139,38 +214,57 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function createHtml5Player(videoSrc) {
         if (!heroVideoContainer) return;
-        heroVideoContainer.innerHTML = '';
-        const videoElement = document.createElement('video');
-        videoElement.src = videoSrc; // Путь к видео
-        videoElement.autoplay = true;
-        videoElement.muted = true;
-        videoElement.loop = false; 
-        videoElement.controls = false; 
-        videoElement.style.width = '100%';
-        videoElement.style.height = '100%';
-        videoElement.style.objectFit = 'cover';
-
-        console.log(`[CLIENT DEBUG] HTML5 Video Element создан. SRC установлен на: ${videoElement.src}`);
-
-
-        videoElement.addEventListener('canplay', () => {
-            console.log(`[CLIENT DEBUG] HTML5 Video: Событие 'canplay' для ${videoSrc}`);
+        heroVideoContainer.innerHTML = ''; 
+        currentHeroVideoElement = document.createElement('video'); 
+        
+        currentHeroVideoElement.src = videoSrc;
+        currentHeroVideoElement.autoplay = true; 
+        currentHeroVideoElement.muted = true;    
+        currentHeroVideoElement.loop = false;
+        currentHeroVideoElement.controls = false;
+        currentHeroVideoElement.playsInline = true; 
+        currentHeroVideoElement.style.width = '100%';
+        currentHeroVideoElement.style.height = '100%';
+        currentHeroVideoElement.style.objectFit = 'cover';
+    
+        console.log(`[CLIENT DEBUG] HTML5 Video Element создан. SRC: ${currentHeroVideoElement.src}, Muted: ${currentHeroVideoElement.muted}, Autoplay: ${currentHeroVideoElement.autoplay}`);
+    
+        const onPlayingHandler = () => {
+            console.log(`[CLIENT DEBUG] HTML5 Video: Событие 'playing' для ${videoSrc}. Видео воспроизводится (звук выключен).`);
             heroVideoContainer.style.opacity = '1';
-            if(heroFallback) heroFallback.classList.remove('active');
+            if (heroFallback) heroFallback.classList.remove('active');
             heroSection.classList.add('video-playing');
             heroSection.classList.remove('poster-active');
             if (soundButton) soundButton.style.display = 'flex';
-        });
-        videoElement.addEventListener('ended', () => {
+            isHeroSoundActive = false; // Звук по умолчанию выключен
+            updateSoundButtonIcon();    // Установить иконку в fa-volume-mute
+            currentHeroVideoElement.removeEventListener('playing', onPlayingHandler); 
+        };
+        currentHeroVideoElement.addEventListener('playing', onPlayingHandler);
+    
+        const onCanPlayHandler = () => {
+            console.log(`[CLIENT DEBUG] HTML5 Video: Событие 'canplay' для ${videoSrc}. Готово к воспроизведению.`);
+            // Попытка воспроизвести, если autoplay не сработал (на всякий случай)
+            if (currentHeroVideoElement.paused) {
+                currentHeroVideoElement.play().catch(e => {
+                    console.warn(`[CLIENT DEBUG] HTML5 Video: Дополнительная попытка play() в 'canplay' не удалась или была не нужна. Ошибка (если есть):`, e);
+                });
+            }
+            isHeroSoundActive = false;
+            updateSoundButtonIcon(); 
+            currentHeroVideoElement.removeEventListener('canplay', onCanPlayHandler);
+        };
+        currentHeroVideoElement.addEventListener('canplay', onCanPlayHandler);
+        
+        currentHeroVideoElement.addEventListener('ended', () => {
             console.log(`[CLIENT DEBUG] HTML5 Video: Событие 'ended' для ${videoSrc}. Переключение на fallback.`);
             switchToHeroFallback(heroFallbackImg ? heroFallbackImg.src : null, false);
         });
-        videoElement.addEventListener('error', (e) => {
-            // DEBUG LOG: Более детальная информация об ошибке
+        currentHeroVideoElement.addEventListener('error', (e) => {
             console.error(`[CLIENT DEBUG] Ошибка HTML5 video при загрузке ${videoSrc}:`, e);
-            if (videoElement.error) {
-                console.error(`[CLIENT DEBUG] Код ошибки видео: ${videoElement.error.code}`);
-                switch (videoElement.error.code) {
+            if (currentHeroVideoElement.error) {
+                console.error(`[CLIENT DEBUG] Код ошибки видео: ${currentHeroVideoElement.error.code}, Сообщение: ${currentHeroVideoElement.error.message}`);
+                 switch (currentHeroVideoElement.error.code) {
                     case MediaError.MEDIA_ERR_ABORTED:
                         console.error('[CLIENT DEBUG] Загрузка видео прервана пользователем или скриптом.');
                         break;
@@ -190,38 +284,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             switchToHeroFallback(heroFallbackImg ? heroFallbackImg.src : null, true);
         });
-        heroVideoContainer.appendChild(videoElement);
-        if (soundButton && soundIcon) {
-            soundButton.onclick = () => { 
-                videoElement.muted = !videoElement.muted;
-                soundIcon.classList.toggle('fa-volume-mute', videoElement.muted);
-                soundIcon.classList.toggle('fa-volume-up', !videoElement.muted);
-            };
-        }
+        heroVideoContainer.appendChild(currentHeroVideoElement);
     }
-
-    function initializePlayer(videoId, playerId) { 
-         heroYouTubePlayer = new YT.Player(playerId, { 
-            height: '100%',
-            width: '100%',
-            videoId: videoId,
-            playerVars: {
-                'autoplay': 1,       
-                'controls': 0,       
-                'rel': 0,            
-                'iv_load_policy': 3, 
-                'modestbranding': 1, 
-                'loop': 0,          
-                'mute': 1,          
-                'vq': 'hd1080',      
-                'origin': window.location.origin 
-            },
-            events: { 
-                'onReady': onPlayerReady, 
-                'onStateChange': onPlayerStateChange, 
-                'onError': onPlayerError 
-            }
-        });
+    
+    function onPlayerReady(event) { 
+        console.log("[CLIENT DEBUG] YouTube Player Ready. ID:", event.target.getIframe().id);
+        event.target.playVideo(); 
+        heroVideoContainer.style.opacity = '1';
+        if(heroFallback) heroFallback.classList.remove('active');
+        heroSection.classList.add('video-playing');
+        heroSection.classList.remove('poster-active');
+        if (soundButton) soundButton.style.display = 'flex';
+        isHeroSoundActive = false; // Звук по умолчанию выключен (т.к. mute:1 в playerVars)
+        updateSoundButtonIcon(); 
     }
 
     function createYouTubePlayer(videoId) {
@@ -237,31 +312,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         playerDiv.id = 'youtube-player-hero'; 
         heroVideoContainer.appendChild(playerDiv);
 
-        initializePlayer(videoId, playerDiv.id); 
+         heroYouTubePlayer = new YT.Player(playerDiv.id, { 
+            height: '100%',
+            width: '100%',
+            videoId: videoId,
+            playerVars: {
+                'autoplay': 1,       
+                'controls': 0,       
+                'rel': 0,            
+                'iv_load_policy': 3, 
+                'modestbranding': 1, 
+                'loop': 0,          
+                'mute': 1,      // Начинаем без звука
+                'vq': 'hd1080',      
+                'origin': window.location.origin 
+            },
+            events: { 
+                'onReady': onPlayerReady, 
+                'onStateChange': onPlayerStateChange, 
+                'onError': onPlayerError 
+            }
+        });
     }
     
-    function onPlayerReady(event) {
-        event.target.playVideo();
-        heroVideoContainer.style.opacity = '1';
-        if(heroFallback) heroFallback.classList.remove('active');
-        heroSection.classList.add('video-playing');
-        heroSection.classList.remove('poster-active');
-        if (soundButton) soundButton.style.display = 'flex';
-        if (soundIcon && heroYouTubePlayer) {
-            soundIcon.classList.toggle('fa-volume-mute', heroYouTubePlayer.isMuted());
-            soundIcon.classList.toggle('fa-volume-up', !heroYouTubePlayer.isMuted());
-        }
-    }
-
     function onPlayerStateChange(event) {
         if (event.data === YT.PlayerState.ENDED) {
             switchToHeroFallback(heroFallbackImg ? heroFallbackImg.src : null, false);
         }
-        if (event.data === YT.PlayerState.PLAYING) {
+        // Дополнительная проверка для показа UI, если onReady не успел
+        if (event.data === YT.PlayerState.PLAYING && !heroSection.classList.contains('video-playing')) {
              heroVideoContainer.style.opacity = '1';
              if(heroFallback) heroFallback.classList.remove('active');
              heroSection.classList.add('video-playing');
              heroSection.classList.remove('poster-active');
+             if (soundButton) soundButton.style.display = 'flex';
+             isHeroSoundActive = false; // Убедимся, что звук считается выключенным
+             updateSoundButtonIcon();
         }
     }
 
@@ -279,6 +365,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             heroVideoContainer.innerHTML = ''; 
             heroVideoContainer.style.opacity = '0';
         }
+        currentHeroVideoElement = null; 
 
         if (heroFallbackImg && heroFallback) {
             if (backdropSrc && backdropSrc !== heroFallbackImg.src) {
@@ -291,32 +378,58 @@ document.addEventListener('DOMContentLoaded', async () => {
         heroSection.classList.remove('video-playing');
         heroSection.classList.add('poster-active');
         if (soundButton) soundButton.style.display = 'none';
+        isHeroSoundActive = false; 
+        updateSoundButtonIcon(); 
         heroSection.dataset.waitingForYt = 'false';
     }
 
     if (soundButton && soundIcon) {
         soundButton.addEventListener('click', () => {
-            if (heroYouTubePlayer && typeof heroYouTubePlayer.isMuted === 'function' && heroYouTubePlayer.getPlayerState && (heroYouTubePlayer.getPlayerState() === 1 || heroYouTubePlayer.getPlayerState() === 2) ) { 
-                if (heroYouTubePlayer.isMuted()) {
-                    heroYouTubePlayer.unMute();
-                    soundIcon.classList.remove('fa-volume-mute');
-                    soundIcon.classList.add('fa-volume-up');
-                } else {
-                    heroYouTubePlayer.mute();
-                    soundIcon.classList.remove('fa-volume-up');
-                    soundIcon.classList.add('fa-volume-mute');
+            const targetVolumeRatioOn = 0.1; 
+            const targetVolumeRatioOff = 0.0;  
+
+            let activeMedia = currentHeroVideoElement; 
+            if (!activeMedia && heroYouTubePlayer && typeof heroYouTubePlayer.getPlayerState === 'function' && heroYouTubePlayer.getPlayerState() !== -1) {
+                activeMedia = heroYouTubePlayer; 
+            }
+            
+            if (!activeMedia) {
+                console.warn("[CLIENT DEBUG] Sound button clicked, but no active media found.");
+                return;
+            }
+
+            const isHtml5 = activeMedia === currentHeroVideoElement;
+
+            if (isHeroSoundActive) { // Если звук сейчас включен (10%), выключаем его
+                animateVolume(activeMedia, targetVolumeRatioOff, 500);
+                isHeroSoundActive = false;
+            } else { // Если звук выключен, включаем его до 10%
+                if (isHtml5 && currentHeroVideoElement.paused) {
+                    console.log("[CLIENT DEBUG] HTML5 video was paused, attempting to play on sound toggle ON.");
+                    currentHeroVideoElement.play().then(() => {
+                        console.log("[CLIENT DEBUG] Play successful after sound button click for paused video.");
+                        // Убедимся, что muted = false перед анимацией громкости
+                        if (currentHeroVideoElement.muted) currentHeroVideoElement.muted = false;
+                        animateVolume(activeMedia, targetVolumeRatioOn, 100);
+                    }).catch(e => {
+                        console.warn("[CLIENT DEBUG] Error trying to play HTML5 video on sound toggle ON:", e);
+                        if (currentHeroVideoElement.muted) currentHeroVideoElement.muted = false;
+                        animateVolume(activeMedia, targetVolumeRatioOn, 1000); 
+                    });
+                } else if (!isHtml5 && heroYouTubePlayer) { // YouTube
+                    heroYouTubePlayer.playVideo(); 
+                    if (heroYouTubePlayer.isMuted()) heroYouTubePlayer.unMute(); // Явно размьютим перед анимацией
+                    animateVolume(activeMedia, targetVolumeRatioOn, 100);
+                } else { 
+                     if (isHtml5 && currentHeroVideoElement.muted) currentHeroVideoElement.muted = false;
+                     else if (!isHtml5 && heroYouTubePlayer && heroYouTubePlayer.isMuted()) heroYouTubePlayer.unMute();
+                     animateVolume(activeMedia, targetVolumeRatioOn, 1000);
                 }
-            } else { 
-                const html5Video = heroVideoContainer?.querySelector('video');
-                if (html5Video) {
-                    html5Video.muted = !html5Video.muted;
-                    soundIcon.classList.toggle('fa-volume-mute', html5Video.muted);
-                    soundIcon.classList.toggle('fa-volume-up', !html5Video.muted);
-                }
+                isHeroSoundActive = true;
             }
         });
     }
-
+    
     loadAndDisplayHeroContent();
 
     // --- Логика поиска и фильтров ---
@@ -531,7 +644,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await response.json();
             let resultsToDisplay = data.results || [];
 
-            if (query) {
+            if (query) { 
                 if (selectedGenreIdsArray.length > 0) {
                     const selectedGenreIdsAsNumbers = selectedGenreIdsArray.map(idStr => parseInt(idStr, 10));
                     resultsToDisplay = resultsToDisplay.filter(item => {
@@ -603,10 +716,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             items.forEach((item, index) => {
                 let mediaType = item.media_type;
-                if (!mediaType) {
+                if (!mediaType) { 
                     mediaType = searchedMediaTypeContext !== 'multi' ? searchedMediaTypeContext : (item.title ? 'movie' : 'tv');
                 }
-                if (mediaType === 'person') return;
+                if (mediaType === 'person') return; 
 
                 const title = item.title || item.name;
                 const releaseDate = item.release_date || item.first_air_date;
@@ -621,12 +734,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (item.genre_ids && item.genre_ids.length > 0 && currentGenreMap.size > 0) {
                     const names = item.genre_ids
                         .map(id => currentGenreMap.get(parseInt(id, 10)))
-                        .filter(name => name);
+                        .filter(name => name); 
                     if (names.length > 0) genreNames = names.join(', ');
                 }
                  if (genreNames === 'Жанры не указаны' && item.genre_ids && item.genre_ids.length > 0) {
                     if (currentGenreMap.size === 0 && (allMovieGenresMap.size === 0 || allTvGenresMap.size === 0)) {
-                       genreNames = 'Загрузка названий жанров...';
+                       genreNames = 'Загрузка названий жанров...'; 
                     } else {
                         genreNames = `ID жанров: ${item.genre_ids.join(', ')}`;
                     }
@@ -657,7 +770,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 requestAnimationFrame(() => {
                     setTimeout(() => {
                         itemElement.classList.add('visible');
-                    }, index * 50);
+                    }, index * 50); 
                 });
             });
         }
@@ -669,13 +782,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function displayError(message) {
-        clearSearchResults(false);
+        clearSearchResults(false); 
         const errorElement = document.createElement('p');
         errorElement.className = 'search-error-message';
         errorElement.textContent = `Ошибка: ${message}`;
         if (searchResultsContainer) {
             const oldGrid = searchResultsContainer.querySelector('.search-results-grid');
-            if (oldGrid) oldGrid.remove();
+            if (oldGrid) oldGrid.remove(); 
             searchResultsContainer.appendChild(errorElement);
         }
         if (loadingIndicator) loadingIndicator.style.display = 'none';
@@ -702,7 +815,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (mutation.attributeName === 'class') {
                     const isActive = newSearchModal.classList.contains('active');
                     if (isActive) {
-                         if (allMovieGenresMap.size === 0 && allTvGenresMap.size === 0) {
+                         if (allMovieGenresMap.size === 0 && allTvGenresMap.size === 0) { 
                             loadAndPopulateAllGenres();
                         }
                     }
@@ -719,7 +832,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (toggleButton && dropdownMenu) {
             toggleButton.addEventListener('click', (event) => {
-                event.stopPropagation();
+                event.stopPropagation(); 
                 const currentlyOpen = dropdown.classList.contains('open');
                 customDropdowns.forEach(otherDropdown => {
                     if (otherDropdown !== dropdown) otherDropdown.classList.remove('open');
@@ -730,9 +843,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                          const placeholder = document.createElement('p');
                          placeholder.className = 'genres-loading-placeholder';
                          placeholder.textContent = 'Загрузка жанров...';
-                         placeholder.style.cssText = "padding: 8px 10px; color: #A0A0A0; font-size: 0.9em; font-style: italic;";
+                         placeholder.style.cssText = "padding: 8px 10px; color: #A0A0A0; font-size: 0.9em; font-style: italic;"; 
                          dropdownMenu.appendChild(placeholder);
-                         loadAndPopulateAllGenres();
+                         loadAndPopulateAllGenres(); 
                     }
                 } else {
                     dropdown.classList.remove('open');
@@ -752,12 +865,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const selectedCheckboxes = dropdownElement.querySelectorAll('.dropdown-menu input[type="checkbox"]:checked');
         let selectedTexts = [];
         selectedCheckboxes.forEach(cb => {
-            selectedTexts.push(cb.dataset.genreName || cb.value);
+            selectedTexts.push(cb.dataset.genreName || cb.labels[0].textContent.trim() || cb.value);
         });
 
         if (selectedTexts.length > 0) {
             const isGenreDropdown = dropdownElement.dataset.dropdownId === "genres-movie";
-            const maxNamesToShow = isGenreDropdown ? 2 : 1;
+            const maxNamesToShow = isGenreDropdown ? 2 : 1; 
 
             if (selectedTexts.length <= maxNamesToShow) {
                 textElement.textContent = selectedTexts.join(', ');
@@ -768,8 +881,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             textElement.textContent = defaultText;
         }
     }
-
-    function updateToggleTextForGenres(dropdownElement) {
+    
+    function updateToggleTextForGenres(dropdownElement) { 
         if (!dropdownElement) return;
         const menu = dropdownElement.querySelector('.dropdown-menu');
         const toggleSpan = dropdownElement.querySelector('.dropdown-toggle span');
@@ -780,7 +893,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (menu && menu.querySelectorAll('label').length === 0 && !menu.querySelector('.genres-loading-placeholder')) {
              toggleSpan.textContent = "Жанры не найдены";
         }
-        else {
+        else { 
             updateToggleTextForDropdown(dropdownElement, "Выберите жанр(ы)");
         }
     }
@@ -806,11 +919,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.querySelectorAll('.movie-tile.active-details').forEach(activeTile => {
                 activeTile.classList.remove('active-details');
                 const details = activeTile.querySelector('.movie-details');
-                if (details) details.style.transform = 'translateY(100%)';
+                if (details) details.style.transform = 'translateY(100%)'; 
             });
         }
     });
 
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 20) navbar.classList.add('scrolled');
+            else navbar.classList.remove('scrolled');
+        }, { passive: true }); 
+    }
+    
     navbarButtons.forEach(button => {
         button.addEventListener('click', function(event) {
             event.preventDefault();
@@ -824,31 +945,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
-    const navbar = document.querySelector('.navbar');
-    if (navbar) {
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 20) navbar.classList.add('scrolled');
-            else navbar.classList.remove('scrolled');
-        }, { passive: true });
-    }
 
     if (profileButton) {
         profileButton.addEventListener('click', (event) => {
-            event.preventDefault();
+            event.preventDefault(); 
             window.location.href = profileButton.getAttribute('href');
         });
     }
 
     function initMovieTileInteractivity() {
         document.querySelectorAll('.movie-tile').forEach(tile => {
-            tile.removeEventListener('click', handleMovieTileClick);
+            tile.removeEventListener('click', handleMovieTileClick); 
             tile.addEventListener('click', handleMovieTileClick);
         });
     }
     function handleMovieTileClick(event) {
         const tile = event.currentTarget;
         const details = tile.querySelector('.movie-details');
-        if (!details || event.target.closest('button')) return;
+        if (!details || event.target.closest('button')) return; 
 
         document.querySelectorAll('.movie-tile.active-details').forEach(activeTile => {
             if (activeTile !== tile) {
@@ -861,16 +975,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         tile.classList.toggle('active-details');
         details.style.transform = tile.classList.contains('active-details') ? 'translateY(0)' : 'translateY(100%)';
     }
-
+    
     function setRatingColor(ratingElement, ratingValue) {
         if (!ratingElement) return;
         const rating = parseFloat(ratingValue);
-        ratingElement.classList.remove('rating-red', 'rating-gray', 'rating-green');
-        ratingElement.style.backgroundColor = '';
+        ratingElement.classList.remove('rating-red', 'rating-gray', 'rating-green'); 
+        ratingElement.style.backgroundColor = ''; 
 
         if (isNaN(rating) || rating === null || rating === undefined || rating === 0) {
-            ratingElement.textContent = '–';
-            ratingElement.style.backgroundColor = '#4a4a4a';
+            ratingElement.textContent = '–'; 
+            ratingElement.style.backgroundColor = '#4a4a4a'; 
             ratingElement.style.color = '#ccc';
             return;
         }
@@ -889,12 +1003,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     ];
     function renderMovies(gridElement, movieList) {
         if (!gridElement) return;
-        gridElement.innerHTML = '';
+        gridElement.innerHTML = ''; 
         movieList.forEach(movie => {
             const movieTile = document.createElement('div');
             movieTile.classList.add('movie-tile');
-            movieTile.dataset.tmdbId = movie.tmdb_id || movie.id;
-            movieTile.dataset.mediaType = movie.media_type || (movie.title && !movie.name ? 'movie' : 'tv');
+            movieTile.dataset.tmdbId = movie.tmdb_id || movie.id; 
+            movieTile.dataset.mediaType = movie.media_type || (movie.title && !movie.name ? 'movie' : 'tv'); 
 
             const ratingSpan = document.createElement('span');
             ratingSpan.classList.add('movie-rating');
@@ -902,8 +1016,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const posterUrl = movie.poster_path ? `${TMDB_IMAGE_BASE_URL}w342${movie.poster_path}` : (movie.poster || 'https://placehold.co/200x300/1a1a1a/ffffff?text=Нет+постера');
             let overview = movie.overview || 'Описание скоро будет...';
-            if (overview.length > 100) overview = overview.substring(0, 97) + '...';
-            const displayTitle = movie.title || movie.name;
+            if (overview.length > 100) overview = overview.substring(0, 97) + '...'; 
+            const displayTitle = movie.title || movie.name; 
 
             movieTile.innerHTML = `
                 <img src="${posterUrl}" alt="${displayTitle}" onerror="this.onerror=null;this.src='https://placehold.co/200x300/1a1a1a/ffffff?text=Ошибка';">
@@ -913,13 +1027,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <button class="action-button watch-from-tile-btn">Смотреть</button>
                 </div>
             `;
-            movieTile.insertBefore(ratingSpan, movieTile.querySelector('.movie-details'));
+            movieTile.insertBefore(ratingSpan, movieTile.querySelector('.movie-details')); 
             gridElement.appendChild(movieTile);
         });
-        initMovieTileInteractivity();
+        initMovieTileInteractivity(); 
+
         document.querySelectorAll('.watch-from-tile-btn').forEach(button => {
             button.addEventListener('click', (e) => {
-                e.stopPropagation();
+                e.stopPropagation(); 
                 const tile = e.target.closest('.movie-tile');
                 if (tile && tile.dataset.tmdbId && tile.dataset.mediaType) {
                     window.location.href = `watch.html?tmdbId=${tile.dataset.tmdbId}&type=${tile.dataset.mediaType}`;

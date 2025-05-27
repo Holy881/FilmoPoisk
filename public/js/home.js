@@ -5,9 +5,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const heroVideoContainer = heroSection?.querySelector('.hero-video-container');
     const heroFallback = heroSection?.querySelector('.hero-fallback');
     const heroFallbackImg = heroFallback?.querySelector('img');
-    const soundButton = heroSection?.querySelector('.sound-button');
-    const soundIcon = soundButton?.querySelector('i');
     
+    const heroActionButtonsContainer = heroSection?.querySelector('.hero-action-buttons-container');
+    const soundButton = heroActionButtonsContainer?.querySelector('.sound-button');
+    const soundIcon = soundButton?.querySelector('i');
+    const infoToggleButton = heroActionButtonsContainer?.querySelector('.info-toggle-button');
+    // const infoToggleIcon = infoToggleButton?.querySelector('i'); // Для смены иконки, если понадобится
+
     const heroContentDisplay = heroSection?.querySelector('.hero-content-display');
     const heroTitleElement = heroContentDisplay?.querySelector('.hero-title');
     const heroDescriptionElement = heroContentDisplay?.querySelector('.hero-description');
@@ -40,8 +44,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const BACKDROP_SIZE_HERO = 'original';
     const POSTER_SIZE_SEARCH = 'w154';
 
-    const DEFAULT_VOLUME_LEVEL = 0.1; // 10% громкости
-    const VOLUME_ANIMATION_DURATION = 1500; // 1.5 секунды
+    const DEFAULT_VOLUME_LEVEL = 0.1; 
+    const VOLUME_ANIMATION_DURATION = 1500; 
 
     let searchTimeout;
     let allMovieGenresMap = new Map();
@@ -50,7 +54,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let ytApiLoaded = false;
     let ytApiLoading = false;
     let isHeroSoundActive = false; 
-    let currentHeroVideoElement = null; 
+    let currentHeroVideoElement = null;
+    let isInfoPinned = false; 
 
     function animateVolume(media, targetVolumeRatio, duration) { 
         const isYouTube = typeof media.setVolume === 'function';
@@ -78,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 media.volume = targetVolumeRatio;
                 media.muted = (targetVolumeRatio === 0);
             }
-            updateSoundButtonIcon(); // Обновляем иконку после установки громкости
+            updateSoundButtonIcon();
             console.log(`[CLIENT DEBUG] Volume already at target. Target: ${targetVolumeRatio.toFixed(2)}`);
             return;
         }
@@ -108,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     media.muted = (targetVolumeRatio === 0); 
                 }
                 console.log(`[CLIENT DEBUG] Volume animation finished. Final volume ratio: ${targetVolumeRatio.toFixed(2)}`);
-                updateSoundButtonIcon(); // Обновляем иконку в конце анимации
+                updateSoundButtonIcon();
             }
         }
         requestAnimationFrame(animationStep);
@@ -125,6 +130,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         console.log(`[CLIENT DEBUG] Updated sound icon. isHeroSoundActive: ${isHeroSoundActive}`);
     }
+
+    function updateInfoToggleButtonState() {
+        if (!infoToggleButton || !heroContentDisplay || !heroSection) return;
+        
+        if (isInfoPinned) {
+            infoToggleButton.classList.add('active');
+            heroContentDisplay.classList.add('visible');
+            heroSection.classList.add('info-pinned');
+        } else {
+            infoToggleButton.classList.remove('active');
+            heroSection.classList.remove('info-pinned');
+            // Видимость .hero-content-display теперь будет управляться CSS :hover,
+            // если мышь наведена, он будет виден. Если нет - скрыт.
+            // Принудительно скрываем только если мышь НЕ наведена.
+            if (!heroSection.matches(':hover')) {
+                heroContentDisplay.classList.remove('visible');
+            } else {
+                 // Если мышь наведена, но не закреплено, CSS :hover должен показать.
+                 // Убедимся, что JS не мешает этому, если visible был удален ранее.
+                 // Но в данном случае, если !isInfoPinned, то класс visible будет управляться
+                 // только CSS :hover, поэтому явное добавление/удаление здесь не всегда нужно,
+                 // кроме как при откреплении.
+            }
+        }
+        console.log(`[CLIENT DEBUG] Updated info toggle. Pinned: ${isInfoPinned}, Content visible: ${heroContentDisplay.classList.contains('visible')}`);
+    }
+
 
     function loadYouTubeAPI() {
         if (ytApiLoaded || ytApiLoading) return;
@@ -185,7 +217,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             heroFallbackImg.src = backdropUrl;
             heroFallbackImg.alt = `Задник для ${data.title}`;
             heroSection.dataset.videoType = data.video_info.type;
-            isHeroSoundActive = false; // Звук по умолчанию выключен
+            
+            isHeroSoundActive = false; 
+            isInfoPinned = false; 
+            heroSection.classList.remove('info-pinned');
+            heroContentDisplay.classList.remove('visible'); 
+            updateInfoToggleButtonState(); // Обновляем состояние кнопки инфо
+
 
             if (data.video_info.type === 'youtube' && data.video_info.key_or_url) {
                 heroSection.dataset.waitingForYt = 'true';
@@ -222,7 +260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         currentHeroVideoElement.src = videoSrc;
         currentHeroVideoElement.autoplay = true; 
-        currentHeroVideoElement.muted = true;    // Начинаем без звука - это ключ к автовоспроизведению!
+        currentHeroVideoElement.muted = true;    
         currentHeroVideoElement.loop = false;
         currentHeroVideoElement.controls = false;
         currentHeroVideoElement.playsInline = true; 
@@ -239,9 +277,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             heroSection.classList.add('video-playing');
             heroSection.classList.remove('poster-active');
             if (soundButton) soundButton.style.display = 'flex';
+            if (infoToggleButton) infoToggleButton.style.display = 'flex'; 
             
-            isHeroSoundActive = false; // Убедимся, что звук считается выключенным
-            updateSoundButtonIcon();    // Установить иконку в fa-volume-mute
+            isHeroSoundActive = false; 
+            updateSoundButtonIcon();    
+            updateInfoToggleButtonState(); // Обновить состояние кнопки инфо
     
             currentHeroVideoElement.removeEventListener('playing', onPlayingHandler); 
         };
@@ -256,6 +296,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             isHeroSoundActive = false; 
             updateSoundButtonIcon(); 
+            updateInfoToggleButtonState();
             currentHeroVideoElement.removeEventListener('canplay', onCanPlayHandler);
         };
         currentHeroVideoElement.addEventListener('canplay', onCanPlayHandler);
@@ -299,9 +340,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         heroSection.classList.add('video-playing');
         heroSection.classList.remove('poster-active');
         if (soundButton) soundButton.style.display = 'flex';
+        if (infoToggleButton) infoToggleButton.style.display = 'flex'; 
         
-        isHeroSoundActive = false; // Звук по умолчанию выключен (т.к. mute:1 в playerVars)
+        isHeroSoundActive = false; 
         updateSoundButtonIcon(); 
+        updateInfoToggleButtonState();
     }
 
     function createYouTubePlayer(videoId) {
@@ -328,7 +371,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 'iv_load_policy': 3, 
                 'modestbranding': 1, 
                 'loop': 0,          
-                'mute': 1,      // Начинаем без звука
+                'mute': 1,      
                 'vq': 'hd1080',      
                 'origin': window.location.origin 
             },
@@ -350,8 +393,10 @@ document.addEventListener('DOMContentLoaded', async () => {
              heroSection.classList.add('video-playing');
              heroSection.classList.remove('poster-active');
              if (soundButton) soundButton.style.display = 'flex';
+             if (infoToggleButton) infoToggleButton.style.display = 'flex';
              isHeroSoundActive = false; 
              updateSoundButtonIcon();
+             updateInfoToggleButtonState();
         }
     }
 
@@ -382,9 +427,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         heroSection.classList.remove('video-playing');
         heroSection.classList.add('poster-active');
         if (soundButton) soundButton.style.display = 'none';
+        if (infoToggleButton) infoToggleButton.style.display = 'none';
         isHeroSoundActive = false; 
         updateSoundButtonIcon(); 
         heroSection.dataset.waitingForYt = 'false';
+        
+        isInfoPinned = false; // Сбрасываем пин при смене контента
+        heroSection.classList.remove('info-pinned'); 
+        heroContentDisplay.classList.remove('visible');
+        updateInfoToggleButtonState();
     }
 
     if (soundButton && soundIcon) {
@@ -404,10 +455,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const isHtml5 = activeMedia === currentHeroVideoElement;
 
-            if (isHeroSoundActive) { // Если звук сейчас включен (10%), выключаем его
+            if (isHeroSoundActive) { 
                 animateVolume(activeMedia, targetVolumeOff, VOLUME_ANIMATION_DURATION);
                 isHeroSoundActive = false;
-            } else { // Если звук выключен, включаем его до 10%
+            } else { 
                 if (isHtml5 && currentHeroVideoElement.paused) {
                     console.log("[CLIENT DEBUG] HTML5 video was paused, attempting to play on sound toggle ON.");
                     currentHeroVideoElement.play().then(() => {
@@ -415,17 +466,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                         animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION);
                     }).catch(e => {
                         console.warn("[CLIENT DEBUG] Error trying to play HTML5 video on sound toggle ON:", e);
-                        // Все равно пытаемся анимировать громкость, т.к. muted уже будет false из animateVolume
                         animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION); 
                     });
-                } else if (!isHtml5 && heroYouTubePlayer) { // YouTube
-                    heroYouTubePlayer.playVideo(); // Убедимся, что играет
+                } else if (!isHtml5 && heroYouTubePlayer) { 
+                    heroYouTubePlayer.playVideo(); 
                     animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION);
-                } else { // HTML5 уже играет или это не HTML5 (но не YouTube), просто анимируем громкость
+                } else { 
                      animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION);
                 }
                 isHeroSoundActive = true;
             }
+        });
+    }
+
+    if (infoToggleButton && heroContentDisplay && heroSection) {
+        infoToggleButton.addEventListener('click', () => {
+            isInfoPinned = !isInfoPinned;
+            updateInfoToggleButtonState();
+        });
+
+        heroSection.addEventListener('mouseenter', () => {
+            if (!isInfoPinned && heroContentDisplay) {
+                heroContentDisplay.classList.add('visible');
+            }
+            // updateInfoToggleButtonState(); // Обновляем состояние кнопки при наведении, если нужно менять ее вид
+        });
+        heroSection.addEventListener('mouseleave', () => {
+            if (!isInfoPinned && heroContentDisplay) {
+                heroContentDisplay.classList.remove('visible');
+            }
+            // updateInfoToggleButtonState(); // Обновляем состояние кнопки при уходе мыши
         });
     }
     

@@ -58,7 +58,6 @@ body {
     padding-top: $navbar-height;
 }
 
-// Стилизация input[type="number"]
 input[type="number"] {
     -moz-appearance: textfield;
     appearance: textfield;
@@ -96,7 +95,6 @@ input[type="number"] {
     }
 }
 
-/* --- Общий стиль для кнопок --- */
 .action-button {
     color: $text-secondary-color;
     background-color: transparent;
@@ -128,7 +126,6 @@ input[type="number"] {
     }
 }
 
-/* --- Navbar --- */
 .navbar {
     position: fixed;
     top: 0;
@@ -196,7 +193,6 @@ input[type="number"] {
     }
 }
 
-/* --- Модальное окно поиска --- */
 .search-modal {
     visibility: hidden; opacity: 0; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background-color: rgba(0,0,0,0.85); z-index: 1010; display: flex; justify-content: center; align-items: center;
@@ -378,51 +374,49 @@ input[type="number"] {
 .hero {
     position: relative; width: 100%; height: calc(100vh - #{$navbar-height});
     overflow: hidden; margin-top: -$navbar-height;
-    background-color: $bg-color; // Фон на случай, если ни видео, ни fallback не загрузятся
+    background-color: $bg-color;
 
-    .hero-video-container { // Контейнер для iframe или video тега
+    .hero-video-container { 
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
         z-index: 1;
-        background-color: #000; // Черный фон под видео
-        opacity: 0; // Начально скрыт, JS сделает видимым
+        background-color: #000; 
+        opacity: 0; 
         transition: opacity 0.5s ease-in-out;
 
         iframe, video {
             width: 100%;
             height: 100%;
-            object-fit: cover; // Для <video>, для iframe может не сработать идеально без JS
-            border: none; // Убираем рамку у iframe
+            object-fit: cover; 
+            border: none; 
         }
     }
 
     .hero-fallback {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        z-index: 0; // Ниже чем видео контейнер
+        z-index: 0; 
         opacity: 0;
         transition: opacity 0.5s ease-in-out;
         img {
             width: 100%; height: 100%;
             object-fit: cover;
         }
-        &.active { // Показываем fallback, когда он активен
-            opacity: 1 !important; // Важно, чтобы перекрыть opacity контейнера видео, если он тоже 0
-            z-index: 2; // Выше чем контейнер видео, если видео не играет
+        &.active { 
+            opacity: 1 !important; 
+            z-index: 2; 
         }
     }
-    // Если видео играет, контейнер видео должен быть выше fallback
     &.video-playing .hero-video-container {
         opacity: 1;
         z-index: 3;
     }
-     &.video-playing .hero-fallback { // И скрываем fallback
+     &.video-playing .hero-fallback { 
         opacity: 0;
         z-index: 0;
     }
-    // Когда активен постер (fallback)
     &.poster-active .hero-fallback {
         opacity: 1 !important;
         z-index: 2;
@@ -432,17 +426,70 @@ input[type="number"] {
         z-index: 1;
     }
 
-
     .hero-overlay {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         display: flex; flex-direction: column; justify-content: flex-end;
         align-items: flex-start; padding: 0 5% 50px;
         background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 70%);
-        z-index: 4; // Выше видео и fallback, но ниже UI элементов, если они есть поверх
+        z-index: 4; 
     }
 
-    .hero-content-display { // Общий контейнер для информации
-        // Стили могут быть общими, или можно специфично управлять через .video-playing и .poster-active на .hero
+    .hero-action-buttons-container {
+        position: absolute;
+        bottom: 160px; 
+        right: 20px;
+        z-index: 5;
+        display: flex;
+        flex-direction: column; 
+        gap: 12px; // Немного увеличим отступ между кнопками
+
+        .hero-action-icon {
+            @extend .action-button; // Наследуем базовый стиль
+            background-color: rgba($input-bg-color, 0.5); // Полупрозрачный фон
+            border: 1px solid rgba($border-color,0.4);
+            border-radius: 50%; // Круглые кнопки
+            width: 44px; 
+            height: 44px;
+            font-size: 1.2em; // Размер иконки
+            padding: 0; // Убираем внутренние отступы, т.к. иконка центрируется
+            color: $text-secondary-color;
+            backdrop-filter: blur(4px); // Эффект размытия фона
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+            display: none; // Начально скрыты, JS покажет
+
+            i { // Для центрирования иконки внутри кнопки
+                line-height: 1; 
+            }
+
+            &:hover {
+                background-color: rgba($input-bg-color, 0.8);
+                color: $text-color;
+                transform: scale(1.1);
+                border-color: rgba($interactive-border-color, 0.6);
+            }
+            // &.active для info-toggle-button будет управляться через JS, если нужно особое состояние
+            &.active { 
+                 background-color: rgba($interactive-active-bg-color, 0.9);
+                 color: $text-color;
+                 border-color: rgba($interactive-border-color, 0.8);
+            }
+        }
+    }
+
+    .hero-content-display {
+        opacity: 0; 
+        visibility: hidden;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease-out, visibility 0s 0.3s, transform 0.3s ease-out;
+        max-width: 60%; 
+
+        &.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            transition-delay: 0s;
+        }
+
         .hero-title {
             font-size: 3.5em;
             margin-bottom: 15px;
@@ -459,9 +506,8 @@ input[type="number"] {
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
-            -webkit-line-clamp: 3; // Ограничиваем 3 строками
+            -webkit-line-clamp: 3; 
             line-clamp: 3;
-            max-width: 60%;
         }
         .hero-button.action-button {
             padding: 12px 25px; font-size: 1.1em; margin-right: 0;
@@ -479,24 +525,27 @@ input[type="number"] {
         }
     }
 
-
-    .sound-button {
-        @extend .action-button;
-        position: absolute; bottom: 160px; right: 20px; // Положение может потребовать корректировки
-        background-color: rgba($input-bg-color, 0.4);
-        border: 1px solid rgba($border-color,0.3);
-        border-radius: 50%; width: 40px; height: 40px;
-        font-size: 1.2em; z-index: 5; // Выше оверлея
-        margin-right: 0; padding: 0;
-        color: $text-secondary-color;
-        backdrop-filter: blur(3px);
-        display: none; // Начально скрыта, JS покажет при наличии видео
-        &:hover {
-            background-color: rgba($input-bg-color, 0.7);
-            color: $text-color;
-            border-color: rgba($border-color, 0.6);
+    // Показываем контент при наведении на .hero, если нет класса .info-pinned
+    &:not(.info-pinned):hover {
+        .hero-content-display {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            transition-delay: 0s; // Показываем сразу при ховере
         }
     }
+    // Если есть класс .info-pinned, контент всегда видим (управляется кнопкой)
+    // Этот класс будет добавляться/удаляться через JS
+    &.info-pinned {
+        .hero-content-display {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            transition-delay: 0s;
+        }
+    }
+    // Удаляем старый стиль для .sound-button, если он еще есть
+    // .sound-button { ... } 
 }
 
 /* --- Стили для секций с плитками фильмов --- */
@@ -557,7 +606,7 @@ input[type="number"] {
     }
 }
 
-// --- Стили для результатов поиска ---
+/* --- Стили для результатов поиска --- */
 .search-modal-main {
     .search-results-grid {
         display: flex;
@@ -677,15 +726,12 @@ input[type="number"] {
     }
 }
 
-// Анимация для спиннера
 @keyframes spinner {
     to {
         transform: rotate(360deg);
     }
 }
 
-
-// Медиа-запросы
 @media (max-width: 1024px) {
     .hero .hero-content-display .hero-title { font-size: 2.8em; }
     .hero .hero-content-display .hero-description { font-size: 1.05em; max-width: 70%; }
@@ -753,7 +799,14 @@ input[type="number"] {
             .hero-description { font-size: 0.9em; -webkit-line-clamp: 3; line-clamp: 3; margin-bottom: 15px; max-width: 100%;}
             .hero-button.action-button { padding: 10px 18px; font-size: 0.95em; }
         }
-        .sound-button { bottom: 20px; right: 15px; width: 35px; height: 35px; font-size: 1em; }
+        .hero-action-buttons-container { 
+            bottom: 20px; 
+            right: 15px;
+            flex-direction: row; 
+            .hero-action-icon {
+                width: 38px; height: 38px; font-size: 1em; // Сделаем чуть больше для мобильных
+            }
+        }
     }
     .content-area { padding-top: 0;}
     .movie-list {

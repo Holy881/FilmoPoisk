@@ -40,9 +40,16 @@
         </div>
         <div class="navbar-right">
             <button class="navbar-icon" id="search-button"><i class="fas fa-search"></i></button>
-            <a href="profile" class="navbar-icon" id="user-profile-link">
-                <span id="user-profile-icon-container"><i class="fas fa-user"></i></span>
-            </a>
+            <div class="navbar-profile-container"> <a href="profile" class="navbar-icon" id="user-profile-link">
+                    <span id="user-profile-icon-container"><i class="fas fa-user"></i></span>
+                </a>
+                <div class="profile-dropdown" id="profile-dropdown-menu">
+                    <div class="dropdown-username" id="dropdown-username-display">Никнейм</div>
+                    <hr class="dropdown-divider">
+                    <button class="dropdown-button" id="dropdown-profile-button">Профиль</button>
+                    <button class="dropdown-button" id="dropdown-logout-button">Выход</button>
+                </div>
+            </div>
         </div>
     </nav>
 

@@ -5,7 +5,8 @@ $bg-color: #0D0D0D;
 $surface-color: #1A1A1A;
 $sidebar-bg-color: #171717;
 $input-bg-color: #2C2C2C;
-$dropdown-bg-color: #222222;
+$dropdown-bg-color: #222222; // Используется для основного дропдауна фильтров
+$profile-dropdown-bg-color: #282828; // Цвет для дропдауна профиля
 $text-color: #E0E0E0;
 $text-secondary-color: #A0A0A0;
 $border-color: #383838;
@@ -39,7 +40,7 @@ $tile-details-height: 150px;
         background-color: lighten($border-color, 20%);
     }
 }
-body, .dropdown-menu, .search-modal-sidebar, .search-modal-main {
+body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown {
   scrollbar-width: thin;
   scrollbar-color: lighten($border-color, 10%) darken($input-bg-color, 10%);
 }
@@ -177,18 +178,21 @@ input[type="number"] {
              color: $interactive-text-color;
         }
     }
+    .navbar-profile-container {
+        position: relative; 
+    }
     .navbar-icon {
         @extend .action-button;
         background-color: transparent;
         border-color: transparent;
-        padding: 8px; // Базовый паддинг
+        padding: 8px; 
         font-size: 1.3em;
         margin-left: 5px;
         color: $text-secondary-color;
-        width: 40px;   // Фиксированная ширина для консистентности
-        height: 40px;  // Фиксированная высота
+        width: 40px;  
+        height: 40px; 
         text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
-        display: inline-flex; // Для корректного центрирования содержимого
+        display: inline-flex; 
         align-items: center;
         justify-content: center;
         
@@ -212,11 +216,73 @@ input[type="number"] {
             object-fit: cover;
             display: block; 
         }
-        // Если нужно, чтобы иконка и аватар занимали одинаковое место
-        // i.fas.fa-user {
-        //    font-size: 1.3em; // Уже есть от .navbar-icon
-        //    line-height: 1; // Для лучшего вертикального центрирования иконки
-        // }
+    }
+
+    .profile-dropdown {
+        position: absolute;
+        top: calc(100% + 10px); 
+        right: 0;
+        background-color: $profile-dropdown-bg-color;
+        border: 1px solid $border-color;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        z-index: 1001; 
+        width: 200px;
+        padding: 10px;
+        // Убираем display: none; используем visibility и opacity для анимации
+        visibility: hidden; // Скрыто по умолчанию
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s 0.2s; // visibility с задержкой
+
+        &.active {
+            visibility: visible; // Показываем
+            opacity: 1;
+            transform: translateY(0);
+            transition-delay: 0s; // Сбрасываем задержку для visibility при активации
+        }
+
+        .dropdown-username {
+            padding: 8px 12px;
+            font-size: 0.95em;
+            color: $text-color;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .dropdown-divider {
+            border: none;
+            border-top: 1px solid $border-color;
+            margin: 8px 0;
+        }
+        .dropdown-button {
+            @extend .action-button; 
+            width: 100%;
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            background-color: transparent;
+            border-color: transparent;
+            color: $text-secondary-color;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+
+            &:hover {
+                background-color: lighten($profile-dropdown-bg-color, 8%);
+                color: $text-color;
+                border-color: transparent; 
+            }
+             &.logout-button:hover { 
+                background-color: darken($rating-red, 10%);
+                color: $text-color;
+            }
+        }
     }
 }
 
@@ -798,14 +864,28 @@ input[type="number"] {
         .navbar-right {
             margin-top: 0; width: 100%; display: flex;
             justify-content: space-around; padding: 0;
-             .navbar-icon {
+             .navbar-icon { // Применяется и к .navbar-profile-container > .navbar-icon
                 margin: 0; padding: 10px; flex-grow: 1; justify-content: center;
                 border-radius: 0; border-left: 1px solid $border-color;
                 background-color: $surface-color;
                 color: $text-color;
-                &:first-child { border-left: none;}
+                &:first-child { border-left: none;} // Для кнопки поиска
                 &:hover { background-color: $interactive-hover-bg-color;}
              }
+             .navbar-profile-container { // Адаптация контейнера профиля
+                flex-grow: 1; // Чтобы занимал место как и другие иконки
+                display: flex; // Для центрирования .navbar-icon внутри
+                justify-content: center;
+                border-left: 1px solid $border-color;
+                &:first-child { border-left: none;}
+                .navbar-icon { border-left: none; } // Убираем двойную рамку
+             }
+        }
+        .profile-dropdown { // Адаптация дропдауна для мобильных
+            width: calc(100% - 20px); // Немного уже экрана
+            left: 10px; // Центрируем
+            right: 10px;
+            top: calc(100% + 5px); // Чуть ниже
         }
     }
     .search-modal {

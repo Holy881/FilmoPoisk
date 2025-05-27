@@ -20,7 +20,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const navbarButtons = document.querySelectorAll('.navbar-button');
     const userProfileLink = document.getElementById('user-profile-link'); 
     const userProfileIconContainer = document.getElementById('user-profile-icon-container'); 
+    const profileDropdownMenu = document.getElementById('profile-dropdown-menu'); 
+    const dropdownUsernameDisplay = document.getElementById('dropdown-username-display'); 
+    const dropdownProfileButton = document.getElementById('dropdown-profile-button'); 
+    const dropdownLogoutButton = document.getElementById('dropdown-logout-button'); 
     
+    console.log('[INIT] userProfileLink:', userProfileLink);
+    console.log('[INIT] profileDropdownMenu:', profileDropdownMenu);
+
+
     const newSearchButton = document.getElementById('search-button');
     const newSearchModal = document.getElementById('search-modal');
     const searchInput = newSearchModal?.querySelector('.search-modal-input');
@@ -29,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loadingIndicator = searchResultsContainer?.querySelector('.search-loading-indicator');
 
     const genreDropdownMovieElement = newSearchModal?.querySelector('.custom-dropdown[data-dropdown-id="genres-movie"]');
-    const genreDropdownMovieMenu = genreDropdownMovieElement?.querySelector('.dropdown-menu');
+    const genreDropdownMovieMenuElement = genreDropdownMovieElement?.querySelector('.dropdown-menu'); 
 
     const typeFilterCheckboxes = newSearchModal?.querySelectorAll('input[name="type_filter"]');
     const typeDropdownElement = newSearchModal?.querySelector('.custom-dropdown[data-dropdown-id="type"]');
@@ -53,56 +61,154 @@ document.addEventListener('DOMContentLoaded', async () => {
     let isHeroSoundActive = false; 
     let currentHeroVideoElement = null;
     let isInfoPinned = false; 
+    let currentUserData = null; 
 
-    const DEFAULT_AVATAR_PATH = '/images/default-avatar.png'; // Путь к дефолтному аватару, если он есть на сервере
+    const DEFAULT_AVATAR_PATH = '/images/default-avatar.png'; 
 
     function setDefaultUserIcon() {
-        if (!userProfileIconContainer) return;
+        console.log('[DEBUG] setDefaultUserIcon called');
+        if (!userProfileIconContainer) {
+            console.error('[DEBUG] userProfileIconContainer is null in setDefaultUserIcon');
+            return;
+        }
         userProfileIconContainer.innerHTML = '<i class="fas fa-user"></i>';
+        if (dropdownUsernameDisplay) {
+            dropdownUsernameDisplay.textContent = 'Гость';
+        }
     }
 
     async function updateUserProfileDisplay() {
+        console.log('[DEBUG] updateUserProfileDisplay called');
         if (!userProfileIconContainer) {
-            console.error('User profile icon container not found');
+            console.error('[DEBUG] userProfileIconContainer is null in updateUserProfileDisplay');
+            setDefaultUserIcon(); 
+            if (profileDropdownMenu) profileDropdownMenu.classList.remove('active');
             return;
         }
 
         const userId = localStorage.getItem('userId');
+        console.log('[DEBUG] updateUserProfileDisplay - userId from localStorage:', userId);
+
         if (userId) {
             try {
-                // Запрос данных пользователя с сервера
-                const response = await fetch(`/api/user/${userId}`); // Используем относительный путь
+                const response = await fetch(`/api/user/${userId}`); 
+                console.log('[DEBUG] updateUserProfileDisplay - fetch response status:', response.status);
                 if (!response.ok) {
-                    console.error('Ошибка при получении данных пользователя:', response.status);
-                    setDefaultUserIcon();
+                    const errorText = await response.text().catch(() => 'Failed to get error text');
+                    console.error('[DEBUG] Ошибка при получении данных пользователя:', response.status, errorText);
+                    localStorage.removeItem('userId'); 
+                    currentUserData = null;
+                    setDefaultUserIcon(); 
+                    if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); 
                     return;
                 }
-                const userData = await response.json();
-                // Проверяем, есть ли аватар и не является ли он путем к дефолтному аватару (если такая логика есть)
-                if (userData.avatar && userData.avatar !== DEFAULT_AVATAR_PATH) {
+                currentUserData = await response.json();
+                console.log('[DEBUG] updateUserProfileDisplay - currentUserData:', currentUserData);
+                
+                if (dropdownUsernameDisplay && currentUserData && currentUserData.username) {
+                    dropdownUsernameDisplay.textContent = currentUserData.username;
+                } else if (dropdownUsernameDisplay) {
+                    dropdownUsernameDisplay.textContent = 'Пользователь'; 
+                }
+
+                if (currentUserData && currentUserData.avatar && currentUserData.avatar !== DEFAULT_AVATAR_PATH) {
                     const avatarImg = document.createElement('img');
-                    // Убедимся, что URL аватара полный, если он относительный
-                    avatarImg.src = userData.avatar.startsWith('/') ? userData.avatar : `/${userData.avatar}`;
+                    avatarImg.src = currentUserData.avatar.startsWith('/') ? currentUserData.avatar : `/${currentUserData.avatar}`;
                     avatarImg.alt = 'Аватар пользователя';
                     avatarImg.className = 'navbar-avatar';
                     avatarImg.onerror = () => {
-                        console.warn('Не удалось загрузить аватар, используется иконка по умолчанию.');
-                        setDefaultUserIcon();
+                        console.warn('[DEBUG] Не удалось загрузить аватар, используется иконка по умолчанию.');
+                        if(userProfileIconContainer) userProfileIconContainer.innerHTML = '<i class="fas fa-user"></i>'; 
                     };
                     userProfileIconContainer.innerHTML = ''; 
                     userProfileIconContainer.appendChild(avatarImg);
                 } else {
-                    setDefaultUserIcon();
+                    if(userProfileIconContainer) userProfileIconContainer.innerHTML = '<i class="fas fa-user"></i>';
                 }
             } catch (error) {
-                console.error('Сетевая ошибка или ошибка парсинга JSON при получении данных пользователя:', error);
-                setDefaultUserIcon();
+                console.error('[DEBUG] Сетевая ошибка или ошибка парсинга JSON:', error);
+                localStorage.removeItem('userId'); 
+                currentUserData = null;
+                setDefaultUserIcon(); 
+                if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); 
             }
         } else {
-            // Пользователь не вошел в систему
-            setDefaultUserIcon();
+            console.log('[DEBUG] No userId in localStorage, setting default icon and hiding dropdown.');
+            currentUserData = null;
+            setDefaultUserIcon(); 
+            if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); 
         }
     }
+
+    if (userProfileLink) {
+        userProfileLink.addEventListener('click', (event) => {
+            event.preventDefault(); 
+            event.stopPropagation();
+            const userId = localStorage.getItem('userId');
+            console.log('[DEBUG] Profile link clicked. userId:', userId); 
+
+            if (userId) { 
+                if (profileDropdownMenu) {
+                    const isActive = profileDropdownMenu.classList.contains('active');
+                    console.log('[DEBUG] Before toggle. Dropdown active state:', isActive);
+                    profileDropdownMenu.classList.toggle('active');
+                    console.log('[DEBUG] After toggle. Dropdown active state:', profileDropdownMenu.classList.contains('active'));
+
+                    if (profileDropdownMenu.classList.contains('active')) { 
+                        console.log('[DEBUG] Dropdown is now active. Updating user display.');
+                        if (dropdownUsernameDisplay) { 
+                           dropdownUsernameDisplay.textContent = currentUserData?.username || 'Загрузка...';
+                        }
+                        updateUserProfileDisplay(); 
+                    } else {
+                        console.log('[DEBUG] Dropdown is now inactive.');
+                    }
+                } else {
+                    console.error('[DEBUG] profileDropdownMenu not found on click!');
+                }
+            } else {
+                console.log('[DEBUG] User not logged in, redirecting to /auth');
+                window.location.href = '/auth';
+            }
+        });
+    } else {
+        console.error('[DEBUG] userProfileLink not found!');
+    }
+
+    if (dropdownProfileButton) {
+        dropdownProfileButton.addEventListener('click', () => {
+            console.log('[DEBUG] Profile button in dropdown clicked.');
+            window.location.href = '/profile'; 
+            if (profileDropdownMenu) profileDropdownMenu.classList.remove('active');
+        });
+    } else {
+         console.error('[DEBUG] dropdownProfileButton not found!');
+    }
+
+    if (dropdownLogoutButton) {
+        dropdownLogoutButton.addEventListener('click', () => {
+            console.log('[DEBUG] Logout button clicked.');
+            localStorage.removeItem('userId');
+            currentUserData = null; 
+            // updateUserProfileDisplay(); // Обновит иконку и скроет дропдаун
+            // Вместо перехода на /auth, перезагружаем текущую страницу
+            window.location.reload(); 
+        });
+    } else {
+        console.error('[DEBUG] dropdownLogoutButton not found!');
+    }
+
+    document.addEventListener('click', (event) => {
+        if (profileDropdownMenu && profileDropdownMenu.classList.contains('active')) {
+            const isClickInsideDropdown = profileDropdownMenu.contains(event.target);
+            const isClickOnProfileLink = userProfileLink && userProfileLink.contains(event.target); 
+            
+            if (!isClickInsideDropdown && !isClickOnProfileLink) {
+                console.log('[DEBUG] Click outside dropdown, closing it.');
+                profileDropdownMenu.classList.remove('active');
+            }
+        }
+    });
 
 
     function animateVolume(media, targetVolumeRatio, duration) { 
@@ -118,11 +224,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             media.volume = targetVolumeRatio;
             media.muted = (targetVolumeRatio === 0);
             updateSoundButtonIcon();
-            console.log(`[CLIENT DEBUG] Volume already at target. Target: ${targetVolumeRatio.toFixed(2)}`);
             return;
         }
-    
-        console.log(`[CLIENT DEBUG] Animating volume. From: ${startVolumeRatio.toFixed(2)}, To: ${targetVolumeRatio.toFixed(2)}, Duration: ${duration}ms`);
     
         function animationStep(timestamp) {
             if (!startTime) startTime = timestamp;
@@ -136,7 +239,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else { 
                 media.volume = targetVolumeRatio;
                 media.muted = (targetVolumeRatio === 0); 
-                console.log(`[CLIENT DEBUG] Volume animation finished. Final volume ratio: ${targetVolumeRatio.toFixed(2)}`);
                 updateSoundButtonIcon();
             }
         }
@@ -152,7 +254,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else { 
             soundIcon.classList.add('fa-volume-mute');
         }
-        console.log(`[CLIENT DEBUG] Updated sound icon. isHeroSoundActive: ${isHeroSoundActive}`);
     }
 
     function updateInfoToggleButtonState() {
@@ -160,17 +261,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (isInfoPinned) {
             infoToggleButton.classList.add('active');
-            heroSection.classList.add('info-pinned');
+            if(heroSection) heroSection.classList.add('info-pinned');
         } else {
             infoToggleButton.classList.remove('active');
-            heroSection.classList.remove('info-pinned');
+            if(heroSection) heroSection.classList.remove('info-pinned');
         }
-        console.log(`[CLIENT DEBUG] Updated info toggle. Pinned: ${isInfoPinned}`);
     }
     
     async function loadAndDisplayHeroContent() {
         if (!heroSection || !heroTitleElement || !heroDescriptionElement || !heroWatchButton || !heroFallbackImg) {
-            console.error("Один или несколько элементов Hero не найдены в DOM.");
             return;
         }
         try {
@@ -180,25 +279,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             const data = await response.json();
             if (data.error) {
-                console.error("Ошибка от сервера (hero):", data.error);
                 switchToHeroFallback(null, true);
                 return;
             }
             
-            console.log('[CLIENT DEBUG] Получено от сервера video_info:', data.video_info);
-
             heroTitleElement.textContent = data.title || 'Название не найдено';
             heroDescriptionElement.textContent = data.overview || 'Описание отсутствует.';
-            heroWatchButton.dataset.tmdbId = data.id;
-            heroWatchButton.dataset.mediaType = data.media_type;
-            heroWatchButton.onclick = () => {
-                window.location.href = `watch.html?tmdbId=${data.id}&type=${data.media_type}`;
-            };
+            if(heroWatchButton) {
+                heroWatchButton.dataset.tmdbId = data.id;
+                heroWatchButton.dataset.mediaType = data.media_type;
+                heroWatchButton.onclick = () => {
+                    window.location.href = `watch.html?tmdbId=${data.id}&type=${data.media_type}`;
+                };
+            }
+
 
             const backdropUrl = data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${BACKDROP_SIZE_HERO}${data.backdrop_path}` : 'https://placehold.co/1920x1080/0D0D0D/333333?text=Нет+изображения';
-            heroFallbackImg.src = backdropUrl;
-            heroFallbackImg.alt = `Задник для ${data.title}`;
-            heroSection.dataset.videoType = data.video_info.type;
+            if(heroFallbackImg) heroFallbackImg.src = backdropUrl;
+            if(heroFallbackImg) heroFallbackImg.alt = `Задник для ${data.title || 'фильма'}`;
+            if(heroSection) heroSection.dataset.videoType = data.video_info.type;
             
             isHeroSoundActive = false; 
             isInfoPinned = false; 
@@ -206,15 +305,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateInfoToggleButtonState(); 
 
             if (data.video_info.type === 'html5_local' && data.video_info.key_or_url) {
-                console.log('[CLIENT DEBUG] Попытка создать HTML5 плеер с src:', data.video_info.key_or_url);
                 createHtml5Player(data.video_info.key_or_url);
             }
             else {
-                console.warn('[CLIENT DEBUG] Не удалось определить тип видео или отсутствует ключ/URL. Переключение на fallback.');
                 switchToHeroFallback(backdropUrl, true);
             }
         } catch (error) {
-            console.error('Не удалось загрузить hero-контент:', error);
             switchToHeroFallback(null, true);
         }
     }
@@ -234,11 +330,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentHeroVideoElement.style.height = '100%';
         currentHeroVideoElement.style.objectFit = 'cover';
     
-        console.log(`[CLIENT DEBUG] HTML5 Video Element создан. SRC: ${currentHeroVideoElement.src}, Muted: ${currentHeroVideoElement.muted}, Autoplay: ${currentHeroVideoElement.autoplay}`);
-    
         const onPlayingHandler = () => {
-            console.log(`[CLIENT DEBUG] HTML5 Video: Событие 'playing' для ${videoSrc}. Видео воспроизводится (звук выключен).`);
-            heroVideoContainer.style.opacity = '1';
+            if(heroVideoContainer) heroVideoContainer.style.opacity = '1';
             if (heroFallback) heroFallback.classList.remove('active');
             if(heroSection) {
                 heroSection.classList.add('video-playing');
@@ -257,51 +350,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     
             if(currentHeroVideoElement) currentHeroVideoElement.removeEventListener('playing', onPlayingHandler); 
         };
-        currentHeroVideoElement.addEventListener('playing', onPlayingHandler);
+        if(currentHeroVideoElement) currentHeroVideoElement.addEventListener('playing', onPlayingHandler);
     
         const onCanPlayHandler = () => {
-            console.log(`[CLIENT DEBUG] HTML5 Video: Событие 'canplay' для ${videoSrc}. Готово к воспроизведению.`);
             if (currentHeroVideoElement && currentHeroVideoElement.paused) { 
-                 currentHeroVideoElement.play().catch(e => {
-                    console.warn(`[CLIENT DEBUG] HTML5 Video: Дополнительная попытка play() в 'canplay' не удалась. Ошибка:`, e);
-                });
+                 currentHeroVideoElement.play().catch(e => {});
             }
             isHeroSoundActive = false; 
             updateSoundButtonIcon(); 
             updateInfoToggleButtonState();
             if(currentHeroVideoElement) currentHeroVideoElement.removeEventListener('canplay', onCanPlayHandler);
         };
-        currentHeroVideoElement.addEventListener('canplay', onCanPlayHandler);
+        if(currentHeroVideoElement) currentHeroVideoElement.addEventListener('canplay', onCanPlayHandler);
         
-        currentHeroVideoElement.addEventListener('ended', () => {
-            console.log(`[CLIENT DEBUG] HTML5 Video: Событие 'ended' для ${videoSrc}. Переключение на fallback.`);
+        if(currentHeroVideoElement) currentHeroVideoElement.addEventListener('ended', () => {
             switchToHeroFallback(heroFallbackImg ? heroFallbackImg.src : null, false);
         });
-        currentHeroVideoElement.addEventListener('error', (e) => {
-            console.error(`[CLIENT DEBUG] Ошибка HTML5 video при загрузке ${videoSrc}:`, e);
+        if(currentHeroVideoElement) currentHeroVideoElement.addEventListener('error', (e) => {
             if (currentHeroVideoElement && currentHeroVideoElement.error) {
-                console.error(`[CLIENT DEBUG] Код ошибки видео: ${currentHeroVideoElement.error.code}, Сообщение: ${currentHeroVideoElement.error.message}`);
                  switch (currentHeroVideoElement.error.code) {
-                    case MediaError.MEDIA_ERR_ABORTED:
-                        console.error('[CLIENT DEBUG] Загрузка видео прервана пользователем или скриптом.');
-                        break;
-                    case MediaError.MEDIA_ERR_NETWORK:
-                        console.error('[CLIENT DEBUG] Ошибка сети при загрузке видео. Проверьте путь и доступность файла.');
-                        break;
-                    case MediaError.MEDIA_ERR_DECODE:
-                        console.error('[CLIENT DEBUG] Ошибка декодирования видео. Возможно, файл поврежден или формат не поддерживается.');
-                        break;
-                    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                        console.error('[CLIENT DEBUG] Источник видео не поддерживается (например, неверный URL или тип MIME). Убедитесь, что путь к видео правильный: ' + videoSrc);
-                        break;
-                    default:
-                        console.error('[CLIENT DEBUG] Неизвестная ошибка видео.');
-                        break;
+                    case MediaError.MEDIA_ERR_ABORTED: break;
+                    case MediaError.MEDIA_ERR_NETWORK: break;
+                    case MediaError.MEDIA_ERR_DECODE: break;
+                    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED: break;
+                    default: break;
                 }
             }
             switchToHeroFallback(heroFallbackImg ? heroFallbackImg.src : null, true);
         });
-        heroVideoContainer.appendChild(currentHeroVideoElement);
+        if(heroVideoContainer) heroVideoContainer.appendChild(currentHeroVideoElement);
     }
     
     function switchToHeroFallback(backdropSrc, forceShowFallback) {
@@ -344,10 +421,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             let activeMedia = currentHeroVideoElement; 
             
-            if (!activeMedia) {
-                console.warn("[CLIENT DEBUG] Sound button clicked, but no active media found.");
-                return;
-            }
+            if (!activeMedia) return;
 
             const isHtml5 = activeMedia === currentHeroVideoElement;
 
@@ -356,12 +430,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 isHeroSoundActive = false;
             } else { 
                 if (isHtml5 && currentHeroVideoElement && currentHeroVideoElement.paused) {
-                    console.log("[CLIENT DEBUG] HTML5 video was paused, attempting to play on sound toggle ON.");
                     currentHeroVideoElement.play().then(() => {
-                        console.log("[CLIENT DEBUG] Play successful after sound button click for paused video.");
                         animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION);
                     }).catch(e => {
-                        console.warn("[CLIENT DEBUG] Error trying to play HTML5 video on sound toggle ON:", e);
                         animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION); 
                     });
                 } else { 
@@ -378,22 +449,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateInfoToggleButtonState();
         });
 
-        heroSection.addEventListener('mouseenter', () => {
-            if (!isInfoPinned) { 
-                if (heroContentDisplay) heroContentDisplay.classList.add('visible');
-                if (heroActionButtonsContainer) heroActionButtonsContainer.classList.add('visible');
-            }
-        });
-        heroSection.addEventListener('mouseleave', () => {
-            if (!isInfoPinned) { 
-                if (heroContentDisplay) heroContentDisplay.classList.remove('visible');
-                if (heroActionButtonsContainer) heroActionButtonsContainer.classList.remove('visible');
-            }
-        });
+        if(heroSection) {
+            heroSection.addEventListener('mouseenter', () => {
+                if (!isInfoPinned) { 
+                    if (heroContentDisplay) heroContentDisplay.classList.add('visible');
+                    if (heroActionButtonsContainer) heroActionButtonsContainer.classList.add('visible');
+                }
+            });
+            heroSection.addEventListener('mouseleave', () => {
+                if (!isInfoPinned) { 
+                    if (heroContentDisplay) heroContentDisplay.classList.remove('visible');
+                    if (heroActionButtonsContainer) heroActionButtonsContainer.classList.remove('visible');
+                }
+            });
+        }
     }
     
     loadAndDisplayHeroContent();
-    updateUserProfileDisplay(); // Обновляем иконку/аватар при загрузке
+    updateUserProfileDisplay(); 
 
     // --- Логика поиска и фильтров ---
     if (newSearchButton && newSearchModal) {
@@ -401,12 +474,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(!newSearchModal) return;
             newSearchModal.classList.add('active');
             document.body.style.overflow = 'hidden';
-            if (genreDropdownMovieMenu && genreDropdownMovieMenu.querySelectorAll('label').length === 0 && !genreDropdownMovieMenu.querySelector('.genres-loading-placeholder')) {
+            if (genreDropdownMovieMenuElement && genreDropdownMovieMenuElement.querySelectorAll('label').length === 0 && !genreDropdownMovieMenuElement.querySelector('.genres-loading-placeholder')) {
                 const placeholder = document.createElement('p');
                 placeholder.className = 'genres-loading-placeholder';
                 placeholder.textContent = 'Загрузка жанров...';
                 placeholder.style.cssText = "padding: 8px 10px; color: #A0A0A0; font-size: 0.9em; font-style: italic;";
-                genreDropdownMovieMenu.appendChild(placeholder);
+                genreDropdownMovieMenuElement.appendChild(placeholder);
                 loadAndPopulateAllGenres();
             } else if (allMovieGenresMap.size === 0 && allTvGenresMap.size === 0) {
                 loadAndPopulateAllGenres();
@@ -430,8 +503,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (data.error) throw new Error(data.error);
             return Array.isArray(data) ? data : [];
         } catch (error) {
-            console.error(`Ошибка загрузки жанров ${type}:`, error);
-            const targetMenu = type === 'movie' ? genreDropdownMovieMenu : null;
+            const targetMenu = type === 'movie' ? genreDropdownMovieMenuElement : null;
             if (targetMenu) {
                 const placeholder = targetMenu.querySelector('.genres-loading-placeholder');
                 if(placeholder) placeholder.textContent = `Ошибка загрузки жанров.`;
@@ -455,13 +527,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         genreMapToPopulate.clear();
         if (!Array.isArray(genres)) {
-            console.error("populateGenreDropdown ожидал массив жанров, получил:", genres);
             return;
         }
 
         genres.forEach(genre => {
             if (typeof genre.id !== 'number' || typeof genre.name !== 'string') {
-                console.warn("Некорректный формат жанра:", genre);
                 return;
             }
             genreMapToPopulate.set(genre.id, genre.name);
@@ -485,7 +555,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function loadAndPopulateAllGenres() {
         const movieGenres = await fetchGenresFromServer('movie');
-        populateGenreDropdown(genreDropdownMovieMenu, movieGenres, 'movie', allMovieGenresMap);
+        populateGenreDropdown(genreDropdownMovieMenuElement, movieGenres, 'movie', allMovieGenresMap);
 
         const tvGenres = await fetchGenresFromServer('tv');
         allTvGenresMap.clear();
@@ -501,7 +571,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function getSelectedGenreIds() {
         const selectedIds = [];
-        genreDropdownMovieMenu?.querySelectorAll('input[name="genre_filter"]:checked').forEach(cb => {
+        genreDropdownMovieMenuElement?.querySelectorAll('input[name="genre_filter"]:checked').forEach(cb => {
             selectedIds.push(cb.value);
         });
         return selectedIds;
@@ -554,7 +624,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(searchInput) searchInput.value = '';
             typeFilterCheckboxes?.forEach(cb => cb.checked = false);
             if(typeDropdownElement) updateToggleTextForDropdown(typeDropdownElement, "Выберите тип");
-            genreDropdownMovieMenu?.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            genreDropdownMovieMenuElement?.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             if(genreDropdownMovieElement) updateToggleTextForGenres(genreDropdownMovieElement);
             [yearFromInput, yearToInput, ratingFromInput, ratingToInput].forEach(input => { if(input) input.value = ''; });
             clearSearchResults(true);
@@ -654,7 +724,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             displayResults(resultsToDisplay, searchedMediaTypeContextForDisplay || 'movie');
         } catch (error) {
-            console.error('Ошибка при выполнении поиска:', error);
             displayError(error.message);
         } finally {
             if (loadingIndicator) loadingIndicator.style.display = 'none';
@@ -742,9 +811,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
         
-        const oldGrid = searchResultsContainer.querySelector('.search-results-grid');
+        const oldGrid = searchResultsContainer?.querySelector('.search-results-grid');
         if (oldGrid) oldGrid.remove();
-        searchResultsContainer.appendChild(resultsGrid);
+        searchResultsContainer?.appendChild(resultsGrid);
         
     }
 
@@ -826,7 +895,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!dropdownElement) return;
         const textElement = dropdownElement.querySelector('.dropdown-toggle span');
         if (!textElement) {
-            console.warn("Элемент для текста в кнопке дропдауна не найден:", dropdownElement);
             return;
         }
 
@@ -877,20 +945,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.addEventListener('click', (event) => {
-        customDropdowns.forEach(dropdown => {
+        customDropdowns.forEach(dropdown => { 
             if (dropdown.classList.contains('open') && !dropdown.contains(event.target)) {
                 dropdown.classList.remove('open');
             }
         });
-        const clickedInsideMovieTile = event.target.closest('.movie-tile');
-        if (!clickedInsideMovieTile) {
-            document.querySelectorAll('.movie-tile.active-details').forEach(activeTile => {
-                activeTile.classList.remove('active-details');
-                const details = activeTile.querySelector('.movie-details');
-                if (details) details.style.transform = 'translateY(100%)'; 
+        const clickedInsideMovieTileDetails = event.target.closest('.movie-details');
+        if (!event.target.closest('.movie-tile') || (event.target.closest('.movie-tile') && !clickedInsideMovieTileDetails && !event.target.closest('button')) ) {
+             document.querySelectorAll('.movie-tile.active-details').forEach(activeTile => {
+                if (!activeTile.contains(event.target)) { 
+                    activeTile.classList.remove('active-details');
+                    const details = activeTile.querySelector('.movie-details');
+                    if (details) details.style.transform = 'translateY(100%)';
+                }
             });
         }
     });
+
 
     const navbar = document.querySelector('.navbar');
     if (navbar) {
@@ -914,18 +985,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    if (userProfileLink) { 
-        userProfileLink.addEventListener('click', (event) => {
-            event.preventDefault(); 
-            const userId = localStorage.getItem('userId');
-            if (userId) {
-                window.location.href = userProfileLink.getAttribute('href'); // или `/profile/${userId}` если так настроен роутинг
-            } else {
-                window.location.href = '/auth'; // Перенаправляем на страницу входа, если ID нет
-            }
-        });
-    }
-
     function initMovieTileInteractivity() {
         document.querySelectorAll('.movie-tile').forEach(tile => {
             tile.removeEventListener('click', handleMovieTileClick); 
@@ -933,9 +992,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     function handleMovieTileClick(event) {
-        const tile = event.currentTarget;
+        const tile = event.currentTarget; 
         const details = tile.querySelector('.movie-details');
-        if (!details || event.target.closest('button')) return; 
+
+        if (event.target.closest('.movie-details button')) {
+            return;
+        }
 
         document.querySelectorAll('.movie-tile.active-details').forEach(activeTile => {
             if (activeTile !== tile) {
@@ -944,7 +1006,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (otherDetails) otherDetails.style.transform = 'translateY(100%)';
             }
         });
-
+        
         tile.classList.toggle('active-details');
         if(details) details.style.transform = tile.classList.contains('active-details') ? 'translateY(0)' : 'translateY(100%)';
     }

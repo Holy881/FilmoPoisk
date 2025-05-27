@@ -5,11 +5,13 @@ $bg-color: #0D0D0D;
 $surface-color: #1A1A1A;
 $sidebar-bg-color: #171717;
 $input-bg-color: #2C2C2C;
-$dropdown-bg-color: #222222; // Используется для основного дропдауна фильтров
-$profile-dropdown-bg-color: #282828; // Цвет для дропдауна профиля
+$dropdown-bg-color: #222222;
+$profile-dropdown-bg-color: #282828;
 $text-color: #E0E0E0;
 $text-secondary-color: #A0A0A0;
+$text-light-emphasis: #FFFFFF;
 $border-color: #383838;
+$accent-color: #E50914; // Пример акцентного цвета
 
 $interactive-hover-bg-color: #2a2a2a;
 $interactive-active-bg-color: #3a3a3a;
@@ -20,34 +22,23 @@ $rating-red: #E53935;
 $rating-gray: #757575;
 $rating-green: #4CAF50;
 
+$hero-height-value: 107vh;
 $navbar-height: 60px;
-$tile-details-height: 150px;
+$content-area-overlap: 300px; // Глубина наложения на hero.
+$shelf-padding: 20px; // Отступы для полок
 
 // 2. Глобальные стили для кастомного скроллбара
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: darken($input-bg-color, 10%); border-radius: 10px; }
+::-webkit-scrollbar-thumb { background-color: lighten($border-color, 10%); border-radius: 10px; border: 2px solid darken($input-bg-color, 10%);
+    &:hover { background-color: lighten($border-color, 20%); }
 }
-::-webkit-scrollbar-track {
-    background: darken($input-bg-color, 10%);
-    border-radius: 10px;
-}
-::-webkit-scrollbar-thumb {
-    background-color: lighten($border-color, 10%);
-    border-radius: 10px;
-    border: 2px solid darken($input-bg-color, 10%);
-    &:hover {
-        background-color: lighten($border-color, 20%);
-    }
-}
-body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown {
+body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown, .shelf-grid {
   scrollbar-width: thin;
   scrollbar-color: lighten($border-color, 10%) darken($input-bg-color, 10%);
 }
 
-*, *::before, *::after {
-    box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
     margin: 0;
@@ -67,13 +58,14 @@ input[type="number"] {
         margin: 0;
     }
 }
+
 .number-input-container {
     position: relative;
     display: flex;
     align-items: center;
     flex-grow: 1;
     .range-input, .year-input, .rating-input {
-       padding-right: 28px;
+       padding-right: 28px; /* Место для стрелок */
        width: 100%;
     }
     .number-input-arrows {
@@ -82,6 +74,7 @@ input[type="number"] {
         display: flex; flex-direction: column;
         justify-content: center; align-items: center;
         width: 24px;
+        // background-color: lighten($input-bg-color, 3%);
         border-top-right-radius: 5px;
         border-bottom-right-radius: 5px;
         .arrow {
@@ -119,7 +112,7 @@ input[type="number"] {
     &:active {
         transform: translateY(1px);
     }
-    &.active {
+    &.active { // Для активных кнопок фильтров, например
         color: $interactive-text-color;
         background-color: $interactive-active-bg-color;
         border-color: $interactive-border-color;
@@ -132,21 +125,21 @@ input[type="number"] {
     left: 0;
     width: 100%;
     height: $navbar-height;
-    background-color: transparent;
+    background-color: transparent; // Начальный фон
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
     box-sizing: border-box;
-    z-index: 1000;
+    z-index: 1000; // Высокий z-index для навбара
     transition: background-color 0.3s ease, box-shadow 0.3s ease, border-bottom-color 0.3s ease;
-    border-bottom: 1px solid transparent;
+    border-bottom: 1px solid transparent; // Для эффекта при скролле
 
     &.scrolled {
-         background-color: rgba(darken($bg-color, 2%), 0.9);
+         background-color: rgba(darken($bg-color, 2%), 0.9); // Полупрозрачный при скролле
          border-bottom-color: $border-color;
          box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-         backdrop-filter: blur(5px);
+         backdrop-filter: blur(5px); // Эффект размытия фона под навбаром
     }
 
     .navbar-left, .navbar-right {
@@ -164,35 +157,35 @@ input[type="number"] {
     .navbar-button {
         @extend .action-button;
         margin-right: 10px;
-        border-color: transparent;
+        border-color: transparent; // Убираем рамку по умолчанию
         background-color: transparent;
         color: $text-secondary-color;
         text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
         padding: 8px 12px;
         &:hover {
-            background-color: $interactive-hover-bg-color;
+            background-color: $interactive-hover-bg-color; // Фон при наведении
             color: $interactive-text-color;
         }
-        &.active {
+        &.active { // Активная кнопка навигации
              background-color: $interactive-active-bg-color;
              color: $interactive-text-color;
         }
     }
     .navbar-profile-container {
-        position: relative;
+        position: relative; // Для позиционирования дропдауна
     }
     .navbar-icon {
         @extend .action-button;
         background-color: transparent;
         border-color: transparent;
-        padding: 8px;
+        padding: 8px; // Уменьшаем паддинг для иконок
         font-size: 1.3em;
         margin-left: 5px;
         color: $text-secondary-color;
-        width: 40px;
-        height: 40px;
+        width: 40px;  // Фиксированная ширина
+        height: 40px; // Фиксированная высота
         text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
-        display: inline-flex;
+        display: inline-flex; // Для центрирования иконки внутри
         align-items: center;
         justify-content: center;
 
@@ -201,7 +194,7 @@ input[type="number"] {
             color: $interactive-text-color;
         }
 
-        #user-profile-icon-container {
+        #user-profile-icon-container { // Контейнер для иконки пользователя или аватара
             display: flex;
             align-items: center;
             justify-content: center;
@@ -209,37 +202,36 @@ input[type="number"] {
             height: 100%;
         }
 
-        img.navbar-avatar {
-            width: 28px;
+        img.navbar-avatar { // Стили для загруженного аватара
+            width: 28px; // Размер аватара внутри иконки
             height: 28px;
             border-radius: 50%;
             object-fit: cover;
-            display: block;
+            display: block; // Убирает лишние отступы у img
         }
     }
 
     .profile-dropdown {
         position: absolute;
-        top: calc(100% + 10px);
+        top: calc(100% + 10px); // Позиционирование под иконкой профиля
         right: 0;
         background-color: $profile-dropdown-bg-color;
         border: 1px solid $border-color;
         border-radius: 8px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        z-index: 1001;
+        z-index: 1001; // Выше других элементов навбара
         width: 200px;
         padding: 10px;
-        // Убираем display: none; используем visibility и opacity для анимации
-        visibility: hidden; // Скрыто по умолчанию
+        visibility: hidden;
         opacity: 0;
         transform: translateY(-10px);
-        transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s 0.2s; // visibility с задержкой
+        transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s 0.2s;
 
         &.active {
-            visibility: visible; // Показываем
+            visibility: visible;
             opacity: 1;
             transform: translateY(0);
-            transition-delay: 0s; // Сбрасываем задержку для visibility при активации
+            transition-delay: 0s;
         }
 
         .dropdown-username {
@@ -259,7 +251,7 @@ input[type="number"] {
             margin: 8px 0;
         }
         .dropdown-button {
-            @extend .action-button;
+            @extend .action-button; // Наследуем стили базовой кнопки
             width: 100%;
             text-align: left;
             padding: 10px 12px;
@@ -269,16 +261,13 @@ input[type="number"] {
             border-color: transparent;
             color: $text-secondary-color;
 
-            &:last-child {
-                margin-bottom: 0;
-            }
-
+            &:last-child { margin-bottom: 0; }
             &:hover {
                 background-color: lighten($profile-dropdown-bg-color, 8%);
                 color: $text-color;
-                border-color: transparent;
+                border-color: transparent; // Убираем рамку при наведении, если не нужна
             }
-             &.logout-button:hover {
+             &.logout-button:hover { // Специальный стиль для кнопки выхода
                 background-color: darken($rating-red, 10%);
                 color: $text-color;
             }
@@ -294,10 +283,7 @@ input[type="number"] {
     &.active {
         visibility: visible; opacity: 1;
         transition: opacity 0.3s ease, visibility 0s 0s;
-        .search-modal-content {
-            transform: scale(1) translateY(0);
-            opacity: 1;
-        }
+        .search-modal-content { transform: scale(1) translateY(0); opacity: 1; }
     }
 
     .search-modal-content {
@@ -311,8 +297,7 @@ input[type="number"] {
 
     .search-modal-main {
         flex: 2; padding: 25px 30px; display: flex; flex-direction: column;
-        background-color: $surface-color; box-sizing: border-box;
-        overflow-y: auto;
+        background-color: $surface-color; box-sizing: border-box; overflow-y: auto;
 
         .search-modal-input {
             width: 100%; padding: 14px 18px; margin-bottom: 20px;
@@ -320,34 +305,16 @@ input[type="number"] {
             border: 1px solid $border-color; border-radius: 6px;
             font-size: 1.15em; box-sizing: border-box; flex-shrink: 0;
             &::placeholder { color: $text-secondary-color; }
-            &:focus {
-                outline: none; border-color: $interactive-border-color;
-                box-shadow: 0 0 0 2px rgba($interactive-border-color, 0.2);
-            }
+            &:focus { outline: none; border-color: $interactive-border-color; box-shadow: 0 0 0 2px rgba($interactive-border-color, 0.2); }
         }
         .search-results-placeholder {
             flex-grow: 1; display: flex; justify-content: center; align-items: center;
-            text-align: center; color: $text-secondary-color; font-size: 1.1em;
-            padding: 20px 0;
+            text-align: center; color: $text-secondary-color; font-size: 1.1em; padding: 20px 0;
             p { margin: 0; }
         }
         .search-loading-indicator {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px 0;
-
-            &::after {
-                content: "";
-                display: block;
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                border: 4px solid $border-color;
-                border-top-color: $interactive-text-color;
-                animation: spinner 0.8s linear infinite;
-            }
+            flex-grow: 1; display: flex; justify-content: center; align-items: center; padding: 20px 0;
+            &::after { content: ""; display: block; width: 40px; height: 40px; border-radius: 50%; border: 4px solid $border-color; border-top-color: $interactive-text-color; animation: spinner 0.8s linear infinite; }
         }
     }
     .search-modal-sidebar {
@@ -355,110 +322,45 @@ input[type="number"] {
         border-left: 1px solid $border-color; display: flex; flex-direction: column;
         box-sizing: border-box; overflow-y: auto;
 
-        .filters-title {
-            font-size: 1.3em; color: $text-color; margin-bottom: 25px;
-            font-weight: 600; text-align: left; flex-shrink: 0;
-        }
+        .filters-title { font-size: 1.3em; color: $text-color; margin-bottom: 25px; font-weight: 600; text-align: left; flex-shrink: 0; }
         .filter-group {
             margin-bottom: 20px; flex-shrink: 0;
-            .filter-group-title {
-                font-size: 1em; color: $text-secondary-color; margin-bottom: 12px;
-                font-weight: 500; text-align: left;
-            }
+            .filter-group-title { font-size: 1em; color: $text-secondary-color; margin-bottom: 12px; font-weight: 500; text-align: left; }
             .custom-dropdown {
                 position: relative;
                 .dropdown-toggle {
-                    @extend .action-button;
-                    width: 100%;
-                    justify-content: space-between;
-                    margin-right: 0;
-                    padding: 10px 15px;
-                    font-size: 0.95em;
-                    text-align: left;
-                    background-color: $input-bg-color;
-                    border-color: $border-color;
-
-                    &:hover {
-                        border-color: $interactive-border-color;
-                        background-color: lighten($input-bg-color, 5%);
-                    }
-                    span {
-                        white-space: nowrap; overflow: hidden;
-                        text-overflow: ellipsis; flex-grow: 1;
-                    }
-                    .dropdown-arrow {
-                        transition: transform 0.3s ease;
-                        color: $text-secondary-color;
-                        margin-left: 8px; flex-shrink: 0;
-                    }
+                    @extend .action-button; width: 100%; justify-content: space-between; margin-right: 0; padding: 10px 15px; font-size: 0.95em; text-align: left; background-color: $input-bg-color; border-color: $border-color;
+                    &:hover { border-color: $interactive-border-color; background-color: lighten($input-bg-color, 5%); }
+                    span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; }
+                    .dropdown-arrow { transition: transform 0.3s ease; color: $text-secondary-color; margin-left: 8px; flex-shrink: 0; }
                 }
                 .dropdown-menu {
-                    visibility: hidden;
-                    opacity: 0;
-                    transform: translateY(-10px);
-                    transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s 0.2s;
-
-                    position: absolute; top: calc(100% + 5px); left: 0; width: 100%;
-                    background-color: $dropdown-bg-color; border: 1px solid $border-color;
-                    border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-                    z-index: 10; padding: 10px; max-height: 200px; overflow-y: auto;
-                    label {
-                        display: block; color: $text-secondary-color; padding: 8px 10px;
-                        font-size: 0.9em; cursor: pointer; border-radius: 3px;
-                        transition: background-color 0.2s ease, color 0.2s ease;
+                    visibility: hidden; opacity: 0; transform: translateY(-10px); transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s 0.2s;
+                    position: absolute; top: calc(100% + 5px); left: 0; width: 100%; background-color: $dropdown-bg-color; border: 1px solid $border-color; border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; padding: 10px; max-height: 200px; overflow-y: auto;
+                    label { display: block; color: $text-secondary-color; padding: 8px 10px; font-size: 0.9em; cursor: pointer; border-radius: 3px; transition: background-color 0.2s ease, color 0.2s ease;
                         &:hover { background-color: lighten($dropdown-bg-color, 7%); color: $text-color; }
-                        input[type="checkbox"] {
-                            margin-right: 10px;
-                            accent-color: $interactive-border-color;
-                            vertical-align: middle;
-                        }
+                        input[type="checkbox"] { margin-right: 10px; accent-color: $interactive-border-color; vertical-align: middle; }
                     }
-                    .genres-loading-placeholder {
-                        padding: 8px 10px; color: $text-secondary-color;
-                        font-size: 0.9em; font-style: italic;
-                    }
+                    .genres-loading-placeholder { padding: 8px 10px; color: $text-secondary-color; font-size: 0.9em; font-style: italic; }
                 }
                 &.open {
-                    .dropdown-toggle {
-                         border-color: $interactive-border-color;
-                        .dropdown-arrow { transform: rotate(180deg); }
-                    }
-                    .dropdown-menu {
-                        visibility: visible;
-                        opacity: 1;
-                        transform: translateY(0);
-                        transition-delay: 0s;
-                     }
+                    .dropdown-toggle { border-color: $interactive-border-color; .dropdown-arrow { transform: rotate(180deg); } }
+                    .dropdown-menu { visibility: visible; opacity: 1; transform: translateY(0); transition-delay: 0s; }
                 }
             }
             .filter-range {
                  display: flex; align-items: center; gap: 10px;
                 .number-input-container { flex-grow: 1; }
-                .range-input {
-                    width: 100%; padding: 10px; padding-right: 28px;
-                    background-color: $input-bg-color; color: $text-color;
-                    border: 1px solid $border-color; border-radius: 5px;
-                    font-size: 0.95em; box-sizing: border-box; text-align: center;
+                .range-input { width: 100%; padding: 10px; padding-right: 28px; background-color: $input-bg-color; color: $text-color; border: 1px solid $border-color; border-radius: 5px; font-size: 0.95em; box-sizing: border-box; text-align: center;
                     &::placeholder { color: $text-secondary-color; }
-                    &:focus {
-                        outline: none; border-color: $interactive-border-color;
-                        box-shadow: 0 0 0 2px rgba($interactive-border-color, 0.2);
-                    }
+                    &:focus { outline: none; border-color: $interactive-border-color; box-shadow: 0 0 0 2px rgba($interactive-border-color, 0.2); }
                 }
                 span { color: $text-secondary-color; }
             }
         }
         .reset-filters-button {
-            @extend .action-button;
-            width: 100%;
-            margin-top: auto;
-            margin-right: 0;
-            background-color: darken($interactive-hover-bg-color, 5%);
-            border-color: darken($interactive-border-color, 5%);
-             &:hover {
-                background-color: $interactive-hover-bg-color;
-                border-color: $interactive-border-color;
-            }
+            @extend .action-button; width: 100%; margin-top: auto; margin-right: 0; background-color: darken($interactive-hover-bg-color, 5%); border-color: darken($interactive-border-color, 5%);
+             &:hover { background-color: $interactive-hover-bg-color; border-color: $interactive-border-color; }
         }
     }
 }
@@ -466,428 +368,334 @@ input[type="number"] {
 /* --- Стили для Hero секции --- */
 .hero {
     position: relative; width: 100%;
-    height: calc(107vh - #{$navbar-height});
-    overflow: hidden; margin-top: -$navbar-height;
+    height: $hero-height-value;
+    overflow: hidden; // Важно, чтобы .hero-overlay не вылезал за пределы
+    margin-top: -$navbar-height;
     background-color: $bg-color;
+    z-index: 1; // Базовый z-index для hero
 
-    .hero-video-container {
+    .hero-video-container, .hero-fallback {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        img, video, iframe { width: 100%; height: 100%; object-fit: cover; border: none; }
+    }
+    .hero-video-container { z-index: 1; background-color: #000; opacity: 0; transition: opacity 0.5s ease-in-out; }
+    .hero-fallback { z-index: 0; opacity: 0; transition: opacity 0.5s ease-in-out; }
+
+    &.video-playing .hero-video-container { opacity: 1; z-index: 2; } // Видео под оверлеем и контентом
+    &.video-playing .hero-fallback { opacity: 0; z-index: 0; }
+    &.poster-active .hero-fallback { opacity: 1 !important; z-index: 1; } // Фолбэк над пустым видео контейнером
+    &.poster-active .hero-video-container { opacity: 0; z-index: 0; }
+
+    .hero-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column; justify-content: flex-end;
+        align-items: flex-start;
+        padding: 0 5% calc(#{$content-area-overlap} + 80px);
+        background: linear-gradient(to top, rgba($bg-color,1) 5%, rgba($bg-color,0.85) 10%, rgba($bg-color,0.0) 25%);
+        z-index: 3; // Над видео/фолбэком
+        // pointer-events: none; // Убираем, чтобы .hero-content-display внутри был интерактивен
+    }
+
+    .hero-content-display {
+        max-width: 60%;
+        z-index: 4; // Выше .hero-overlay
+        position: relative;
+        opacity: 0; visibility: hidden; transform: translateY(20px);
+        transition: opacity 0.3s ease-out 0.1s, visibility 0s 0.4s, transform 0.3s ease-out 0.1s; // Добавил задержку для плавности
+        pointer-events: auto;
+
+        &.visible { opacity: 1; visibility: visible; transform: translateY(0); transition-delay: 0s; }
+        .hero-title { font-size: 3.2em; margin-bottom: 15px; text-shadow: 2px 2px 5px rgba(0,0,0,0.8); color: #fff; }
+        .hero-description { font-size: 1.1em; margin-bottom: 25px; line-height: 1.6; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); color: #e0e0e0; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; -webkit-line-clamp: 3; line-clamp: 3; }
+        .hero-button.action-button {
+            padding: 12px 25px; font-size: 1.1em; margin-right: 0;
+            background-color: rgba(255,255,255, 0.2); border: 1px solid rgba(255,255,255, 0.6);
+            color: $text-light-emphasis; border-radius: 30px; backdrop-filter: blur(3px);
+            &:hover { background-color: rgba(255,255,255, 0.3); border-color: rgba(255,255,255, 0.9); transform: translateY(-2px); }
+        }
+    }
+    .hero-action-buttons-container {
+        position: absolute;
+        bottom: calc(#{$content-area-overlap} + 40px);
+        right: $shelf-padding + 10px;
+        z-index: 5; // Выше всего в hero
+        display: flex; flex-direction: column; gap: 12px;
+        opacity: 0; visibility: hidden; transform: translateY(10px);
+        transition: opacity 0.3s ease-out 0.1s, visibility 0s 0.4s, transform 0.3s ease-out 0.1s;
+        pointer-events: auto;
+
+        &.visible { opacity: 1; visibility: visible; transform: translateY(0); transition-delay: 0s; }
+        .hero-action-icon {
+            @extend .action-button; background-color: rgba($input-bg-color, 0.6); border: 1px solid rgba($border-color,0.5);
+            border-radius: 50%; width: 44px; height: 44px; font-size: 1.2em; padding: 0;
+            color: $text-secondary-color; backdrop-filter: blur(4px);
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+            i { line-height: 1; }
+            &:hover { background-color: rgba($input-bg-color, 0.9); color: $text-color; transform: scale(1.1); border-color: rgba($interactive-border-color, 0.7); }
+            &.active { background-color: rgba($interactive-active-bg-color, 0.95); color: $text-color; border-color: rgba($interactive-border-color, 0.8); }
+        }
+    }
+    &:not(.info-pinned):hover {
+        .hero-content-display, .hero-action-buttons-container { opacity: 1; visibility: visible; transform: translateY(0); transition-delay: 0s; }
+    }
+    &.info-pinned {
+        .hero-content-display, .hero-action-buttons-container { opacity: 1; visibility: visible; transform: translateY(0); transition-delay: 0s; }
+    }
+}
+
+/* --- Новые стили для .content-area и "полок" --- */
+.content-area {
+    position: relative;
+    z-index: 3;
+    margin-top: -$content-area-overlap;
+    background: transparent;
+    padding-top: 0;
+
+    &::before {
+        content: '';
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-        height: 100%; // Будет занимать 100% новой высоты .hero
-        z-index: 1;
-        background-color: #000;
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
+        height: $content-area-overlap + 100px;
+        background: linear-gradient(to bottom, rgba($bg-color, 0) 0%, rgba($bg-color, 0.6) 40%, $bg-color 80%);
+        z-index: -1;
+        pointer-events: none;
+    }
+}
 
-        iframe, video {
-            width: 100%;
-            height: 100%; // Будет занимать 100% новой высоты .hero-video-container
-            object-fit: cover;
-            border: none;
-        }
+.movie-shelf {
+    padding: $shelf-padding $shelf-padding 30px $shelf-padding;
+    position: relative;
+
+    h2 {
+        font-size: 1.8em;
+        margin-bottom: 15px;
+        color: $text-light-emphasis;
+        font-weight: 600;
+        padding-left: 5px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.7);
     }
 
-    .hero-fallback {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%; // Будет занимать 100% новой высоты .hero
-        z-index: 0;
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
-        img {
-            width: 100%; height: 100%; // Будет занимать 100% новой высоты .hero-fallback
-            object-fit: cover;
-        }
-        &.active {
-            opacity: 1 !important;
-            z-index: 2;
-        }
+    .shelf-grid {
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 15px;
+        padding-bottom: 15px;
+
+        &::-webkit-scrollbar { height: 6px; }
+        &::-webkit-scrollbar-thumb { background-color: lighten($border-color, 5%); border-radius: 3px; }
+        &::-webkit-scrollbar-track { background: darken($surface-color, 5%); border-radius: 3px; }
     }
-    &.video-playing .hero-video-container {
+
+    &#popular {
         opacity: 1;
-        z-index: 3;
-    }
-     &.video-playing .hero-fallback {
-        opacity: 0;
-        z-index: 0;
-    }
-    &.poster-active .hero-fallback {
-        opacity: 1 !important;
-        z-index: 2;
-    }
-     &.poster-active .hero-video-container {
-        opacity: 0;
-        z-index: 1;
-    }
+        transform: translateY(0);
+        transition: opacity 0.4s ease-out, transform 0.4s ease-out;
 
-    .hero-overlay {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%; // Будет занимать 100% новой высоты .hero
-        display: flex; flex-direction: column; justify-content: flex-end;
-        align-items: flex-start; padding: 0 5% 50px;
-        background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 70%);
-        z-index: 4;
-    }
-
-    .hero-action-buttons-container {
-        position: absolute;
-        bottom: 160px;
-        right: 20px;
-        z-index: 5;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(10px);
-        transition: opacity 0.3s ease-out, visibility 0s 0.3s, transform 0.3s ease-out;
-
-        &.visible {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-            transition-delay: 0s;
-        }
-
-        .hero-action-icon {
-            @extend .action-button;
-            background-color: rgba($input-bg-color, 0.5);
-            border: 1px solid rgba($border-color,0.4);
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            font-size: 1.2em;
-            padding: 0;
-            color: $text-secondary-color;
-            backdrop-filter: blur(4px);
-            transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
-
-            i {
-                line-height: 1;
-            }
-
-            &:hover {
-                background-color: rgba($input-bg-color, 0.8);
-                color: $text-color;
-                transform: scale(1.1);
-                border-color: rgba($interactive-border-color, 0.6);
-            }
-            &.active {
-                 background-color: rgba($interactive-active-bg-color, 0.9);
-                 color: $text-color;
-                 border-color: rgba($interactive-border-color, 0.8);
-            }
-        }
-    }
-
-    .hero-content-display {
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(20px);
-        transition: opacity 0.3s ease-out, visibility 0s 0.3s, transform 0.3s ease-out;
-        max-width: 60%;
-
-        &.visible {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-            transition-delay: 0s;
-        }
-
-        .hero-title {
-            font-size: 3.5em;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
-            color: #fff;
-        }
-        .hero-description {
-            font-size: 1.2em;
-            margin-bottom: 30px;
-            line-height: 1.5;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
-            color: #e0e0e0;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            -webkit-line-clamp: 3;
-            line-clamp: 3;
-        }
-        .hero-button.action-button {
-            padding: 12px 25px; font-size: 1.1em; margin-right: 0;
-            background-color: rgba(255,255,255, 0.15);
-            border: 1px solid rgba(255,255,255, 0.5);
-            color: $text-color;
-            border-radius: 30px;
-            backdrop-filter: blur(3px);
-            &:hover {
-                background-color: rgba(255,255,255, 0.25);
-                border-color: rgba(255,255,255, 0.8);
-                color: $text-color;
-                transform: translateY(-2px);
-            }
-        }
-    }
-
-    &:not(.info-pinned):hover {
-        .hero-content-display, .hero-action-buttons-container {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-            transition-delay: 0s;
-        }
-    }
-    &.info-pinned {
-        .hero-content-display, .hero-action-buttons-container {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-            transition-delay: 0s;
+        &.hidden-on-scroll {
+            opacity: 0;
+            transform: translateY(50px);
+            pointer-events: none;
         }
     }
 }
 
-/* --- Стили для секций с плитками фильмов --- */
-.content-area {
-    background-color: $bg-color; position: relative; z-index: 2; padding-top: 20px;
-}
-.movie-list {
-    padding: 20px; margin-bottom: 40px;
-    h2 { font-size: 2em; margin-bottom: 20px; text-align: center; font-weight: 600; }
-    .movie-grid {
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px; justify-content: center;
-    }
-    .movie-tile {
-        position: relative; overflow: hidden; border-radius: 10px;
-        background-color: $surface-color;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-        cursor: pointer;
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        &:hover { transform: scale(1.03); box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
-        img {
-            width: 100%; height: auto; aspect-ratio: 2/3;
-            object-fit: cover; display: block;
-            border-top-left-radius: 10px; border-top-right-radius: 10px;
-        }
-        .movie-rating {
-            position: absolute; top: 10px; right: 10px;
-            color: #FFFFFF; padding: 5px 8px; border-radius: 5px;
-            font-size: 0.9em; font-weight: bold;
-            text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
-            z-index: 3;
-            &.rating-red { background-color: $rating-red; }
-            &.rating-gray { background-color: $rating-gray; }
-            &.rating-green { background-color: $rating-green; }
-        }
-        .movie-details {
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            background-color: rgba(darken($surface-color, 5%), 0.97);
-            backdrop-filter: blur(4px);
-            color: $text-color; padding: 15px;
-            transform: translateY(100%); transition: transform 0.3s ease-in-out;
-            height: $tile-details-height; box-sizing: border-box;
-            border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;
-            display: flex; flex-direction: column;
-            h3 { font-size: 1.2em; margin-top:0; margin-bottom: 8px; color: $text-color; line-height: 1.3; }
-            p {
-                font-size: 0.9em; margin-bottom: 10px; color: $text-secondary-color;
-                display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
-                text-overflow: ellipsis; -webkit-line-clamp: 3; line-clamp: 3;
-                flex-grow: 1;
-            }
-            button.action-button {
-                 padding: 8px 15px; font-size: 0.9em; margin-right: 0;
-                 width: 100%; margin-top: auto;
-            }
-        }
-        &.active-details .movie-details { transform: translateY(0); }
-    }
-}
+.movie-tile {
+    position: relative;
+    width: 180px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: $surface-color;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 
-/* --- Стили для результатов поиска --- */
-.search-modal-main {
-    .search-results-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        padding-top: 15px;
+    &:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        .movie-hover-details {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    img.movie-poster-img {
         width: 100%;
+        height: 270px;
+        object-fit: cover;
+        display: block;
     }
 
-    .search-result-item {
-        background-color: darken($surface-color, 3%);
-        border-radius: 8px;
-        padding: 15px;
-        display: flex;
-        gap: 15px;
-        border: 1px solid $border-color;
-        opacity: 0;
-        transform: translateY(15px);
-        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    .movie-rating {
+        position: absolute; top: 8px; right: 8px; color: #FFFFFF; background-color: rgba(0,0,0,0.6);
+        padding: 4px 7px; border-radius: 4px; font-size: 0.8em; font-weight: bold; z-index: 2;
+        &.rating-red { background-color: $rating-red; }
+        &.rating-gray { background-color: $rating-gray; }
+        &.rating-green { background-color: $rating-green; }
+    }
 
-        &.visible {
-            opacity: 1;
-            transform: translateY(0);
+    .movie-hover-details {
+        position: absolute; bottom: 0; left: 0; width: 100%;
+        background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 60%, transparent 100%);
+        color: $text-color; padding: 12px; opacity: 0; transform: translateY(20px);
+        transition: opacity 0.25s ease, transform 0.25s ease; z-index: 1; min-height: 80px;
+
+        h3 {
+            font-size: 1em; margin: 0 0 5px 0; color: $text-light-emphasis; line-height: 1.3;
+            display: -webkit-box; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;
+        }
+        p {
+            font-size: 0.8em; margin: 0; color: $text-secondary-color; line-height: 1.4;
+            display: -webkit-box; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;
+        }
+    }
+}
+
+/* Стили для выдвигаемой панели */
+.detailed-info-panel {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 2000; display: none; align-items: center; justify-content: center;
+    &.active { display: flex; }
+
+    .detailed-info-backdrop {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 1;
+    }
+
+    .detailed-info-content-wrapper {
+        position: relative; z-index: 2; background-color: darken($surface-color, 5%);
+        color: $text-color; width: 90%; max-width: 800px; max-height: 90vh;
+        border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        overflow-y: auto; display: flex; flex-direction: column;
+    }
+
+    .detailed-info-close-btn {
+        position: absolute; top: 15px; right: 15px; background: transparent; border: none;
+        color: $text-secondary-color; font-size: 1.8em; cursor: pointer; padding: 5px;
+        line-height: 1; z-index: 3; transition: color 0.2s ease;
+        &:hover { color: $text-light-emphasis; }
+    }
+
+    .detailed-info-header {
+        display: flex; padding: 25px; gap: 25px; border-bottom: 1px solid $border-color;
+        align-items: flex-start;
+
+        .detailed-info-poster {
+            width: 180px; height: auto; aspect-ratio: 2/3; object-fit: cover;
+            border-radius: 6px; flex-shrink: 0;
         }
 
-        &:hover {
-            background-color: lighten($surface-color, 2%);
-        }
-
-        .search-result-poster {
-            width: 100px;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 4px;
-            flex-shrink: 0;
-            background-color: $input-bg-color;
-        }
-
-        .search-result-details {
-            display: flex;
-            flex-direction: column;
+        .detailed-info-main {
             flex-grow: 1;
-            min-width: 0;
+            .detailed-info-title { font-size: 2.2em; margin: 0 0 10px 0; font-weight: 600; color: $text-light-emphasis; }
+            .detailed-info-meta {
+                display: flex; flex-wrap: wrap; gap: 5px 15px; font-size: 0.9em;
+                color: $text-secondary-color; margin-bottom: 15px;
+                span { display: inline-flex; align-items: center; }
+                .meta-rating i { color: #f5c518; margin-right: 5px; }
+            }
+            .detailed-info-genres { font-size: 0.9em; color: $text-secondary-color; margin-bottom: 20px; line-height: 1.5; }
+            .detailed-info-actions {
+                display: flex; gap: 10px;
+                .action-button { padding: 10px 18px; font-size: 0.95em; i { margin-right: 7px; } }
+            }
         }
+    }
 
+    .detailed-info-tabs {
+        display: flex; padding: 0 $shelf-padding; border-bottom: 1px solid $border-color;
+        background-color: darken($surface-color, 2%);
+
+        .tab-button {
+            background: transparent; border: none; color: $text-secondary-color;
+            padding: 15px 20px; font-size: 1em; cursor: pointer; position: relative;
+            transition: color 0.2s ease;
+            &:hover { color: $text-light-emphasis; }
+            &.active {
+                color: $text-light-emphasis; font-weight: 500;
+                &::after {
+                    content: ''; position: absolute; bottom: -1px; left: 0; width: 100%;
+                    height: 3px; background-color: $accent-color; border-radius: 2px 2px 0 0;
+                }
+            }
+        }
+    }
+
+    .detailed-info-tab-content {
+        padding: 25px; flex-grow: 1;
+        .tab-pane { display: none; &.active { display: block; }
+            .detailed-info-overview { font-size: 1em; line-height: 1.7; color: $text-color; }
+        }
+    }
+}
+
+/* --- Стили для результатов поиска (остаются как были) --- */
+.search-modal-main {
+    .search-results-grid { display: flex; flex-direction: column; gap: 15px; padding-top: 15px; width: 100%; }
+    .search-result-item {
+        background-color: darken($surface-color, 3%); border-radius: 8px; padding: 15px; display: flex; gap: 15px;
+        border: 1px solid $border-color; opacity: 0; transform: translateY(15px);
+        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        &.visible { opacity: 1; transform: translateY(0); }
+        &:hover { background-color: lighten($surface-color, 2%); }
+        .search-result-poster { width: 100px; height: 150px; object-fit: cover; border-radius: 4px; flex-shrink: 0; background-color: $input-bg-color; }
+        .search-result-details { display: flex; flex-direction: column; flex-grow: 1; min-width: 0; }
         .search-result-main-info {
             margin-bottom: 8px;
-            .search-result-title {
-                font-size: 1.2em;
-                font-weight: 600;
-                color: $text-color;
-                margin: 0 0 5px 0;
-                line-height: 1.3;
+            .search-result-title { font-size: 1.2em; font-weight: 600; color: $text-color; margin: 0 0 5px 0; line-height: 1.3; }
+            .search-result-meta { font-size: 0.85em; color: $text-secondary-color; display: flex; flex-wrap: wrap; gap: 10px;
+                span { display: inline-flex; align-items: center; }
+                .search-result-rating i { color: #f5c518; margin-right: 4px; }
             }
-
-            .search-result-meta {
-                font-size: 0.85em;
-                color: $text-secondary-color;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
-
-                span {
-                    display: inline-flex;
-                    align-items: center;
-                }
-
-                .search-result-rating {
-                    i {
-                        color: #f5c518;
-                        margin-right: 4px;
-                    }
-                }
-            }
-            .search-result-genres {
-                font-size: 0.8em;
-                color: darken($text-secondary-color, 10%);
-                margin-top: 4px;
-                line-height: 1.3;
-                display: -webkit-box;
-                line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
+            .search-result-genres { font-size: 0.8em; color: darken($text-secondary-color, 10%); margin-top: 4px; line-height: 1.3; display: -webkit-box; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
         }
-
-        .search-result-overview {
-            font-size: 0.9em;
-            color: $text-secondary-color;
-            line-height: 1.5;
-            margin-bottom: 12px;
-            display: -webkit-box;
-            line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .search-result-watch-btn {
-            margin-top: auto;
-            align-self: flex-start;
-            padding: 7px 15px;
-            font-size: 0.9em;
-            text-decoration: none;
-            i { margin-right: 6px; }
-        }
+        .search-result-overview { font-size: 0.9em; color: $text-secondary-color; line-height: 1.5; margin-bottom: 12px; display: -webkit-box; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+        .search-result-watch-btn { margin-top: auto; align-self: flex-start; padding: 7px 15px; font-size: 0.9em; text-decoration: none; i { margin-right: 6px; } }
     }
-
-    .no-results,
-    .search-error-message {
-        text-align: center;
-        color: $text-secondary-color;
-        font-size: 1.1em;
-        padding: 30px 15px;
-        width: 100%;
-    }
+    .no-results, .search-error-message { text-align: center; color: $text-secondary-color; font-size: 1.1em; padding: 30px 15px; width: 100%; }
 }
 
-@keyframes spinner {
-    to {
-        transform: rotate(360deg);
-    }
-}
+@keyframes spinner { to { transform: rotate(360deg); } }
 
+/* Адаптивность */
 @media (max-width: 1024px) {
     .hero .hero-content-display .hero-title { font-size: 2.8em; }
     .hero .hero-content-display .hero-description { font-size: 1.05em; max-width: 70%; }
-    .movie-list .movie-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    // .movie-list .movie-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); } // Старый стиль, заменяется на shelf
+    .content-area { margin-top: -$content-area-overlap + 80px; }
+    .movie-shelf h2 { font-size: 1.6em; }
+    .movie-tile { width: 160px; img.movie-poster-img { height: 240px; } }
+    .detailed-info-panel .detailed-info-content-wrapper { max-width: 95%; }
+    .detailed-info-panel .detailed-info-header { flex-direction: column; align-items: center; text-align: center; .detailed-info-poster { margin-bottom: 20px; } .detailed-info-actions { justify-content: center; } }
 }
 
 @media (max-width: 768px) {
     body { padding-top: 0; }
     .navbar {
-        position: relative;
-        flex-direction: column; height: auto; align-items: stretch; padding: 0;
-        background-color: darken($bg-color, 3%);
-        border-bottom: 1px solid $border-color;
-
+        position: relative; flex-direction: column; height: auto; align-items: stretch; padding: 0;
+        background-color: darken($bg-color, 3%); border-bottom: 1px solid $border-color; z-index: 1000;
         .navbar-left {
             flex-direction: column; align-items: stretch; margin-bottom: 0; width: 100%;
-            .navbar-brand {
-                font-size: 1.3em; padding: 12px 15px; text-align: center;
-                border-bottom: 1px solid $border-color; margin-right: 0;
-            }
-            .navbar-button {
-                width: 100%; margin: 0; border-radius: 0;
-                justify-content: center; padding: 12px 15px;
-                border-bottom: 1px solid $border-color;
-                background-color: $surface-color;
-                border-color: $border-color;
-                color: $text-color;
+            .navbar-brand { font-size: 1.3em; padding: 12px 15px; text-align: center; border-bottom: 1px solid $border-color; margin-right: 0; }
+            .navbar-button { width: 100%; margin: 0; border-radius: 0; justify-content: center; padding: 12px 15px; border-bottom: 1px solid $border-color; background-color: $surface-color; border-color: $border-color; color: $text-color;
                 &:hover { background-color: $interactive-hover-bg-color; }
                 &:last-child { border-bottom: none; }
             }
         }
         .navbar-right {
-            margin-top: 0; width: 100%; display: flex;
-            justify-content: space-around; padding: 0;
-             .navbar-icon { // Применяется и к .navbar-profile-container > .navbar-icon
-                margin: 0; padding: 10px; flex-grow: 1; justify-content: center;
-                border-radius: 0; border-left: 1px solid $border-color;
-                background-color: $surface-color;
-                color: $text-color;
-                &:first-child { border-left: none;} // Для кнопки поиска
+            margin-top: 0; width: 100%; display: flex; justify-content: space-around; padding: 0;
+             .navbar-icon { margin: 0; padding: 10px; flex-grow: 1; justify-content: center; border-radius: 0; border-left: 1px solid $border-color; background-color: $surface-color; color: $text-color;
+                &:first-child { border-left: none;}
                 &:hover { background-color: $interactive-hover-bg-color;}
              }
-             .navbar-profile-container { // Адаптация контейнера профиля
-                flex-grow: 1; // Чтобы занимал место как и другие иконки
-                display: flex; // Для центрирования .navbar-icon внутри
-                justify-content: center;
-                border-left: 1px solid $border-color;
+             .navbar-profile-container { flex-grow: 1; display: flex; justify-content: center; border-left: 1px solid $border-color;
                 &:first-child { border-left: none;}
-                .navbar-icon { border-left: none; } // Убираем двойную рамку
+                .navbar-icon { border-left: none; }
              }
         }
-        .profile-dropdown { // Адаптация дропдауна для мобильных
-            width: calc(100% - 20px); // Немного уже экрана
-            left: 10px; // Центрируем
-            right: 10px;
-            top: calc(100% + 5px); // Чуть ниже
-        }
+        .profile-dropdown { width: calc(100% - 20px); left: 10px; right: 10px; top: calc(100% + 5px); }
     }
     .search-modal {
         padding: 10px;
@@ -901,33 +709,34 @@ input[type="number"] {
         .search-result-watch-btn { align-self: stretch; text-align: center; }
     }
      .hero {
-        margin-top: 0;
-        height: auto; // На мобильных устройствах высота будет автоматической
-        min-height: 70vh; // Можно увеличить min-height, если нужно, чтобы hero был выше на мобильных
-        border-radius: 0;
-
-        .hero-overlay { padding: 0 5% 15%; }
+        margin-top: 0; height: auto; min-height: 60vh;
+        .hero-overlay { padding: 0 5% calc(#{$content-area-overlap} - 80px); }
+        .hero-action-buttons-container { bottom: calc(#{$content-area-overlap} - 100px); }
         .hero-content-display {
             .hero-title { font-size: 1.8em; margin-bottom: 10px; }
             .hero-description { font-size: 0.9em; -webkit-line-clamp: 3; line-clamp: 3; margin-bottom: 15px; max-width: 100%;}
             .hero-button.action-button { padding: 10px 18px; font-size: 0.95em; }
         }
-        .hero-action-buttons-container {
-            bottom: 20px;
-            right: 15px;
-            flex-direction: row;
-            .hero-action-icon {
-                width: 38px; height: 38px; font-size: 1em;
-            }
+        .hero-action-buttons-container { right: 15px; flex-direction: row; .hero-action-icon { width: 38px; height: 38px; font-size: 1em; } }
+    }
+    .content-area {
+      padding-top: 0; margin-top: -$content-area-overlap + 100px;
+    }
+    .movie-shelf {
+        padding: 15px;
+        h2 { font-size: 1.4em; }
+        .shelf-grid { gap: 10px; }
+        &#popular {
+            margin-top: 0;
+            padding-top: 10px;
+            &::before { height: 80px; top: -($content-area-overlap + 100px); }
+            &.hidden-on-scroll { transform: translateY(20px); }
         }
     }
-    .content-area { padding-top: 0;}
-    .movie-list {
-        padding: 15px;
-        h2 { font-size: 1.6em; }
-        .movie-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
-        .movie-tile .movie-details { height: auto; min-height: $tile-details-height - 30px; }
-    }
+    .movie-tile { width: 140px; img.movie-poster-img { height: 210px; } }
+    .detailed-info-panel .detailed-info-header { padding: 20px; .detailed-info-title { font-size: 1.8em; } .detailed-info-meta { font-size: 0.8em; } .detailed-info-actions .action-button { font-size: 0.9em; padding: 8px 15px; } }
+    .detailed-info-panel .detailed-info-tabs .tab-button { padding: 12px 15px; font-size: 0.9em; }
+    .detailed-info-panel .detailed-info-tab-content { padding: 20px; }
 }
 
 @media (max-width: 480px) {
@@ -945,5 +754,16 @@ input[type="number"] {
         .hero-description { font-size: 0.85em; -webkit-line-clamp: 2; line-clamp: 2; }
         .hero-button.action-button { padding: 8px 15px; font-size: 0.9em; }
     }
-     .movie-list .movie-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+    .content-area { margin-top: -$content-area-overlap + 150px; }
+    // .movie-list .movie-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); } // Старый стиль
+    .movie-shelf h2 {font-size: 1.3em;}
+    .movie-tile { width: 120px; img.movie-poster-img { height: 180px; } .movie-hover-details { min-height: 70px; h3 {font-size: 0.9em;} p {font-size: 0.75em; line-clamp: 2;} } }
+    .hero .hero-overlay { padding: 0 5% calc(#{$content-area-overlap} - 120px); }
+    .hero .hero-action-buttons-container { bottom: calc(#{$content-area-overlap} - 140px); }
+    .detailed-info-panel .detailed-info-content-wrapper { max-height: 95vh; }
+    .detailed-info-panel .detailed-info-header { .detailed-info-poster { width: 150px; } .detailed-info-title { font-size: 1.6em; } }
+    .movie-shelf#popular {
+       &::before { top: -($content-area-overlap + 150px); }
+    }
 }
+

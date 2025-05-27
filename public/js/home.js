@@ -49,39 +49,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     let searchTimeout;
     let allMovieGenresMap = new Map();
     let allTvGenresMap = new Map();
-    let heroYouTubePlayer;
-    let ytApiLoaded = false;
-    let ytApiLoading = false;
     let isHeroSoundActive = false; 
     let currentHeroVideoElement = null;
     let isInfoPinned = false; 
 
     function animateVolume(media, targetVolumeRatio, duration) { 
-        const isYouTube = typeof media.setVolume === 'function';
         let startVolumeRatio;
         let startTime = null;
     
-        if (isYouTube) {
-            startVolumeRatio = media.isMuted() ? 0 : media.getVolume() / 100;
-            if (targetVolumeRatio > 0 && media.isMuted()) {
-                media.unMute(); 
-            }
-        } else { 
-            startVolumeRatio = media.muted ? 0 : media.volume;
-            if (targetVolumeRatio > 0 && media.muted) { 
-                media.muted = false; 
-            }
+        startVolumeRatio = media.muted ? 0 : media.volume;
+        if (targetVolumeRatio > 0 && media.muted) { 
+            media.muted = false; 
         }
     
         if (Math.abs(startVolumeRatio - targetVolumeRatio) < 0.01) { 
-            if (isYouTube) {
-                media.setVolume(targetVolumeRatio * 100);
-                if (targetVolumeRatio === 0 && !media.isMuted()) media.mute();
-                else if (targetVolumeRatio > 0 && media.isMuted()) media.unMute();
-            } else {
-                media.volume = targetVolumeRatio;
-                media.muted = (targetVolumeRatio === 0);
-            }
+            media.volume = targetVolumeRatio;
+            media.muted = (targetVolumeRatio === 0);
             updateSoundButtonIcon();
             console.log(`[CLIENT DEBUG] Volume already at target. Target: ${targetVolumeRatio.toFixed(2)}`);
             return;
@@ -94,23 +77,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const progress = Math.min((timestamp - startTime) / duration, 1);
             const currentVolumeRatio = startVolumeRatio + (targetVolumeRatio - startVolumeRatio) * progress;
     
-            if (isYouTube) {
-                media.setVolume(Math.round(currentVolumeRatio * 100));
-            } else {
-                media.volume = currentVolumeRatio;
-            }
+            media.volume = currentVolumeRatio;
     
             if (progress < 1) {
                 requestAnimationFrame(animationStep);
             } else { 
-                if (isYouTube) {
-                    media.setVolume(Math.round(targetVolumeRatio * 100));
-                    if (targetVolumeRatio === 0 && !media.isMuted()) media.mute();
-                    else if (targetVolumeRatio > 0 && media.isMuted()) media.unMute();
-                } else {
-                    media.volume = targetVolumeRatio;
-                    media.muted = (targetVolumeRatio === 0); 
-                }
+                media.volume = targetVolumeRatio;
+                media.muted = (targetVolumeRatio === 0); 
                 console.log(`[CLIENT DEBUG] Volume animation finished. Final volume ratio: ${targetVolumeRatio.toFixed(2)}`);
                 updateSoundButtonIcon();
             }
@@ -136,44 +109,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (isInfoPinned) {
             infoToggleButton.classList.add('active');
             heroSection.classList.add('info-pinned');
-            // CSS .info-pinnedзаботится о видимости .hero-content-display и .hero-action-buttons-container
         } else {
             infoToggleButton.classList.remove('active');
             heroSection.classList.remove('info-pinned');
-            // Если не закреплено, видимость управляется :hover в CSS.
-            // Явное управление классами .visible здесь не требуется, если CSS :hover настроен правильно.
         }
         console.log(`[CLIENT DEBUG] Updated info toggle. Pinned: ${isInfoPinned}`);
     }
-
-
-    function loadYouTubeAPI() {
-        if (ytApiLoaded || ytApiLoading) return;
-        ytApiLoading = true;
-        console.log("Загрузка YouTube IFrame API...");
-        const tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api"; 
-        tag.onerror = () => {
-            console.error("Ошибка загрузки YouTube IFrame API. YouTube трейлеры не будут работать.");
-            ytApiLoaded = false; 
-            ytApiLoading = false;
-            if (heroSection.dataset.waitingForYt === 'true' && heroSection.dataset.videoType === 'youtube') {
-                 switchToHeroFallback(heroFallbackImg ? heroFallbackImg.src : null, true);
-            }
-        };
-        const firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-    }
-
-    window.onYouTubeIframeAPIReady = () => {
-        console.log("YouTube IFrame API успешно загружена.");
-        ytApiLoaded = true;
-        ytApiLoading = false;
-        if (typeof window.pendingHeroPlayerInit === 'function') {
-            window.pendingHeroPlayerInit();
-            delete window.pendingHeroPlayerInit;
-        }
-    };
     
     async function loadAndDisplayHeroContent() {
         if (!heroSection || !heroTitleElement || !heroDescriptionElement || !heroWatchButton || !heroFallbackImg) {
@@ -210,27 +151,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             isHeroSoundActive = false; 
             isInfoPinned = false; 
             heroSection.classList.remove('info-pinned');
-            // Начальное состояние видимости будет управляться CSS (opacity: 0, visibility: hidden)
-            // heroContentDisplay.classList.remove('visible'); 
-            // if(heroActionButtonsContainer) heroActionButtonsContainer.classList.remove('visible');
             updateInfoToggleButtonState(); 
 
-
-            if (data.video_info.type === 'youtube' && data.video_info.key_or_url) {
-                heroSection.dataset.waitingForYt = 'true';
-                if (ytApiLoaded) {
-                    createYouTubePlayer(data.video_info.key_or_url);
-                } else {
-                    loadYouTubeAPI();
-                    window.pendingHeroPlayerInit = () => createYouTubePlayer(data.video_info.key_or_url);
-                    setTimeout(() => {
-                        if (!ytApiLoaded && heroSection.dataset.waitingForYt === 'true') {
-                            console.warn("Таймаут загрузки YouTube API. Переключение на fallback.");
-                            switchToHeroFallback(backdropUrl, true);
-                        }
-                    }, 7000);
-                }
-            } else if (data.video_info.type === 'html5_local' && data.video_info.key_or_url) {
+            if (data.video_info.type === 'html5_local' && data.video_info.key_or_url) {
                 console.log('[CLIENT DEBUG] Попытка создать HTML5 плеер с src:', data.video_info.key_or_url);
                 createHtml5Player(data.video_info.key_or_url);
             }
@@ -268,10 +191,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             heroSection.classList.add('video-playing');
             heroSection.classList.remove('poster-active');
             
-            // Показываем контейнер кнопок, когда видео начинает играть
-             if (heroActionButtonsContainer) {
+            if (heroActionButtonsContainer) {
                 heroActionButtonsContainer.classList.add('visible');
-                // Убедимся, что отдельные кнопки тоже видимы, если они управляются индивидуально
                 if(soundButton) soundButton.style.display = 'flex';
                 if(infoToggleButton) infoToggleButton.style.display = 'flex';
             }
@@ -329,87 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         heroVideoContainer.appendChild(currentHeroVideoElement);
     }
     
-    function onPlayerReady(event) { 
-        console.log("[CLIENT DEBUG] YouTube Player Ready. ID:", event.target.getIframe().id);
-        event.target.playVideo(); 
-        heroVideoContainer.style.opacity = '1';
-        if(heroFallback) heroFallback.classList.remove('active');
-        heroSection.classList.add('video-playing');
-        heroSection.classList.remove('poster-active');
-
-        if (heroActionButtonsContainer) heroActionButtonsContainer.classList.add('visible');
-        if(soundButton) soundButton.style.display = 'flex';
-        if(infoToggleButton) infoToggleButton.style.display = 'flex';
-        
-        isHeroSoundActive = false; 
-        updateSoundButtonIcon(); 
-        updateInfoToggleButtonState();
-    }
-
-    function createYouTubePlayer(videoId) {
-        heroSection.dataset.waitingForYt = 'false';
-        if (!heroVideoContainer || !ytApiLoaded) {
-            console.warn("YouTube API не готово или контейнер не найден, переключение на fallback.");
-            switchToHeroFallback(heroFallbackImg ? heroFallbackImg.src : null, true);
-            return;
-        }
-        
-        heroVideoContainer.innerHTML = '';
-        const playerDiv = document.createElement('div');
-        playerDiv.id = 'youtube-player-hero'; 
-        heroVideoContainer.appendChild(playerDiv);
-
-         heroYouTubePlayer = new YT.Player(playerDiv.id, { 
-            height: '100%',
-            width: '100%',
-            videoId: videoId,
-            playerVars: {
-                'autoplay': 1,       
-                'controls': 0,       
-                'rel': 0,            
-                'iv_load_policy': 3, 
-                'modestbranding': 1, 
-                'loop': 0,          
-                'mute': 1,      
-                'vq': 'hd1080',      
-                'origin': window.location.origin 
-            },
-            events: { 
-                'onReady': onPlayerReady, 
-                'onStateChange': onPlayerStateChange, 
-                'onError': onPlayerError 
-            }
-        });
-    }
-    
-    function onPlayerStateChange(event) {
-        if (event.data === YT.PlayerState.ENDED) {
-            switchToHeroFallback(heroFallbackImg ? heroFallbackImg.src : null, false);
-        }
-        if (event.data === YT.PlayerState.PLAYING && !heroSection.classList.contains('video-playing')) {
-             heroVideoContainer.style.opacity = '1';
-             if(heroFallback) heroFallback.classList.remove('active');
-             heroSection.classList.add('video-playing');
-             heroSection.classList.remove('poster-active');
-             if (heroActionButtonsContainer) heroActionButtonsContainer.classList.add('visible');
-             if(soundButton) soundButton.style.display = 'flex';
-             if(infoToggleButton) infoToggleButton.style.display = 'flex';
-             isHeroSoundActive = false; 
-             updateSoundButtonIcon();
-             updateInfoToggleButtonState();
-        }
-    }
-
-    function onPlayerError(event) {
-        console.error("Ошибка YouTube плеера:", event.data);
-        switchToHeroFallback(heroFallbackImg ? heroFallbackImg.src : null, true);
-    }
-
     function switchToHeroFallback(backdropSrc, forceShowFallback) {
-        if (heroYouTubePlayer && typeof heroYouTubePlayer.destroy === 'function') {
-            try { heroYouTubePlayer.destroy(); } catch(e) { console.warn("Ошибка при уничтожении YT плеера:", e); }
-            heroYouTubePlayer = null;
-        }
         if (heroVideoContainer) {
             heroVideoContainer.innerHTML = ''; 
             heroVideoContainer.style.opacity = '0';
@@ -431,10 +272,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(soundButton) soundButton.style.display = 'none';
         if(infoToggleButton) infoToggleButton.style.display = 'none';
 
-
         isHeroSoundActive = false; 
         updateSoundButtonIcon(); 
-        heroSection.dataset.waitingForYt = 'false';
         
         isInfoPinned = false; 
         heroSection.classList.remove('info-pinned'); 
@@ -448,9 +287,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const targetVolumeOff = 0.0;  
 
             let activeMedia = currentHeroVideoElement; 
-            if (!activeMedia && heroYouTubePlayer && typeof heroYouTubePlayer.getPlayerState === 'function' && heroYouTubePlayer.getPlayerState() !== -1) {
-                activeMedia = heroYouTubePlayer; 
-            }
             
             if (!activeMedia) {
                 console.warn("[CLIENT DEBUG] Sound button clicked, but no active media found.");
@@ -472,9 +308,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         console.warn("[CLIENT DEBUG] Error trying to play HTML5 video on sound toggle ON:", e);
                         animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION); 
                     });
-                } else if (!isHtml5 && heroYouTubePlayer) { 
-                    heroYouTubePlayer.playVideo(); 
-                    animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION);
                 } else { 
                      animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION);
                 }

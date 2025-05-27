@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const soundButton = heroActionButtonsContainer?.querySelector('.sound-button');
     const soundIcon = soundButton?.querySelector('i');
     const infoToggleButton = heroActionButtonsContainer?.querySelector('.info-toggle-button');
-    // const infoToggleIcon = infoToggleButton?.querySelector('i'); // Для смены иконки, если понадобится
 
     const heroContentDisplay = heroSection?.querySelector('.hero-content-display');
     const heroTitleElement = heroContentDisplay?.querySelector('.hero-title');
@@ -132,29 +131,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function updateInfoToggleButtonState() {
-        if (!infoToggleButton || !heroContentDisplay || !heroSection) return;
+        if (!infoToggleButton || !heroContentDisplay || !heroSection || !heroActionButtonsContainer) return;
         
         if (isInfoPinned) {
             infoToggleButton.classList.add('active');
-            heroContentDisplay.classList.add('visible');
             heroSection.classList.add('info-pinned');
+            // CSS .info-pinnedзаботится о видимости .hero-content-display и .hero-action-buttons-container
         } else {
             infoToggleButton.classList.remove('active');
             heroSection.classList.remove('info-pinned');
-            // Видимость .hero-content-display теперь будет управляться CSS :hover,
-            // если мышь наведена, он будет виден. Если нет - скрыт.
-            // Принудительно скрываем только если мышь НЕ наведена.
-            if (!heroSection.matches(':hover')) {
-                heroContentDisplay.classList.remove('visible');
-            } else {
-                 // Если мышь наведена, но не закреплено, CSS :hover должен показать.
-                 // Убедимся, что JS не мешает этому, если visible был удален ранее.
-                 // Но в данном случае, если !isInfoPinned, то класс visible будет управляться
-                 // только CSS :hover, поэтому явное добавление/удаление здесь не всегда нужно,
-                 // кроме как при откреплении.
-            }
+            // Если не закреплено, видимость управляется :hover в CSS.
+            // Явное управление классами .visible здесь не требуется, если CSS :hover настроен правильно.
         }
-        console.log(`[CLIENT DEBUG] Updated info toggle. Pinned: ${isInfoPinned}, Content visible: ${heroContentDisplay.classList.contains('visible')}`);
+        console.log(`[CLIENT DEBUG] Updated info toggle. Pinned: ${isInfoPinned}`);
     }
 
 
@@ -221,8 +210,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             isHeroSoundActive = false; 
             isInfoPinned = false; 
             heroSection.classList.remove('info-pinned');
-            heroContentDisplay.classList.remove('visible'); 
-            updateInfoToggleButtonState(); // Обновляем состояние кнопки инфо
+            // Начальное состояние видимости будет управляться CSS (opacity: 0, visibility: hidden)
+            // heroContentDisplay.classList.remove('visible'); 
+            // if(heroActionButtonsContainer) heroActionButtonsContainer.classList.remove('visible');
+            updateInfoToggleButtonState(); 
 
 
             if (data.video_info.type === 'youtube' && data.video_info.key_or_url) {
@@ -276,12 +267,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (heroFallback) heroFallback.classList.remove('active');
             heroSection.classList.add('video-playing');
             heroSection.classList.remove('poster-active');
-            if (soundButton) soundButton.style.display = 'flex';
-            if (infoToggleButton) infoToggleButton.style.display = 'flex'; 
+            
+            // Показываем контейнер кнопок, когда видео начинает играть
+             if (heroActionButtonsContainer) {
+                heroActionButtonsContainer.classList.add('visible');
+                // Убедимся, что отдельные кнопки тоже видимы, если они управляются индивидуально
+                if(soundButton) soundButton.style.display = 'flex';
+                if(infoToggleButton) infoToggleButton.style.display = 'flex';
+            }
             
             isHeroSoundActive = false; 
             updateSoundButtonIcon();    
-            updateInfoToggleButtonState(); // Обновить состояние кнопки инфо
+            updateInfoToggleButtonState(); 
     
             currentHeroVideoElement.removeEventListener('playing', onPlayingHandler); 
         };
@@ -339,8 +336,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(heroFallback) heroFallback.classList.remove('active');
         heroSection.classList.add('video-playing');
         heroSection.classList.remove('poster-active');
-        if (soundButton) soundButton.style.display = 'flex';
-        if (infoToggleButton) infoToggleButton.style.display = 'flex'; 
+
+        if (heroActionButtonsContainer) heroActionButtonsContainer.classList.add('visible');
+        if(soundButton) soundButton.style.display = 'flex';
+        if(infoToggleButton) infoToggleButton.style.display = 'flex';
         
         isHeroSoundActive = false; 
         updateSoundButtonIcon(); 
@@ -392,8 +391,9 @@ document.addEventListener('DOMContentLoaded', async () => {
              if(heroFallback) heroFallback.classList.remove('active');
              heroSection.classList.add('video-playing');
              heroSection.classList.remove('poster-active');
-             if (soundButton) soundButton.style.display = 'flex';
-             if (infoToggleButton) infoToggleButton.style.display = 'flex';
+             if (heroActionButtonsContainer) heroActionButtonsContainer.classList.add('visible');
+             if(soundButton) soundButton.style.display = 'flex';
+             if(infoToggleButton) infoToggleButton.style.display = 'flex';
              isHeroSoundActive = false; 
              updateSoundButtonIcon();
              updateInfoToggleButtonState();
@@ -426,15 +426,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         heroSection.classList.remove('video-playing');
         heroSection.classList.add('poster-active');
-        if (soundButton) soundButton.style.display = 'none';
-        if (infoToggleButton) infoToggleButton.style.display = 'none';
+        
+        if (heroActionButtonsContainer) heroActionButtonsContainer.classList.remove('visible');
+        if(soundButton) soundButton.style.display = 'none';
+        if(infoToggleButton) infoToggleButton.style.display = 'none';
+
+
         isHeroSoundActive = false; 
         updateSoundButtonIcon(); 
         heroSection.dataset.waitingForYt = 'false';
         
-        isInfoPinned = false; // Сбрасываем пин при смене контента
+        isInfoPinned = false; 
         heroSection.classList.remove('info-pinned'); 
-        heroContentDisplay.classList.remove('visible');
+        if(heroContentDisplay) heroContentDisplay.classList.remove('visible');
         updateInfoToggleButtonState();
     }
 
@@ -479,23 +483,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    if (infoToggleButton && heroContentDisplay && heroSection) {
+    if (infoToggleButton && heroContentDisplay && heroSection && heroActionButtonsContainer) {
         infoToggleButton.addEventListener('click', () => {
             isInfoPinned = !isInfoPinned;
             updateInfoToggleButtonState();
         });
 
         heroSection.addEventListener('mouseenter', () => {
-            if (!isInfoPinned && heroContentDisplay) {
-                heroContentDisplay.classList.add('visible');
+            if (!isInfoPinned) { 
+                if (heroContentDisplay) heroContentDisplay.classList.add('visible');
+                if (heroActionButtonsContainer) heroActionButtonsContainer.classList.add('visible');
             }
-            // updateInfoToggleButtonState(); // Обновляем состояние кнопки при наведении, если нужно менять ее вид
         });
         heroSection.addEventListener('mouseleave', () => {
-            if (!isInfoPinned && heroContentDisplay) {
-                heroContentDisplay.classList.remove('visible');
+            if (!isInfoPinned) { 
+                if (heroContentDisplay) heroContentDisplay.classList.remove('visible');
+                if (heroActionButtonsContainer) heroActionButtonsContainer.classList.remove('visible');
             }
-            // updateInfoToggleButtonState(); // Обновляем состояние кнопки при уходе мыши
         });
     }
     

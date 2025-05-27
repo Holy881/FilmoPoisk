@@ -44,7 +44,6 @@ body, .dropdown-menu, .search-modal-sidebar, .search-modal-main {
   scrollbar-color: lighten($border-color, 10%) darken($input-bg-color, 10%);
 }
 
-// Глобальный box-sizing
 *, *::before, *::after {
     box-sizing: border-box;
 }
@@ -441,23 +440,39 @@ input[type="number"] {
         z-index: 5;
         display: flex;
         flex-direction: column; 
-        gap: 12px; // Немного увеличим отступ между кнопками
+        gap: 12px; 
+
+        opacity: 0; 
+        visibility: hidden;
+        transform: translateY(10px); 
+        transition: opacity 0.3s ease-out, visibility 0s 0.3s, transform 0.3s ease-out;
+
+        // Начально скрываем кнопки, JS будет управлять их видимостью через этот класс
+        // или через :hover на .hero
+        &.visible { 
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            transition-delay: 0s;
+        }
 
         .hero-action-icon {
-            @extend .action-button; // Наследуем базовый стиль
-            background-color: rgba($input-bg-color, 0.5); // Полупрозрачный фон
+            @extend .action-button; 
+            background-color: rgba($input-bg-color, 0.5); 
             border: 1px solid rgba($border-color,0.4);
-            border-radius: 50%; // Круглые кнопки
+            border-radius: 50%; 
             width: 44px; 
             height: 44px;
-            font-size: 1.2em; // Размер иконки
-            padding: 0; // Убираем внутренние отступы, т.к. иконка центрируется
+            font-size: 1.2em; 
+            padding: 0; 
             color: $text-secondary-color;
-            backdrop-filter: blur(4px); // Эффект размытия фона
+            backdrop-filter: blur(4px); 
             transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
-            display: none; // Начально скрыты, JS покажет
+            // display: flex; // Убедимся, что они отображаются, если контейнер видим
+            // align-items: center;
+            // justify-content: center;
 
-            i { // Для центрирования иконки внутри кнопки
+            i { 
                 line-height: 1; 
             }
 
@@ -467,7 +482,6 @@ input[type="number"] {
                 transform: scale(1.1);
                 border-color: rgba($interactive-border-color, 0.6);
             }
-            // &.active для info-toggle-button будет управляться через JS, если нужно особое состояние
             &.active { 
                  background-color: rgba($interactive-active-bg-color, 0.9);
                  color: $text-color;
@@ -525,27 +539,22 @@ input[type="number"] {
         }
     }
 
-    // Показываем контент при наведении на .hero, если нет класса .info-pinned
     &:not(.info-pinned):hover {
-        .hero-content-display {
+        .hero-content-display, .hero-action-buttons-container { 
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
-            transition-delay: 0s; // Показываем сразу при ховере
+            transition-delay: 0s; 
         }
     }
-    // Если есть класс .info-pinned, контент всегда видим (управляется кнопкой)
-    // Этот класс будет добавляться/удаляться через JS
     &.info-pinned {
-        .hero-content-display {
+        .hero-content-display, .hero-action-buttons-container { 
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
             transition-delay: 0s;
         }
     }
-    // Удаляем старый стиль для .sound-button, если он еще есть
-    // .sound-button { ... } 
 }
 
 /* --- Стили для секций с плитками фильмов --- */
@@ -804,7 +813,7 @@ input[type="number"] {
             right: 15px;
             flex-direction: row; 
             .hero-action-icon {
-                width: 38px; height: 38px; font-size: 1em; // Сделаем чуть больше для мобильных
+                width: 38px; height: 38px; font-size: 1em; 
             }
         }
     }

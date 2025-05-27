@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 heroWatchButton.dataset.mediaType = data.media_type;
                 heroWatchButton.onclick = () => window.location.href = `watch.html?tmdbId=${data.id}&type=${data.media_type}`;
             }
-            const backdropUrl = data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${BACKDROP_SIZE_HERO}${data.backdrop_path}` : 'https://placehold.co/1920x1080/0D0D0D/333333?text=Нет+изображения';
+            const backdropUrl = data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${BACKDROP_SIZE_HERO}${data.backdrop_path}` : '/images/no_image.png';
             if(heroFallbackImg) { heroFallbackImg.src = backdropUrl; heroFallbackImg.alt = `Задник для ${data.title || 'фильма'}`; }
             if(heroSection) heroSection.dataset.videoType = data.video_info.type;
             
@@ -304,14 +304,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         tile.dataset.tmdbId = String(movie.tmdb_id);
         tile.dataset.mediaType = movie.media_type;
 
-        const posterUrl = movie.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_CARD}${movie.poster_path}` : 'https://placehold.co/180x270/1a1a1a/ffffff?text=Нет+постера';
+        const posterUrl = movie.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_CARD}${movie.poster_path}` : '/images/default-poster.jpg';
 
         const ratingSpan = document.createElement('span');
         ratingSpan.className = 'movie-rating';
         setRatingColor(ratingSpan, movie.vote_average);
 
         tile.innerHTML = `
-            <img src="${posterUrl}" alt="${movie.title || movie.name}" class="movie-poster-img" onerror="this.onerror=null;this.src='https://placehold.co/180x270/1a1a1a/ffffff?text=Ошибка';">
+            <img src="${posterUrl}" alt="${movie.title || movie.name}" class="movie-poster-img" onerror="this.onerror=null;this.src='/images/error.png';">
             <div class="movie-hover-details">
                 <h3>${movie.title || movie.name}</h3>
                 <p>${movie.overview ? (movie.overview.length > 100 ? movie.overview.substring(0, 97) + '...' : movie.overview) : 'Описание отсутствует.'}</p>
@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await response.json();
             if (!data) { console.error('Данные для TMDB ID:', tmdbId, 'не найдены.'); return; }
 
-            if (detailedInfoPoster) detailedInfoPoster.src = data.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_DETAILS}${data.poster_path}` : 'https://placehold.co/300x450/1a1a1a/333333?text=Нет+постера';
+            if (detailedInfoPoster) detailedInfoPoster.src = data.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_DETAILS}${data.poster_path}` : '/images/default-poster.jpg';
             if (detailedInfoTitle) detailedInfoTitle.textContent = data.title || data.name;
             if (detailedInfoRating) detailedInfoRating.textContent = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
             
@@ -607,7 +607,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const title = item.title || item.name;
                 const releaseDate = item.release_date || item.first_air_date;
                 const year = releaseDate ? new Date(releaseDate).getFullYear() : 'N/A';
-                const posterPath = item.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_SEARCH}${item.poster_path}` : 'https://placehold.co/154x231/1a1a1a/ffffff?text=Нет+постера';
+                const posterPath = item.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_SEARCH}${item.poster_path}` : '/images/default-poster.jpg';
                 let overview = item.overview || 'Описание отсутствует.'; if (overview.length > 100) overview = overview.substring(0, 97) + '...';
                 const voteAverage = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
                 const currentGenreMap = mediaType === 'tv' ? allTvGenresMap : allMovieGenresMap;
@@ -616,7 +616,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const itemElement = document.createElement('div'); itemElement.className = 'search-result-item';
                 itemElement.innerHTML = `
-                    <img src="${posterPath}" alt="${title}" class="search-result-poster" onerror="this.onerror=null;this.src='https://placehold.co/154x231/1a1a1a/ffffff?text=Ошибка';">
+                    <img src="${posterPath}" alt="${title}" class="search-result-poster" onerror="this.onerror=null;this.src='/images/error.png';">
                     <div class="search-result-details">
                         <div class="search-result-main-info">
                             <h3 class="search-result-title">${title}</h3>

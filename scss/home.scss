@@ -9,7 +9,7 @@ $dropdown-bg-color: #222222;
 $profile-dropdown-bg-color: #282828;
 $text-color: #E0E0E0;
 $text-secondary-color: #A0A0A0;
-$text-light-emphasis: #FFFFFF;
+$text-light-emphasis: #FFFFFF; // Используется для белой рамки
 $border-color: #383838;
 $accent-color: #E50914; 
 
@@ -498,22 +498,43 @@ input[type="number"] {
     }
 }
 
+// ОБНОВЛЕННЫЕ СТИЛИ для .movie-tile
 .movie-tile {
     position: relative;
     width: 180px;
     flex-shrink: 0;
     border-radius: 8px;
-    overflow: hidden;
+    overflow: visible; // Чтобы стрелка была видна
     background-color: $surface-color;
     cursor: pointer;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; 
+    border: 2px solid transparent; // Место для рамки
 
     &:hover {
         transform: scale(1.05);
         box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        z-index: 5; 
         .movie-hover-details {
             opacity: 1;
             transform: translateY(0);
+        }
+    }
+
+    &.active-tile-details {
+        border-color: $text-light-emphasis; // Белая рамка
+        z-index: 6; 
+
+        &::after { 
+            content: '';
+            position: absolute;
+            bottom: -8px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid $text-light-emphasis; // Белая стрелка
         }
     }
 
@@ -522,14 +543,16 @@ input[type="number"] {
         height: 270px;
         object-fit: cover;
         display: block;
+        border-radius: 6px; 
     }
 
-    .movie-rating {
-        position: absolute; top: 8px; right: 8px; color: #FFFFFF; background-color: rgba(0,0,0,0.6);
-        padding: 4px 7px; border-radius: 4px; font-size: 0.8em; font-weight: bold; z-index: 2;
-        &.rating-red { background-color: $rating-red; }
-        &.rating-gray { background-color: $rating-gray; }
-        &.rating-green { background-color: $rating-green; }
+    .movie-rating { // Использует @extend .rating-display-badge
+        @extend .rating-display-badge; 
+        position: absolute; 
+        top: 8px;
+        right: 8px;
+        z-index: 2;
+        font-size: 0.8em; 
     }
 
     .movie-hover-details {
@@ -537,6 +560,7 @@ input[type="number"] {
         background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 60%, transparent 100%);
         color: $text-color; padding: 12px; opacity: 0; transform: translateY(20px);
         transition: opacity 0.25s ease, transform 0.25s ease; z-index: 1; min-height: 80px;
+        border-radius: 0 0 6px 6px;
 
         h3 {
             font-size: 1em; margin: 0 0 5px 0; color: $text-light-emphasis; line-height: 1.3;
@@ -549,36 +573,49 @@ input[type="number"] {
     }
 }
 
+// ОБЩИЕ СТИЛИ ДЛЯ ЗНАЧКА РЕЙТИНГА
+.rating-display-badge {
+    display: inline-block; 
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em; 
+    font-weight: 600; 
+    color: $text-light-emphasis; 
+    text-align: center;
+    line-height: 1.2; 
+    vertical-align: middle; 
+
+    &.rating-red { background-color: $rating-red; }
+    &.rating-gray { background-color: $rating-gray; }
+    &.rating-green { background-color: $rating-green; }
+    &.rating-none { 
+        background-color: #4a4a4a; 
+        color: $text-secondary-color; 
+    }
+}
+
 /* --- ИЗМЕНЕННЫЕ СТИЛИ для выдвигаемой панели --- */
 .detailed-info-panel {
     position: relative; 
     width: 100%; 
     color: $text-color;
-    margin-top: 20px; 
+    margin-top: 8px; // УМЕНЬШЕН зазор сверху
     margin-bottom: 20px; 
-    overflow: hidden; 
     display: none; 
 
-    max-height: 0;
-    opacity: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    transition: max-height 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), 
-                opacity 0.3s ease-in-out 0.1s, 
-                padding-top 0.5s cubic-bezier(0.25, 0.1, 0.25, 1),
-                padding-bottom 0.5s cubic-bezier(0.25, 0.1, 0.25, 1),
-                margin-top 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    opacity: 0; 
+    transition: opacity 0.3s ease-in-out, 
+                margin-top 0.3s ease-in-out; 
 
     &.expanded {
         display: block; 
-        max-height: 5000px; 
         opacity: 1;
     }
 
     .detailed-info-close-btn { 
         position: absolute;
-        top: 15px; 
-        right: 15px;
+        top: 20px; 
+        right: 20px;
         background: rgba(darken($surface-color, 10%), 0.7);
         border: 1px solid $border-color;
         color: $text-secondary-color;
@@ -606,27 +643,30 @@ input[type="number"] {
         background-color: darken($surface-color, 7%); 
         border-radius: 12px;
         box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-        min-height: 450px; // Можно настроить или убрать, если высота будет полностью зависеть от контента
+        min-height: 450px; 
         overflow: hidden; 
+        padding-top: 25px; 
+        padding-bottom: 25px;
+        transition: opacity 0.25s ease-in-out; 
     }
-
+    
     .detailed-info-left-column {
-        flex: 0 0 58%; // Увеличиваем ширину левой колонки
-        max-width: 700px; // Опционально, максимальная ширина
+        flex: 0 0 58%; 
+        max-width: 700px; 
         background-color: rgba(darken($bg-color, 5%), 0.85); 
         backdrop-filter: blur(10px) saturate(120%); 
-        padding: 30px 35px; // Немного увеличил паддинги
+        padding: 0 35px; 
         position: relative; 
         z-index: 10; 
         display: flex; 
         flex-direction: column;
         
-        &::after { // Градиент для плавного перехода вправо
+        &::after { 
             content: '';
             position: absolute;
             top: 0;
-            right: -60px; // Смещаем немного правее, чтобы перекрыть стык
-            width: 120px; // Ширина градиента
+            right: -60px; 
+            width: 120px; 
             height: 100%;
             background: linear-gradient(to right, rgba(darken($bg-color, 5%), 0.85) 0%, rgba(darken($bg-color, 5%), 0.75) 25%, rgba(darken($bg-color, 5%), 0) 100%);
             pointer-events: none; 
@@ -637,19 +677,11 @@ input[type="number"] {
     .detailed-info-scrollable-content {
         overflow-y: auto; 
         height: 100%; 
-        padding-right: 15px; // Немного увеличил отступ для скроллбара
+        padding-right: 15px; 
     }
-
-    // Стили для .detailed-info-poster-small удалены, так как элемент удален из HTML
-
-    .detailed-info-title-logo { 
-        max-width: 250px;
-        height: auto;
-        margin-bottom: 15px;
-    }
-    
+        
     .detailed-info-title { 
-        font-size: 2.2em; // Можно увеличить
+        font-size: 2.2em; 
         margin: 0 0 12px 0; 
         font-weight: 600; 
         color: $text-light-emphasis; 
@@ -658,23 +690,24 @@ input[type="number"] {
     .detailed-info-meta {
         display: flex; 
         flex-wrap: wrap; 
-        gap: 10px 18px; // Немного увеличил gap
-        font-size: 0.95em; // Немного увеличил шрифт
+        gap: 10px 18px; 
+        font-size: 0.95em; 
         color: $text-secondary-color; 
-        margin-bottom: 18px; // Немного увеличил отступ
+        margin-bottom: 18px; 
         align-items: center;
-        span { display: inline-flex; align-items: center; }
-        .meta-rating i { color: #f5c518; margin-right: 6px; font-size: 1em; }
-        .rating-value { color: $text-light-emphasis; font-weight: 500; }
-        .meta-age-rating {
-            background-color: rgba($text-secondary-color, 0.2);
-            padding: 3px 7px;
-            border-radius: 3px;
-            font-size: 0.9em;
+        span { 
+            display: inline-flex; 
+            align-items: center; 
+            &:empty { display: none; } 
+        }
+        .meta-rating-display { // Использует @extend .rating-display-badge
+            @extend .rating-display-badge; 
+            font-size: 0.95em; 
+            margin-right: 10px; 
         }
     }
     .detailed-info-genres { 
-        font-size: 0.95em; // Немного увеличил шрифт
+        font-size: 0.95em; 
         color: $text-secondary-color; 
         margin-bottom: 25px; 
         line-height: 1.6; 
@@ -688,18 +721,18 @@ input[type="number"] {
     .detailed-info-actions {
         display: flex; 
         flex-wrap: wrap; 
-        gap: 12px; // Немного увеличил gap
+        gap: 12px; 
         margin-top: auto; 
         padding-top: 25px; 
         .action-button { 
-            padding: 12px 22px; // Немного увеличил паддинги кнопок
+            padding: 12px 22px; 
             font-size: 1em; 
             i { margin-right: 8px; } 
         }
     }
 
     .detailed-info-right-column {
-        flex: 1 1 42%; // Уменьшаем долю правой колонки, т.к. левая стала шире
+        flex: 1 1 42%; 
         position: relative; 
         overflow: hidden; 
         
@@ -719,11 +752,11 @@ input[type="number"] {
         display: flex; 
         border-bottom: 1px solid $border-color;
         margin-top: 20px;
-        margin-bottom: 20px; // Увеличил отступ
+        margin-bottom: 20px; 
 
         .tab-button {
             background: transparent; border: none; color: $text-secondary-color;
-            padding: 14px 20px; // Немного увеличил паддинги
+            padding: 14px 20px; 
             font-size: 1em; 
             cursor: pointer; position: relative;
             transition: color 0.2s ease;
@@ -742,7 +775,7 @@ input[type="number"] {
         flex-grow: 1;
         .tab-pane { 
             display: none; 
-            font-size: 0.95em; // Немного увеличил шрифт
+            font-size: 0.95em; 
             line-height: 1.6;
             color: $text-secondary-color;
             &.active { display: block; }
@@ -798,6 +831,7 @@ input[type="number"] {
             flex: 1 1 auto; 
             max-width: 100%; 
             border-radius: 12px 12px 0 0; 
+            padding: 25px 20px; 
             &::after { display: none; } 
         }
         .detailed-info-right-column {
@@ -920,4 +954,3 @@ input[type="number"] {
        &::before { top: -($content-area-overlap + 150px); } 
     }
 }
-

@@ -18,37 +18,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     const contentArea = document.querySelector('.content-area');
     const popularShelf = document.getElementById('popular');
     const nowPlayingShelf = document.getElementById('now-playing');
-    
-    // Панель детальной информации
+
     const detailedInfoPanel = document.getElementById('detailed-info-panel');
     const detailedInfoCloseBtn = detailedInfoPanel?.querySelector('.detailed-info-close-btn');
-    
-    // Селекторы для НОВОЙ СТРУКТУРЫ детальной панели
-    const detailedInfoContentWrapper = detailedInfoPanel?.querySelector('.detailed-info-content-wrapper'); 
+
+    const detailedInfoContentWrapper = detailedInfoPanel?.querySelector('.detailed-info-content-wrapper');
     const detailedInfoLeftColumn = detailedInfoPanel?.querySelector('.detailed-info-left-column');
-    const detailedInfoRightColumn = detailedInfoPanel?.querySelector('.detailed-info-right-column');
-    
-    const detailedInfoPosterSmall = detailedInfoLeftColumn?.querySelector('.detailed-info-poster-small'); 
-    const detailedInfoTitleLogo = detailedInfoLeftColumn?.querySelector('.detailed-info-title-logo'); 
+
     const detailedInfoTitle = detailedInfoLeftColumn?.querySelector('.detailed-info-title');
-    const detailedInfoRatingValue = detailedInfoLeftColumn?.querySelector('.meta-rating .rating-value'); 
+    const detailedInfoRatingDisplay = detailedInfoLeftColumn?.querySelector('.meta-rating-display');
     const detailedInfoYear = detailedInfoLeftColumn?.querySelector('.meta-year');
     const detailedInfoEpisodes = detailedInfoLeftColumn?.querySelector('.meta-episodes');
     const detailedInfoSeasons = detailedInfoLeftColumn?.querySelector('.meta-seasons');
-    const detailedInfoAgeRating = detailedInfoLeftColumn?.querySelector('.meta-age-rating'); 
+    const detailedInfoAgeRating = detailedInfoLeftColumn?.querySelector('.meta-age-rating');
     const detailedInfoGenres = detailedInfoLeftColumn?.querySelector('.detailed-info-genres');
-    const detailedInfoOverview = detailedInfoLeftColumn?.querySelector('#tab-about-details .detailed-info-overview'); 
-    
-    const detailedInfoActions = detailedInfoLeftColumn?.querySelector('.detailed-info-actions');
-    const detailedInfoWatchBtn = detailedInfoActions?.querySelector('.watch-now-btn');
-    const detailedInfoAddToListBtn = detailedInfoActions?.querySelector('.add-to-list-btn');
-    
+    const detailedInfoOverview = detailedInfoLeftColumn?.querySelector('#tab-about-details .detailed-info-overview');
+
+    const detailedInfoWatchBtn = detailedInfoLeftColumn?.querySelector('.watch-now-btn');
+    const detailedInfoAddToListBtn = detailedInfoLeftColumn?.querySelector('.add-to-list-btn');
+
     const detailedInfoTabsContainer = detailedInfoLeftColumn?.querySelector('.detailed-info-tabs');
     const detailedInfoTabPanes = detailedInfoLeftColumn?.querySelectorAll('.detailed-info-tab-content .tab-pane');
-    const detailedInfoAboutTabPane = detailedInfoLeftColumn?.querySelector('#tab-about-details'); 
-    const detailedInfoEpisodesTabPane = detailedInfoLeftColumn?.querySelector('#tab-episodes-details'); 
+    const detailedInfoEpisodesTabPane = detailedInfoLeftColumn?.querySelector('#tab-episodes-details');
 
-    const detailedInfoBackdropImage = detailedInfoRightColumn?.querySelector('.detailed-info-backdrop-image'); 
+    const detailedInfoBackdropImage = detailedInfoPanel?.querySelector('.detailed-info-right-column .detailed-info-backdrop-image');
 
     // --- Элементы DOM для Navbar и User Profile ---
     const navbar = document.querySelector('.navbar');
@@ -80,8 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';
     const BACKDROP_SIZE_HERO = 'original';
     const POSTER_SIZE_CARD = 'w342';
-    const POSTER_SIZE_DETAILS_SMALL = 'w342'; 
-    const BACKDROP_SIZE_DETAILS_LARGE = 'w1280'; 
+    const BACKDROP_SIZE_DETAILS_LARGE = 'w1280';
     const POSTER_SIZE_SEARCH = 'w154';
 
     const DEFAULT_VOLUME_LEVEL = 0.1;
@@ -94,7 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentHeroVideoElement = null;
     let isInfoPinned = false;
     let currentUserData = null;
-    let currentlyOpenShelfForDetails = null; 
+    let currentlyOpenShelfForDetails = null;
+    let currentActiveMovieTile = null;
 
     const DEFAULT_AVATAR_PATH = '/images/default-avatar.png';
     const placeholderMovies = [
@@ -108,17 +101,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Логика для Hero секции ---
     const popularScrollThreshold = 20;
-    function handlePopularSectionVisibility() { 
+    function handlePopularSectionVisibility() {
         if (!popularShelf) return;
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         popularShelf.classList.toggle('hidden-on-scroll', scrollTop <= popularScrollThreshold);
     }
-    function setDefaultUserIcon() { 
+    function setDefaultUserIcon() {
         if (!userProfileIconContainer) return;
         userProfileIconContainer.innerHTML = '<i class="fas fa-user"></i>';
         if (dropdownUsernameDisplay) dropdownUsernameDisplay.textContent = 'Гость';
     }
-    async function updateUserProfileDisplay() { 
+    async function updateUserProfileDisplay() {
         if (!userProfileIconContainer) { setDefaultUserIcon(); if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); return; }
         const userId = localStorage.getItem('userId');
         if (userId) {
@@ -137,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (error) { localStorage.removeItem('userId'); currentUserData = null; setDefaultUserIcon(); if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); }
         } else { currentUserData = null; setDefaultUserIcon(); if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); }
     }
-    if (userProfileLink) { 
+    if (userProfileLink) {
         userProfileLink.addEventListener('click', (event) => {
             event.preventDefault(); event.stopPropagation();
             const userId = localStorage.getItem('userId');
@@ -154,8 +147,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (dropdownProfileButton) { dropdownProfileButton.addEventListener('click', () => { window.location.href = '/profile'; if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); }); }
     if (dropdownLogoutButton) { dropdownLogoutButton.addEventListener('click', () => { localStorage.removeItem('userId'); currentUserData = null; window.location.reload(); }); }
-    
-    document.addEventListener('click', (event) => { 
+
+    document.addEventListener('click', (event) => {
         if (profileDropdownMenu?.classList.contains('active') && !profileDropdownMenu.contains(event.target) && !(userProfileLink && userProfileLink.contains(event.target))) {
             profileDropdownMenu.classList.remove('active');
         }
@@ -166,7 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    function animateVolume(media, targetVolumeRatio, duration) { 
+    function animateVolume(media, targetVolumeRatio, duration) {
         let startVolumeRatio = media.muted ? 0 : media.volume;
         if (targetVolumeRatio > 0 && media.muted) media.muted = false;
         if (Math.abs(startVolumeRatio - targetVolumeRatio) < 0.01) { media.volume = targetVolumeRatio; media.muted = (targetVolumeRatio === 0); updateSoundButtonIcon(); return; }
@@ -180,16 +173,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         requestAnimationFrame(animationStep);
     }
-    function updateSoundButtonIcon() { 
+    function updateSoundButtonIcon() {
         if (!soundButton || !soundIcon) return;
         soundIcon.className = isHeroSoundActive ? 'fas fa-volume-low' : 'fas fa-volume-mute';
     }
-    function updateInfoToggleButtonState() { 
+    function updateInfoToggleButtonState() {
         if (!infoToggleButton || !heroSection) return;
         infoToggleButton.classList.toggle('active', isInfoPinned);
         heroSection.classList.toggle('info-pinned', isInfoPinned);
     }
-    async function loadAndDisplayHeroContent() { 
+    async function loadAndDisplayHeroContent() {
         if (!heroSection || !heroTitleElement || !heroDescriptionElement || !heroWatchButton || !heroFallbackImg) return;
         try {
             const response = await fetch('/api/tmdb/hero-content');
@@ -207,9 +200,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const backdropUrl = data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${BACKDROP_SIZE_HERO}${data.backdrop_path}` : '/images/no_image.png';
             if(heroFallbackImg) { heroFallbackImg.src = backdropUrl; heroFallbackImg.alt = `Задник для ${data.title || 'фильма'}`; }
             if(heroSection) heroSection.dataset.videoType = data.video_info.type;
-            
+
             if(heroContentDisplay) heroContentDisplay.classList.add('visible');
-            
+
             const hasVideo = data.video_info && (data.video_info.type === 'html5_local' || data.video_info.type === 'youtube');
             if (heroActionButtonsContainer) {
                 heroActionButtonsContainer.classList.toggle('visible', hasVideo);
@@ -232,7 +225,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             switchToHeroFallback(null, true);
         }
     }
-    function createHtml5Player(videoSrc) { 
+    function createHtml5Player(videoSrc) {
         if (!heroVideoContainer) return;
         heroVideoContainer.innerHTML = '';
         currentHeroVideoElement = document.createElement('video');
@@ -254,7 +247,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentHeroVideoElement?.removeEventListener('canplay', onCanPlay);
         };
         currentHeroVideoElement.addEventListener('canplay', onCanPlay);
-        
+
         currentHeroVideoElement.addEventListener('ended', () => switchToHeroFallback(heroFallbackImg?.src, false));
         currentHeroVideoElement.addEventListener('error', (e) => {
             console.error("Ошибка HTML5 видео элемента:", e, currentHeroVideoElement.error);
@@ -262,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         heroVideoContainer.appendChild(currentHeroVideoElement);
     }
-    function switchToHeroFallback(backdropSrc, forceShowFallback) { 
+    function switchToHeroFallback(backdropSrc, forceShowFallback) {
         if (heroVideoContainer) { heroVideoContainer.innerHTML = ''; heroVideoContainer.style.opacity = '0'; }
         currentHeroVideoElement = null;
         if (heroFallbackImg && heroFallback) {
@@ -278,7 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         isInfoPinned = false; if(heroSection) heroSection.classList.remove('info-pinned');
         updateInfoToggleButtonState();
     }
-    if (soundButton && soundIcon) { 
+    if (soundButton && soundIcon) {
         soundButton.addEventListener('click', () => {
             if (!currentHeroVideoElement) return;
             isHeroSoundActive = !isHeroSoundActive;
@@ -291,12 +284,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
-    if (infoToggleButton && heroContentDisplay && heroSection) { 
+    if (infoToggleButton && heroContentDisplay && heroSection) {
         infoToggleButton.addEventListener('click', () => { isInfoPinned = !isInfoPinned; updateInfoToggleButtonState(); });
         heroSection.addEventListener('mouseenter', () => { if (!isInfoPinned && heroContentDisplay && heroActionButtonsContainer?.classList.contains('visible')) { heroContentDisplay.classList.add('visible'); }});
         heroSection.addEventListener('mouseleave', () => { if (!isInfoPinned && heroContentDisplay) { heroContentDisplay.classList.remove('visible'); }});
     }
-
 
     // --- Функции для рендеринга "полок" ---
     function createMovieTile(movie) {
@@ -307,9 +299,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const posterUrl = movie.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_CARD}${movie.poster_path}` : '/images/default-poster.jpg';
 
-        const ratingSpan = document.createElement('span');
-        ratingSpan.className = 'movie-rating';
-        setRatingColor(ratingSpan, movie.vote_average);
+        const ratingElement = document.createElement('span');
+        ratingElement.className = 'movie-rating rating-display-badge';
+        applyRatingStyles(ratingElement, movie.vote_average);
 
         tile.innerHTML = `
             <img src="${posterUrl}" alt="${movie.title || movie.name}" class="movie-poster-img" onerror="this.onerror=null;this.src='/images/error.png';">
@@ -318,7 +310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <p>${movie.overview ? (movie.overview.length > 100 ? movie.overview.substring(0, 97) + '...' : movie.overview) : 'Описание отсутствует.'}</p>
             </div>
         `;
-        tile.insertBefore(ratingSpan, tile.firstChild);
+        tile.insertBefore(ratingElement, tile.firstChild);
 
         tile.addEventListener('click', () => openDetailedInfo(movie.tmdb_id, movie.media_type, tile));
         return tile;
@@ -328,143 +320,247 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!shelfElement) return;
         const grid = shelfElement.querySelector('.shelf-grid');
         if (!grid) return;
-        grid.innerHTML = ''; 
+        grid.innerHTML = '';
         movies.forEach(movie => {
             grid.appendChild(createMovieTile(movie));
         });
     }
 
-    function setRatingColor(ratingElement, ratingValue) {
-        if (!ratingElement) return; const rating = parseFloat(ratingValue);
-        ratingElement.className = 'movie-rating'; 
-        if (isNaN(rating) || rating === 0) { 
-            ratingElement.textContent = '–'; 
-            ratingElement.style.backgroundColor = '#4a4a4a'; 
-            ratingElement.style.color = '#ccc';
-            return; 
+    function applyRatingStyles(targetElement, ratingValue) {
+        if (!targetElement) return;
+        const rating = parseFloat(ratingValue);
+        targetElement.classList.remove('rating-red', 'rating-gray', 'rating-green', 'rating-none');
+        targetElement.style.backgroundColor = ''; // Сброс inline стиля, если он был
+
+        if (isNaN(rating) || rating === 0) {
+            targetElement.textContent = '–';
+            targetElement.classList.add('rating-none');
+        } else {
+            targetElement.textContent = `★ ${rating.toFixed(1)}`;
+            if (rating < 5) {
+                targetElement.classList.add('rating-red');
+            } else if (rating < 7) {
+                targetElement.classList.add('rating-gray');
+            } else {
+                targetElement.classList.add('rating-green');
+            }
         }
-        ratingElement.textContent = `★ ${rating.toFixed(1)}`;
-        if (rating < 5) ratingElement.classList.add('rating-red');
-        else if (rating < 7) ratingElement.classList.add('rating-gray');
-        else ratingElement.classList.add('rating-green');
     }
 
-    // --- ОБНОВЛЕННАЯ Логика для детальной панели ---
+    // --- Функция заполнения детальной панели ---
+    const populatePanelData = (itemData, itemMediaType) => {
+        if (!detailedInfoPanel) return;
+        if (detailedInfoTitle) detailedInfoTitle.textContent = itemData.title || itemData.name;
+        if (detailedInfoRatingDisplay) applyRatingStyles(detailedInfoRatingDisplay, itemData.vote_average);
+
+        const itemReleaseDate = itemData.release_date || itemData.first_air_date;
+        if (detailedInfoYear) detailedInfoYear.textContent = itemReleaseDate ? new Date(itemReleaseDate).getFullYear() : 'N/A';
+
+        if (detailedInfoEpisodes) {
+            if (itemMediaType === 'tv' && itemData.number_of_episodes) {
+                detailedInfoEpisodes.textContent = `${itemData.number_of_episodes} эп.`;
+                detailedInfoEpisodes.style.display = 'inline-flex';
+            } else {
+                detailedInfoEpisodes.textContent = '';
+                detailedInfoEpisodes.style.display = 'none';
+            }
+        }
+        if (detailedInfoSeasons) {
+            if (itemMediaType === 'tv' && itemData.number_of_seasons) {
+                detailedInfoSeasons.textContent = `${itemData.number_of_seasons} с.`;
+                detailedInfoSeasons.style.display = 'inline-flex';
+            } else {
+                detailedInfoSeasons.textContent = '';
+                detailedInfoSeasons.style.display = 'none';
+            }
+        }
+
+        let itemAgeRatingText = '';
+        if (itemData.content_ratings && itemData.content_ratings.results) {
+            const ruRating = itemData.content_ratings.results.find(r => r.iso_3166_1 === 'RU');
+            if (ruRating && ruRating.rating) itemAgeRatingText = ruRating.rating;
+        } else if (itemData.release_dates && itemData.release_dates.results && !itemAgeRatingText) {
+             const ruRelease = itemData.release_dates.results.find(r => r.iso_3166_1 === 'RU');
+             if (ruRelease && ruRelease.release_dates && ruRelease.release_dates.length > 0) {
+                 const cert = ruRelease.release_dates.find(rd => rd.certification && rd.certification !== "");
+                 if (cert) itemAgeRatingText = cert.certification;
+             }
+        }
+        if (detailedInfoAgeRating) {
+            if (itemAgeRatingText) {
+                detailedInfoAgeRating.textContent = itemAgeRatingText;
+                detailedInfoAgeRating.style.display = 'inline-flex';
+            } else {
+                detailedInfoAgeRating.textContent = '';
+                detailedInfoAgeRating.style.display = 'none';
+            }
+        }
+
+        if (detailedInfoGenres) detailedInfoGenres.textContent = itemData.genres && itemData.genres.length > 0 ? itemData.genres.map(g => g.name).join(', ') : 'Жанры не указаны';
+        if (detailedInfoOverview) detailedInfoOverview.textContent = itemData.overview || 'Описание отсутствует.';
+        if(detailedInfoWatchBtn) {
+            detailedInfoWatchBtn.dataset.tmdbId = String(itemData.id);
+            detailedInfoWatchBtn.dataset.mediaType = itemMediaType;
+            detailedInfoWatchBtn.onclick = () => window.location.href = `watch.html?tmdbId=${itemData.id}&type=${itemMediaType}`;
+        }
+        if (detailedInfoBackdropImage) {
+            detailedInfoBackdropImage.src = itemData.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${BACKDROP_SIZE_DETAILS_LARGE}${itemData.backdrop_path}` : 'https://placehold.co/1280x720/0c0c0c/111111?text=Нет+изображения';
+            detailedInfoBackdropImage.alt = `Задник для ${itemData.title || itemData.name}`;
+        }
+
+        detailedInfoPanel.dataset.currentTmdbId = String(itemData.id);
+
+        detailedInfoTabsContainer?.querySelector('.tab-button.active')?.classList.remove('active');
+        detailedInfoTabsContainer?.querySelector('.tab-button[data-tab-target="#tab-about-details"]')?.classList.add('active');
+        detailedInfoTabPanes?.forEach(pane => pane.classList.remove('active'));
+        detailedInfoPanel.querySelector('#tab-about-details')?.classList.add('active');
+        const episodesTabButton = detailedInfoTabsContainer?.querySelector('.tab-button[data-tab-target="#tab-episodes-details"]');
+        if (episodesTabButton) {
+            episodesTabButton.style.display = itemMediaType === 'tv' ? 'inline-flex' : 'none';
+            if (itemMediaType !== 'tv' && detailedInfoEpisodesTabPane) detailedInfoEpisodesTabPane.innerHTML = '<p>Сезоны и серии доступны только для сериалов.</p>';
+        }
+    };
+
+    // --- ОБНОВЛЕННАЯ Логика для детальной панели (возврат к логике "старого" файла) ---
     async function openDetailedInfo(tmdbId, mediaType, clickedTileElement) {
         if (!detailedInfoPanel || !clickedTileElement) {
-             console.error('Панель деталей или кликнутый элемент не найдены');
-             return;
+            console.error('Панель деталей или кликнутый элемент не найдены');
+            return;
         }
-        
-        const parentShelf = clickedTileElement.closest('.movie-shelf');
-        if (!parentShelf) {
+
+        const newParentShelf = clickedTileElement.closest('.movie-shelf');
+        if (!newParentShelf) {
             console.error('Родительская полка для кликнутой плитки не найдена.');
             return;
         }
 
-        if (detailedInfoPanel.classList.contains('expanded')) {
-            if (currentlyOpenShelfForDetails === parentShelf && detailedInfoPanel.dataset.currentTmdbId === String(tmdbId)) {
-                await closeDetailedInfo();
-                return;
-            }
-            await closeDetailedInfo(); 
+        const isAlreadyOpen = detailedInfoPanel.classList.contains('expanded');
+        const isSameTile = currentActiveMovieTile === clickedTileElement;
+
+        if (isAlreadyOpen && isSameTile) {
+            await closeDetailedInfo();
+            return;
         }
-        
-        try {
-            const response = await fetch(`/api/tmdb/details/${mediaType}/${tmdbId}?language=ru-RU&append_to_response=release_dates,content_ratings`);
-            if (!response.ok) {
-                console.error('Ошибка при загрузке деталей:', response.status, await response.text());
-                return;
+
+        // Логика открытия/обновления панели, основанная на "старом" файле
+        if (isAlreadyOpen) { // Панель уже открыта, обновляем или перемещаем
+            if (currentActiveMovieTile) {
+                currentActiveMovieTile.classList.remove('active-tile-details');
             }
-            const data = await response.json();
-            if (!data) { 
-                console.error('Данные для TMDB ID:', tmdbId, 'не найдены.'); 
-                return; 
+            clickedTileElement.classList.add('active-tile-details');
+            currentActiveMovieTile = clickedTileElement;
+
+            try {
+                const response = await fetch(`/api/tmdb/details/${mediaType}/${tmdbId}?language=ru-RU&append_to_response=release_dates,content_ratings`);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ status_message: `Ошибка HTTP: ${response.status}` }));
+                    throw new Error(errorData.status_message || `Ошибка HTTP: ${response.status}`);
+                }
+                const data = await response.json();
+                if (!data) throw new Error('Данные не получены.');
+
+                const needsMove = (currentlyOpenShelfForDetails !== newParentShelf);
+
+                if (needsMove) {
+                    detailedInfoPanel.style.transition = 'opacity 0.15s ease-out';
+                    detailedInfoPanel.style.opacity = '0';
+                    await new Promise(resolve => setTimeout(resolve, 150)); // Даем время на fade-out
+                    
+                    newParentShelf.after(detailedInfoPanel); // Перемещаем
+                    populatePanelData(data, mediaType);
+                    currentlyOpenShelfForDetails = newParentShelf;
+                    
+                    detailedInfoPanel.style.opacity = '1'; // Плавное появление на новом месте
+                } else { // Панель на месте, обновляем только контент
+                    if (detailedInfoContentWrapper) {
+                        detailedInfoContentWrapper.style.transition = 'opacity 0.2s ease-out';
+                        detailedInfoContentWrapper.style.opacity = '0';
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        populatePanelData(data, mediaType);
+                        detailedInfoContentWrapper.style.opacity = '1';
+                    } else {
+                        populatePanelData(data, mediaType); // Без анимации, если нет wrapper'а
+                    }
+                }
+                // Прокрутка
+                const navbarHeight = navbar?.offsetHeight || 0;
+                const panelRect = detailedInfoPanel.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const panelTopAbsolute = panelRect.top + scrollTop;
+                window.scrollTo({ top: panelTopAbsolute - navbarHeight - 10, behavior: 'smooth' });
+
+            } catch (error) {
+                console.error('Ошибка при обновлении деталей в открытой панели:', error);
+                // В "старом" коде здесь не было явной обработки ошибки для пользователя, панель оставалась как есть
+                // Можно добавить уведомление, если нужно, но для соответствия "старому" поведению - просто логируем
             }
+        } else { // Панель была закрыта, открываем с нуля
+            try {
+                // Показываем состояние загрузки на самой плитке (опционально, но может быть полезно)
+                // clickedTileElement.classList.add('loading-details'); // Нужно будет добавить стиль для этого
 
-            if (detailedInfoPosterSmall) {
-                detailedInfoPosterSmall.src = data.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_DETAILS_SMALL}${data.poster_path}` : 'https://placehold.co/300x450/1a1a1a/333333?text=Постер';
-                detailedInfoPosterSmall.alt = `Постер для ${data.title || data.name}`;
-            }
-            
-            if (detailedInfoTitle) detailedInfoTitle.textContent = data.title || data.name;
-            if (detailedInfoRatingValue) detailedInfoRatingValue.textContent = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
-            
-            const releaseDate = data.release_date || data.first_air_date;
-            if (detailedInfoYear) detailedInfoYear.textContent = releaseDate ? new Date(releaseDate).getFullYear() : 'N/A';
-            
-            if (detailedInfoEpisodes) detailedInfoEpisodes.textContent = (mediaType === 'tv' && data.number_of_episodes) ? `${data.number_of_episodes} эп.` : '';
-            if (detailedInfoSeasons) detailedInfoSeasons.textContent = (mediaType === 'tv' && data.number_of_seasons) ? `${data.number_of_seasons} с.` : '';
+                const response = await fetch(`/api/tmdb/details/${mediaType}/${tmdbId}?language=ru-RU&append_to_response=release_dates,content_ratings`);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ status_message: `Ошибка HTTP: ${response.status}` }));
+                    throw new Error(errorData.status_message || `Ошибка HTTP: ${response.status}`);
+                }
+                const data = await response.json();
+                if (!data) throw new Error('Данные не получены.');
 
-            let ageRatingText = 'N/A';
-            if (data.content_ratings && data.content_ratings.results) {
-                const ruRating = data.content_ratings.results.find(r => r.iso_3166_1 === 'RU');
-                if (ruRating && ruRating.rating) ageRatingText = ruRating.rating;
-            } else if (data.release_dates && data.release_dates.results) {
-                 const ruRelease = data.release_dates.results.find(r => r.iso_3166_1 === 'RU');
-                 if (ruRelease && ruRelease.release_dates && ruRelease.release_dates.length > 0) {
-                     const cert = ruRelease.release_dates.find(rd => rd.certification && rd.certification !== "");
-                     if (cert) ageRatingText = cert.certification;
-                 }
-            }
-            if (detailedInfoAgeRating) detailedInfoAgeRating.textContent = ageRatingText;
+                // clickedTileElement.classList.remove('loading-details'); // Убираем загрузку с плитки
 
-            if (detailedInfoGenres) detailedInfoGenres.textContent = data.genres && data.genres.length > 0 ? data.genres.map(g => g.name).join(', ') : 'Жанры не указаны';
-            
-            if (detailedInfoOverview) detailedInfoOverview.textContent = data.overview || 'Описание отсутствует.';
-            
-            if(detailedInfoWatchBtn) {
-                detailedInfoWatchBtn.dataset.tmdbId = String(data.id);
-                detailedInfoWatchBtn.dataset.mediaType = mediaType;
-                detailedInfoWatchBtn.onclick = () => window.location.href = `watch.html?tmdbId=${data.id}&type=${mediaType}`;
-            }
+                populatePanelData(data, mediaType);
+                newParentShelf.after(detailedInfoPanel); // Перемещаем панель под нужную полку
+                
+                if (currentActiveMovieTile) {
+                    currentActiveMovieTile.classList.remove('active-tile-details');
+                }
+                clickedTileElement.classList.add('active-tile-details');
+                currentActiveMovieTile = clickedTileElement;
 
-            if (detailedInfoBackdropImage) {
-                detailedInfoBackdropImage.src = data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${BACKDROP_SIZE_DETAILS_LARGE}${data.backdrop_path}` : 'https://placehold.co/1280x720/0c0c0c/111111?text=Нет+изображения';
-                detailedInfoBackdropImage.alt = `Задник для ${data.title || data.name}`;
-            }
+                detailedInfoPanel.style.display = 'block'; // Делаем видимой структурно
+                // Запускаем анимацию появления
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => { // Двойной requestAnimationFrame для надежности CSS-перехода
+                        detailedInfoPanel.classList.add('expanded'); // Добавляет opacity: 1 через CSS
+                        currentlyOpenShelfForDetails = newParentShelf;
 
-            parentShelf.after(detailedInfoPanel);
-            detailedInfoPanel.dataset.currentTmdbId = String(tmdbId); 
-
-            detailedInfoPanel.style.display = 'block'; 
-
-            requestAnimationFrame(() => { 
-                requestAnimationFrame(() => { 
-                    detailedInfoPanel.classList.add('expanded');
-                    currentlyOpenShelfForDetails = parentShelf; 
-                    const panelTopOffset = detailedInfoPanel.getBoundingClientRect().top + window.pageYOffset - (navbar?.offsetHeight || 0) - 20; 
-                    window.scrollTo({ top: panelTopOffset, behavior: 'smooth' });
+                        // Прокрутка к панели
+                        const navbarHeight = navbar?.offsetHeight || 0;
+                        const panelRect = detailedInfoPanel.getBoundingClientRect();
+                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                        const panelTopAbsolute = panelRect.top + scrollTop;
+                        window.scrollTo({ top: panelTopAbsolute - navbarHeight - 10, behavior: 'smooth' });
+                    });
                 });
-            });
-            
-            detailedInfoTabsContainer?.querySelector('.tab-button.active')?.classList.remove('active');
-            detailedInfoTabsContainer?.querySelector('.tab-button[data-tab-target="#tab-about-details"]')?.classList.add('active');
-            detailedInfoTabPanes?.forEach(pane => pane.classList.remove('active'));
-            detailedInfoPanel.querySelector('#tab-about-details')?.classList.add('active');
-            const episodesTabButton = detailedInfoTabsContainer?.querySelector('.tab-button[data-tab-target="#tab-episodes-details"]');
-            if (episodesTabButton) {
-                episodesTabButton.style.display = mediaType === 'tv' ? 'inline-flex' : 'none';
-                if (mediaType !== 'tv' && detailedInfoEpisodesTabPane) detailedInfoEpisodesTabPane.innerHTML = '<p>Сезоны и серии доступны только для сериалов.</p>';
+            } catch (error) {
+                console.error('Ошибка при открытии и загрузке деталей:', error);
+                // clickedTileElement.classList.remove('loading-details'); // Убираем загрузку с плитки в случае ошибки
+                // Панель не отобразится, что соответствует поведению "старого" файла
             }
-        } catch (error) { 
-            console.error('Ошибка при получении или обработке деталей фильма/сериала:', error); 
         }
     }
 
-    function closeDetailedInfo() { 
+    function closeDetailedInfo() {
         return new Promise((resolve) => {
             if (!detailedInfoPanel || !detailedInfoPanel.classList.contains('expanded')) {
                 resolve();
                 return;
             }
 
-            detailedInfoPanel.classList.remove('expanded');
+            if (currentActiveMovieTile) {
+                currentActiveMovieTile.classList.remove('active-tile-details');
+                currentActiveMovieTile = null;
+            }
+
+            detailedInfoPanel.classList.remove('expanded'); // Запускает CSS-анимацию opacity
             currentlyOpenShelfForDetails = null;
             delete detailedInfoPanel.dataset.currentTmdbId;
 
             const onTransitionEnd = (event) => {
-                if (event.target === detailedInfoPanel && (event.propertyName === 'max-height' || event.propertyName === 'opacity')) {
+                // Убедимся, что событие именно от detailedInfoPanel и именно по свойству opacity
+                if (event.target === detailedInfoPanel && event.propertyName === 'opacity') {
+                    // Дополнительная проверка, что панель все еще должна быть скрыта
                     if (!detailedInfoPanel.classList.contains('expanded')) {
                        detailedInfoPanel.style.display = 'none';
                     }
@@ -474,32 +570,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             detailedInfoPanel.addEventListener('transitionend', onTransitionEnd);
 
+            // Fallback на случай, если событие transitionend не сработает (например, если transition прерван)
             setTimeout(() => {
                 if (detailedInfoPanel.style.display !== 'none' && !detailedInfoPanel.classList.contains('expanded')) {
                     detailedInfoPanel.style.display = 'none';
-                    detailedInfoPanel.removeEventListener('transitionend', onTransitionEnd);
+                    detailedInfoPanel.removeEventListener('transitionend', onTransitionEnd); // Удаляем, если еще не удалено
                 }
-                resolve(); 
-            }, 550); 
+                resolve();
+            }, 350); // Чуть дольше, чем длительность transition (0.3s в SCSS)
         });
     }
 
     detailedInfoCloseBtn?.addEventListener('click', closeDetailedInfo);
-    
-    detailedInfoTabsContainer?.addEventListener('click', (event) => { 
+
+    detailedInfoTabsContainer?.addEventListener('click', (event) => {
         const targetButton = event.target.closest('.tab-button');
         if (!targetButton || targetButton.classList.contains('active')) return;
-        
+
         detailedInfoTabsContainer.querySelector('.tab-button.active')?.classList.remove('active');
         targetButton.classList.add('active');
-        
+
         detailedInfoTabPanes?.forEach(pane => pane.classList.remove('active'));
         const targetPaneId = targetButton.dataset.tabTarget;
-        if (targetPaneId) detailedInfoPanel.querySelector(targetPaneId)?.classList.add('active');
+        if (targetPaneId && detailedInfoPanel) detailedInfoPanel.querySelector(targetPaneId)?.classList.add('active');
     });
 
     // --- Логика поиска и фильтров ---
-    if (newSearchButton && newSearchModal) { 
+    if (newSearchButton && newSearchModal) {
         function openSearchModalWindow() {
             if(!newSearchModal) return;
             newSearchModal.classList.add('active');
@@ -524,7 +621,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         newSearchModal.addEventListener('click', (e) => { if (e.target === newSearchModal) closeSearchModalWindow(); });
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && newSearchModal?.classList.contains('active')) closeSearchModalWindow(); });
     }
-    async function fetchGenresFromServer(type) { 
+    async function fetchGenresFromServer(type) {
         try {
             const response = await fetch(`/api/tmdb/genres/${type}?language=ru-RU`);
             if (!response.ok) throw new Error(`Ошибка HTTP ${response.status} при загрузке жанров ${type}`);
@@ -545,7 +642,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return [];
         }
     }
-    async function populateGenreDropdown(dropdownMenu, genresData, type, genreMapToPopulate) { 
+    async function populateGenreDropdown(dropdownMenu, genresData, type, genreMapToPopulate) {
         if (!dropdownMenu) return;
         const placeholder = dropdownMenu.querySelector('.genres-loading-placeholder');
         if (placeholder) placeholder.remove();
@@ -570,7 +667,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             dropdownMenu.appendChild(label);
         });
     }
-    async function loadAndPopulateAllGenres() { 
+    async function loadAndPopulateAllGenres() {
         const [movieGenresData, tvGenresData] = await Promise.all([fetchGenresFromServer('movie'), fetchGenresFromServer('tv')]);
         populateGenreDropdown(genreDropdownMovieMenuElement, movieGenresData, 'movie', allMovieGenresMap);
         allTvGenresMap.clear();
@@ -578,10 +675,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         tvGenres.forEach(genre => { if (typeof genre.id === 'number' && typeof genre.name === 'string') allTvGenresMap.set(genre.id, genre.name); });
         updateToggleTextForGenres(genreDropdownMovieElement);
     }
-    function getSelectedGenreIds() { 
+    function getSelectedGenreIds() {
         return Array.from(genreDropdownMovieMenuElement?.querySelectorAll('input[name="genre_filter"]:checked') || []).map(cb => cb.value);
     }
-    function triggerSearch() { 
+    function triggerSearch() {
         const query = searchInput?.value.trim() || "";
         const selectedGenres = getSelectedGenreIds();
         const yearFrom = yearFromInput?.value.trim() || "";
@@ -605,28 +702,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (loadingIndicator) loadingIndicator.style.display = 'none';
         }
     }
-    async function performSearch(query, mediaType, selectedGenreIds, yearFrom, yearTo, ratingFrom, ratingTo) { 
+    async function performSearch(query, mediaType, selectedGenreIds, yearFrom, yearTo, ratingFrom, ratingTo) {
         if (loadingIndicator) loadingIndicator.style.display = 'flex';
         if (initialPlaceholder) initialPlaceholder.style.display = 'none';
 
         const params = new URLSearchParams({ language: 'ru-RU', page: 1 });
 
         if (query) params.append('query', query);
-        
+
         let requestMediaType = mediaType;
         if (!query && !mediaType && (selectedGenreIds.length > 0 || yearFrom || yearTo || ratingFrom || ratingTo)) {
-            requestMediaType = 'movie';
+            requestMediaType = 'movie'; // Default to movie if filters are applied without a query or type
         } else if (query && !mediaType) {
-            requestMediaType = 'multi';
+            requestMediaType = 'multi'; // Search multi if query exists but no type
         }
         if (requestMediaType) params.append('media_type', requestMediaType);
+
 
         if (selectedGenreIds && selectedGenreIds.length > 0) params.append('genres', selectedGenreIds.join(','));
         if (yearFrom) params.append('year_from', yearFrom);
         if (yearTo) params.append('year_to', yearTo);
         if (ratingFrom) params.append('rating_from', ratingFrom);
         if (ratingTo) params.append('rating_to', ratingTo);
-        
+
         const fullUrl = `/api/tmdb/search?${params.toString()}`;
         try {
             const response = await fetch(fullUrl);
@@ -651,7 +749,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (checkbox.checked) typeFilterCheckboxes.forEach(cb => { if (cb !== checkbox) cb.checked = false; });
         updateToggleTextForDropdown(typeDropdownElement, "Выберите тип"); triggerSearch();
     }));
-    if(resetFiltersButton) { 
+    if(resetFiltersButton) {
         resetFiltersButton.addEventListener('click', () => {
             if(searchInput) searchInput.value = '';
             typeFilterCheckboxes?.forEach(cb => cb.checked = false);
@@ -662,7 +760,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             clearSearchResults(true); if (initialPlaceholder) initialPlaceholder.style.display = 'flex'; if (loadingIndicator) loadingIndicator.style.display = 'none';
         });
     }
-    function displayResults(items, searchedMediaTypeContext) { 
+    function displayResults(items, searchedMediaTypeContext) {
         clearSearchResults(false); if(!searchResultsContainer) return;
         const resultsGrid = document.createElement('div'); resultsGrid.className = 'search-results-grid';
         if (!items || items.length === 0) {
@@ -671,7 +769,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             items.forEach((item, index) => {
                 let mediaType = item.media_type;
-                if (!mediaType) { 
+                if (!mediaType) {
                     mediaType = searchedMediaTypeContext !== 'multi' ? searchedMediaTypeContext : (item.title ? 'movie' : 'tv');
                 }
                 if (mediaType === 'person') return;
@@ -709,25 +807,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         searchResultsContainer.querySelector('.search-results-grid')?.remove();
         searchResultsContainer.appendChild(resultsGrid);
     }
-    function displayError(message) { 
+    function displayError(message) {
         clearSearchResults(false); if(!searchResultsContainer) return;
         const errorElement = document.createElement('p'); errorElement.className = 'search-error-message'; errorElement.textContent = `Ошибка: ${message}`;
         searchResultsContainer.querySelector('.search-results-grid')?.remove(); searchResultsContainer.appendChild(errorElement);
         if (loadingIndicator) loadingIndicator.style.display = 'none'; if (initialPlaceholder) initialPlaceholder.style.display = 'none';
     }
-    function clearSearchResults(showPlaceholder = true) { 
+    function clearSearchResults(showPlaceholder = true) {
         if (!searchResultsContainer) return;
         searchResultsContainer.querySelector('.search-results-grid')?.remove();
         searchResultsContainer.querySelector('.search-error-message')?.remove();
         if (initialPlaceholder) initialPlaceholder.style.display = showPlaceholder ? 'flex' : 'none';
     }
-    if (newSearchModal) { 
+    if (newSearchModal) {
         const observer = new MutationObserver(mutations => {
             mutations.forEach(mutation => {
                 if (mutation.attributeName === 'class') {
                     const isActive = newSearchModal.classList.contains('active');
                     if (isActive) {
-                         if (allMovieGenresMap.size === 0 && allTvGenresMap.size === 0) { 
+                         if (allMovieGenresMap.size === 0 && allTvGenresMap.size === 0) {
                             loadAndPopulateAllGenres();
                         }
                     }
@@ -736,7 +834,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         observer.observe(newSearchModal, { attributes: true });
     }
-    document.querySelectorAll('.search-modal-sidebar .custom-dropdown').forEach(dropdown => { 
+    document.querySelectorAll('.search-modal-sidebar .custom-dropdown').forEach(dropdown => {
         const toggleButton = dropdown.querySelector('.dropdown-toggle');
         toggleButton?.addEventListener('click', (event) => {
             event.stopPropagation();
@@ -750,7 +848,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
-    function updateToggleTextForDropdown(dropdownElement, defaultText) { 
+    function updateToggleTextForDropdown(dropdownElement, defaultText) {
         if (!dropdownElement) return; const textElement = dropdownElement.querySelector('.dropdown-toggle span'); if (!textElement) return;
         const selectedTexts = Array.from(dropdownElement.querySelectorAll('.dropdown-menu input[type="checkbox"]:checked')).map(cb => cb.dataset.genreName || cb.labels[0].textContent.trim() || cb.value);
         if (selectedTexts.length > 0) {
@@ -758,13 +856,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             textElement.textContent = selectedTexts.length <= maxNames ? selectedTexts.join(', ') : `${selectedTexts.length} выбрано`;
         } else textElement.textContent = defaultText;
     }
-    function updateToggleTextForGenres(dropdownElement) { 
+    function updateToggleTextForGenres(dropdownElement) {
         if (!dropdownElement) return; const menu = dropdownElement.querySelector('.dropdown-menu'); const toggleSpan = dropdownElement.querySelector('.dropdown-toggle span'); if (!toggleSpan) return;
         if (menu?.querySelector('.genres-loading-placeholder')) toggleSpan.textContent = "Загрузка жанров...";
         else if (menu?.querySelectorAll('label').length === 0 && !menu?.querySelector('.genres-loading-placeholder')) toggleSpan.textContent = "Жанры не найдены";
         else updateToggleTextForDropdown(dropdownElement, "Выберите жанр(ы)");
     }
-    document.querySelectorAll('.number-input-container').forEach(container => { 
+    document.querySelectorAll('.number-input-container').forEach(container => {
         const input = container.querySelector('input[type="number"]'); const upArrow = container.querySelector('.up-arrow'); const downArrow = container.querySelector('.down-arrow');
         if (input && upArrow && downArrow) {
             upArrow.addEventListener('click', () => { input.stepUp(); input.dispatchEvent(new Event('input', { bubbles: true })); });
@@ -773,7 +871,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // --- Инициализация ---
-    if (detailedInfoPanel) { 
+    if (detailedInfoPanel) {
         detailedInfoPanel.classList.remove('expanded');
         detailedInfoPanel.style.display = 'none';
     }
@@ -782,29 +880,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateUserProfileDisplay();
     if (popularShelf) renderShelf(popularShelf, placeholderMovies.slice(0, 7));
     if (nowPlayingShelf) renderShelf(nowPlayingShelf, placeholderMovies.slice(7, 12).reverse());
-    
-    handlePopularSectionVisibility(); 
+
+    handlePopularSectionVisibility();
     window.addEventListener('scroll', handlePopularSectionVisibility, { passive: true });
 
     if (navbar) window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 20), { passive: true });
-    
-    navbarButtons.forEach(button => { 
+
+    navbarButtons.forEach(button => {
         button.addEventListener('click', function(event) {
             event.preventDefault();
             navbarButtons.forEach(btn => btn.classList.remove('active')); this.classList.add('active');
-            const sectionId = this.dataset.section; 
+            const sectionId = this.dataset.section;
             const targetSection = document.getElementById(sectionId);
             if (targetSection) {
                 let effectiveNavbarHeight = 0;
                 if (navbar && getComputedStyle(navbar).position === 'fixed') {
                     effectiveNavbarHeight = navbar.offsetHeight;
                 }
-                
+
                 let offsetTop = targetSection.getBoundingClientRect().top + window.pageYOffset - effectiveNavbarHeight;
-                
+
                 if (sectionId === 'popular' && contentArea) {
                      offsetTop = contentArea.getBoundingClientRect().top + window.pageYOffset - effectiveNavbarHeight;
-                     if (offsetTop < 0 && sectionId === 'popular') offsetTop = 0; 
+                     if (offsetTop < 0 && sectionId === 'popular') offsetTop = 0;
                 }
                 window.scrollTo({ top: offsetTop, behavior: 'smooth' });
             }

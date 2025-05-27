@@ -19,22 +19,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     const popularShelf = document.getElementById('popular');
     const nowPlayingShelf = document.getElementById('now-playing');
     
-    // Панель детальной информации (остается один экземпляр)
+    // Панель детальной информации
     const detailedInfoPanel = document.getElementById('detailed-info-panel');
     const detailedInfoCloseBtn = detailedInfoPanel?.querySelector('.detailed-info-close-btn');
-    // const detailedInfoBackdrop = detailedInfoPanel?.querySelector('.detailed-info-backdrop'); // Больше не используется
-    const detailedInfoPoster = detailedInfoPanel?.querySelector('.detailed-info-poster');
-    const detailedInfoTitle = detailedInfoPanel?.querySelector('.detailed-info-title');
-    const detailedInfoRating = detailedInfoPanel?.querySelector('.meta-rating span');
-    const detailedInfoYear = detailedInfoPanel?.querySelector('.meta-year');
-    const detailedInfoEpisodes = detailedInfoPanel?.querySelector('.meta-episodes');
-    const detailedInfoSeasons = detailedInfoPanel?.querySelector('.meta-seasons');
-    const detailedInfoGenres = detailedInfoPanel?.querySelector('.detailed-info-genres');
-    const detailedInfoOverview = detailedInfoPanel?.querySelector('.detailed-info-overview');
-    const detailedInfoWatchBtn = detailedInfoPanel?.querySelector('.watch-now-btn');
-    const detailedInfoAddToListBtn = detailedInfoPanel?.querySelector('.add-to-list-btn');
-    const detailedInfoTabsContainer = detailedInfoPanel?.querySelector('.detailed-info-tabs');
-    const detailedInfoTabPanes = detailedInfoPanel?.querySelectorAll('.tab-pane');
+    
+    // Селекторы для НОВОЙ СТРУКТУРЫ детальной панели
+    const detailedInfoContentWrapper = detailedInfoPanel?.querySelector('.detailed-info-content-wrapper'); 
+    const detailedInfoLeftColumn = detailedInfoPanel?.querySelector('.detailed-info-left-column');
+    const detailedInfoRightColumn = detailedInfoPanel?.querySelector('.detailed-info-right-column');
+    
+    const detailedInfoPosterSmall = detailedInfoLeftColumn?.querySelector('.detailed-info-poster-small'); 
+    const detailedInfoTitleLogo = detailedInfoLeftColumn?.querySelector('.detailed-info-title-logo'); 
+    const detailedInfoTitle = detailedInfoLeftColumn?.querySelector('.detailed-info-title');
+    const detailedInfoRatingValue = detailedInfoLeftColumn?.querySelector('.meta-rating .rating-value'); 
+    const detailedInfoYear = detailedInfoLeftColumn?.querySelector('.meta-year');
+    const detailedInfoEpisodes = detailedInfoLeftColumn?.querySelector('.meta-episodes');
+    const detailedInfoSeasons = detailedInfoLeftColumn?.querySelector('.meta-seasons');
+    const detailedInfoAgeRating = detailedInfoLeftColumn?.querySelector('.meta-age-rating'); 
+    const detailedInfoGenres = detailedInfoLeftColumn?.querySelector('.detailed-info-genres');
+    const detailedInfoOverview = detailedInfoLeftColumn?.querySelector('#tab-about-details .detailed-info-overview'); 
+    
+    const detailedInfoActions = detailedInfoLeftColumn?.querySelector('.detailed-info-actions');
+    const detailedInfoWatchBtn = detailedInfoActions?.querySelector('.watch-now-btn');
+    const detailedInfoAddToListBtn = detailedInfoActions?.querySelector('.add-to-list-btn');
+    
+    const detailedInfoTabsContainer = detailedInfoLeftColumn?.querySelector('.detailed-info-tabs');
+    const detailedInfoTabPanes = detailedInfoLeftColumn?.querySelectorAll('.detailed-info-tab-content .tab-pane');
+    const detailedInfoAboutTabPane = detailedInfoLeftColumn?.querySelector('#tab-about-details'); 
+    const detailedInfoEpisodesTabPane = detailedInfoLeftColumn?.querySelector('#tab-episodes-details'); 
+
+    const detailedInfoBackdropImage = detailedInfoRightColumn?.querySelector('.detailed-info-backdrop-image'); 
 
     // --- Элементы DOM для Navbar и User Profile ---
     const navbar = document.querySelector('.navbar');
@@ -63,14 +77,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ratingToInput = newSearchModal?.querySelector('.rating-input[placeholder="до"]');
     const resetFiltersButton = newSearchModal?.querySelector('.reset-filters-button');
 
-
     const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';
     const BACKDROP_SIZE_HERO = 'original';
     const POSTER_SIZE_CARD = 'w342';
-    const POSTER_SIZE_DETAILS = 'w500'; // Для постера в детальной информации
-    const BACKDROP_SIZE_DETAILS = 'original'; // Для фона в детальной информации (если используется)
+    const POSTER_SIZE_DETAILS_SMALL = 'w342'; 
+    const BACKDROP_SIZE_DETAILS_LARGE = 'w1280'; 
     const POSTER_SIZE_SEARCH = 'w154';
-
 
     const DEFAULT_VOLUME_LEVEL = 0.1;
     const VOLUME_ANIMATION_DURATION = 1500;
@@ -82,18 +94,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentHeroVideoElement = null;
     let isInfoPinned = false;
     let currentUserData = null;
-    let currentlyOpenShelfForDetails = null; // Для отслеживания, под какой полкой открыта панель
+    let currentlyOpenShelfForDetails = null; 
 
     const DEFAULT_AVATAR_PATH = '/images/default-avatar.png';
-
-    // Placeholder данные (оставьте или замените на реальную загрузку)
     const placeholderMovies = [
         { id: 1, tmdb_id: 550, media_type: 'movie', title: 'Бойцовский клуб', name: 'Бойцовский клуб', poster_path: '/pB8BM7pdSp6B6Ih7QZ4DrQ3pmJK.jpg', vote_average: 8.43, overview: 'Сотрудник страховой компании страдает хронической бессонницей и отчаянно пытается вырваться из мучительно скучной жизни. Однажды он встречает Тайлера Дёрдена, харизматичного торговца мылом с извращённой философией. Тайлер уверен, что самосовершенствование — удел слабых, а саморазрушение — единственное, ради чего стоит жить.', release_date: '1999-10-15', first_air_date: null, genres: [{id: 18, name: 'Драма'}], number_of_episodes: null, number_of_seasons: null },
         { id: 2, tmdb_id: 1399, media_type: 'tv', title: 'Игра престолов', name: 'Игра престолов', poster_path: '/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg', vote_average: 8.4, overview: 'К концу подходит время благоденствия, и лето, длившееся почти десятилетие, угасает. Вокруг средоточия власти Семи королевств, Железного трона, зреет заговор, и в это непростое время король решает искать поддержки у друга юности Эддарда Старка. В мире, где все — от короля до наемника — рвутся к власти, плетут интриги и готовы вонзить нож в спину, есть место и благородству, состраданию и любви. Между тем, никто не замечает пробуждения тьмы из легенд далеко на Севере — и лишь Стена защищает живых к югу от нее.', release_date: null, first_air_date: '2011-04-17', genres: [{id: 10765, name: 'Sci-Fi & Fantasy'}, {id: 18, name: 'Драма'}, {id: 10759, name: 'Action & Adventure'}], number_of_episodes: 73, number_of_seasons: 8 },
-        // ... (остальные фильмы)
+        { id: 3, tmdb_id: 299536, media_type: 'movie', title: 'Мстители: Война бесконечности', name: 'Мстители: Война бесконечности', poster_path: '/mQsM262K0X2pIF01p50Xm7ie0jV.jpg', vote_average: 8.25, overview: 'Пока Мстители и их союзники продолжают защищать мир от различных опасностей, с которыми не смог бы справиться один супергерой, новая угроза возникает из космоса: Танос. Межгалактический тиран преследует цель собрать все шесть Камней Бесконечности — артефакты невероятной силы, с помощью которых можно менять реальность по своему желанию. Всё, с чем Мстители сталкивались ранее, вело к этому моменту — судьба Земли и всего существующего никогда ещё не была так непредсказуема.', release_date: '2018-04-25', first_air_date: null, genres: [{id: 12, name: 'Приключения'}, {id: 28, name: 'Боевик'}, {id: 878, name: 'Фантастика'}], number_of_episodes: null, number_of_seasons: null },
+        { id: 4, tmdb_id: 157336, media_type: 'movie', title: 'Интерстеллар', name: 'Интерстеллар', poster_path: '/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', vote_average: 8.4, overview: 'Когда засуха приводит человечество к продовольственному кризису, коллектив исследователей и учёных отправляется сквозь червоточину (которая предположительно соединяет области пространства-времени через большое расстояние) в путешествие, чтобы превзойти прежние ограничения для космических путешествий человека и найти планету с подходящими для человечества условиями.', release_date: '2014-11-05', first_air_date: null, genres: [{id: 12, name: 'Приключения'}, {id: 18, name: 'Драма'}, {id: 878, name: 'Фантастика'}], number_of_episodes: null, number_of_seasons: null },
+        { id: 5, tmdb_id: 522627, media_type: 'movie', title: 'Джентльмены', name: 'Джентльмены', poster_path: '/jG52060hZ2Z13cfYc02D07y6pps.jpg', vote_average: 7.7, overview: 'Один очень умный выпускник Оксфорда придумал нелегальную схему обогащения на поместьях обедневшей британской аристократии. Но когда он решает продать свой бизнес влиятельному клану миллиардеров из США, на его пути встают не менее обаятельные, но жёсткие джентльмены.', release_date: '2019-12-03', first_air_date: null, genres: [{id: 28, name: 'Боевик'}, {id: 35, name: 'Комедия'}, {id: 80, name: 'Криминал'}], number_of_episodes: null, number_of_seasons: null },
     ];
 
-    // --- Логика для Hero секции (остается без изменений) ---
+
+    // --- Логика для Hero секции ---
     const popularScrollThreshold = 20;
     function handlePopularSectionVisibility() { 
         if (!popularShelf) return;
@@ -141,6 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (dropdownProfileButton) { dropdownProfileButton.addEventListener('click', () => { window.location.href = '/profile'; if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); }); }
     if (dropdownLogoutButton) { dropdownLogoutButton.addEventListener('click', () => { localStorage.removeItem('userId'); currentUserData = null; window.location.reload(); }); }
+    
     document.addEventListener('click', (event) => { 
         if (profileDropdownMenu?.classList.contains('active') && !profileDropdownMenu.contains(event.target) && !(userProfileLink && userProfileLink.contains(event.target))) {
             profileDropdownMenu.classList.remove('active');
@@ -151,6 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
+
     function animateVolume(media, targetVolumeRatio, duration) { 
         let startVolumeRatio = media.muted ? 0 : media.volume;
         if (targetVolumeRatio > 0 && media.muted) media.muted = false;
@@ -305,7 +320,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
         tile.insertBefore(ratingSpan, tile.firstChild);
 
-        // ИЗМЕНЕНО: передаем сам элемент плитки в openDetailedInfo
         tile.addEventListener('click', () => openDetailedInfo(movie.tmdb_id, movie.media_type, tile));
         return tile;
     }
@@ -314,7 +328,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!shelfElement) return;
         const grid = shelfElement.querySelector('.shelf-grid');
         if (!grid) return;
-        grid.innerHTML = ''; // Очищаем предыдущие плитки
+        grid.innerHTML = ''; 
         movies.forEach(movie => {
             grid.appendChild(createMovieTile(movie));
         });
@@ -322,10 +336,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function setRatingColor(ratingElement, ratingValue) {
         if (!ratingElement) return; const rating = parseFloat(ratingValue);
-        ratingElement.className = 'movie-rating'; // Сброс классов
+        ratingElement.className = 'movie-rating'; 
         if (isNaN(rating) || rating === 0) { 
             ratingElement.textContent = '–'; 
-            ratingElement.style.backgroundColor = '#4a4a4a'; // Нейтральный цвет для отсутствия рейтинга
+            ratingElement.style.backgroundColor = '#4a4a4a'; 
             ratingElement.style.color = '#ccc';
             return; 
         }
@@ -335,7 +349,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         else ratingElement.classList.add('rating-green');
     }
 
-    // --- ИЗМЕНЕННАЯ Логика для детальной панели ---
+    // --- ОБНОВЛЕННАЯ Логика для детальной панели ---
     async function openDetailedInfo(tmdbId, mediaType, clickedTileElement) {
         if (!detailedInfoPanel || !clickedTileElement) {
              console.error('Панель деталей или кликнутый элемент не найдены');
@@ -348,55 +362,55 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Если панель уже открыта и это та же полка, но другая плитка, или та же плитка (переклик)
-        // или если открыта под другой полкой - сначала закрываем
         if (detailedInfoPanel.classList.contains('expanded')) {
-            // Если клик по той же плитке, которая уже открыла панель, то закрываем
             if (currentlyOpenShelfForDetails === parentShelf && detailedInfoPanel.dataset.currentTmdbId === String(tmdbId)) {
                 await closeDetailedInfo();
                 return;
             }
-            await closeDetailedInfo(); // Закрываем предыдущую, если была открыта
+            await closeDetailedInfo(); 
         }
         
         try {
-            // Показываем индикатор загрузки внутри панели, если он есть
-            // detailedInfoPanel.querySelector('.loading-indicator-details')?.style.display = 'block';
-
-            const response = await fetch(`/api/tmdb/details/${mediaType}/${tmdbId}?language=ru-RU`);
+            const response = await fetch(`/api/tmdb/details/${mediaType}/${tmdbId}?language=ru-RU&append_to_response=release_dates,content_ratings`);
             if (!response.ok) {
                 console.error('Ошибка при загрузке деталей:', response.status, await response.text());
-                // detailedInfoPanel.querySelector('.loading-indicator-details')?.style.display = 'none';
                 return;
             }
             const data = await response.json();
             if (!data) { 
                 console.error('Данные для TMDB ID:', tmdbId, 'не найдены.'); 
-                // detailedInfoPanel.querySelector('.loading-indicator-details')?.style.display = 'none';
                 return; 
             }
 
-            // Заполнение данными (ваша существующая логика)
-            if (detailedInfoPoster) detailedInfoPoster.src = data.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_DETAILS}${data.poster_path}` : '/images/default-poster.jpg';
+            if (detailedInfoPosterSmall) {
+                detailedInfoPosterSmall.src = data.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_DETAILS_SMALL}${data.poster_path}` : 'https://placehold.co/300x450/1a1a1a/333333?text=Постер';
+                detailedInfoPosterSmall.alt = `Постер для ${data.title || data.name}`;
+            }
+            
             if (detailedInfoTitle) detailedInfoTitle.textContent = data.title || data.name;
-            if (detailedInfoRating) detailedInfoRating.textContent = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
+            if (detailedInfoRatingValue) detailedInfoRatingValue.textContent = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
             
             const releaseDate = data.release_date || data.first_air_date;
             if (detailedInfoYear) detailedInfoYear.textContent = releaseDate ? new Date(releaseDate).getFullYear() : 'N/A';
             
-            if (detailedInfoEpisodes && detailedInfoSeasons) {
-                if (mediaType === 'tv') {
-                    detailedInfoEpisodes.textContent = data.number_of_episodes ? `${data.number_of_episodes} эп.` : '';
-                    detailedInfoSeasons.textContent = data.number_of_seasons ? `${data.number_of_seasons} сезон(а/ов)` : '';
-                    detailedInfoEpisodes.style.display = data.number_of_episodes ? 'inline-flex' : 'none';
-                    detailedInfoSeasons.style.display = data.number_of_seasons ? 'inline-flex' : 'none';
-                } else {
-                    detailedInfoEpisodes.style.display = 'none';
-                    detailedInfoSeasons.style.display = 'none';
-                }
+            if (detailedInfoEpisodes) detailedInfoEpisodes.textContent = (mediaType === 'tv' && data.number_of_episodes) ? `${data.number_of_episodes} эп.` : '';
+            if (detailedInfoSeasons) detailedInfoSeasons.textContent = (mediaType === 'tv' && data.number_of_seasons) ? `${data.number_of_seasons} с.` : '';
+
+            let ageRatingText = 'N/A';
+            if (data.content_ratings && data.content_ratings.results) {
+                const ruRating = data.content_ratings.results.find(r => r.iso_3166_1 === 'RU');
+                if (ruRating && ruRating.rating) ageRatingText = ruRating.rating;
+            } else if (data.release_dates && data.release_dates.results) {
+                 const ruRelease = data.release_dates.results.find(r => r.iso_3166_1 === 'RU');
+                 if (ruRelease && ruRelease.release_dates && ruRelease.release_dates.length > 0) {
+                     const cert = ruRelease.release_dates.find(rd => rd.certification && rd.certification !== "");
+                     if (cert) ageRatingText = cert.certification;
+                 }
             }
+            if (detailedInfoAgeRating) detailedInfoAgeRating.textContent = ageRatingText;
 
             if (detailedInfoGenres) detailedInfoGenres.textContent = data.genres && data.genres.length > 0 ? data.genres.map(g => g.name).join(', ') : 'Жанры не указаны';
+            
             if (detailedInfoOverview) detailedInfoOverview.textContent = data.overview || 'Описание отсутствует.';
             
             if(detailedInfoWatchBtn) {
@@ -404,40 +418,41 @@ document.addEventListener('DOMContentLoaded', async () => {
                 detailedInfoWatchBtn.dataset.mediaType = mediaType;
                 detailedInfoWatchBtn.onclick = () => window.location.href = `watch.html?tmdbId=${data.id}&type=${mediaType}`;
             }
-            // detailedInfoPanel.querySelector('.loading-indicator-details')?.style.display = 'none';
 
-            // Перемещаем панель в DOM сразу после текущей полки
+            if (detailedInfoBackdropImage) {
+                detailedInfoBackdropImage.src = data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${BACKDROP_SIZE_DETAILS_LARGE}${data.backdrop_path}` : 'https://placehold.co/1280x720/0c0c0c/111111?text=Нет+изображения';
+                detailedInfoBackdropImage.alt = `Задник для ${data.title || data.name}`;
+            }
+
             parentShelf.after(detailedInfoPanel);
-            detailedInfoPanel.dataset.currentTmdbId = String(tmdbId); // Сохраняем ID для проверки переклика
+            detailedInfoPanel.dataset.currentTmdbId = String(tmdbId); 
 
-            // Показываем панель и запускаем анимацию
-            detailedInfoPanel.style.display = 'block'; // Важно установить display перед анимацией
+            detailedInfoPanel.style.display = 'block'; 
 
-            requestAnimationFrame(() => { // Даем браузеру отрисовать display:block
-                requestAnimationFrame(() => { // Еще один кадр для надежности
+            requestAnimationFrame(() => { 
+                requestAnimationFrame(() => { 
                     detailedInfoPanel.classList.add('expanded');
-                    currentlyOpenShelfForDetails = parentShelf; // Запоминаем полку
-                    // Плавная прокрутка, чтобы верх полки и начало панели были видны
-                    const panelTopOffset = detailedInfoPanel.getBoundingClientRect().top + window.pageYOffset - (navbar?.offsetHeight || 0) - 10; // 10px отступ
+                    currentlyOpenShelfForDetails = parentShelf; 
+                    const panelTopOffset = detailedInfoPanel.getBoundingClientRect().top + window.pageYOffset - (navbar?.offsetHeight || 0) - 20; 
                     window.scrollTo({ top: panelTopOffset, behavior: 'smooth' });
                 });
             });
             
-            // Активируем первую вкладку по умолчанию
             detailedInfoTabsContainer?.querySelector('.tab-button.active')?.classList.remove('active');
-            detailedInfoTabsContainer?.querySelector('.tab-button[data-tab-target="#tab-about"]')?.classList.add('active');
+            detailedInfoTabsContainer?.querySelector('.tab-button[data-tab-target="#tab-about-details"]')?.classList.add('active');
             detailedInfoTabPanes?.forEach(pane => pane.classList.remove('active'));
-            detailedInfoPanel.querySelector('#tab-about')?.classList.add('active');
-            const episodesTabButton = detailedInfoTabsContainer?.querySelector('.tab-button[data-tab-target="#tab-episodes"]');
-            if (episodesTabButton) episodesTabButton.style.display = mediaType === 'tv' ? 'inline-flex' : 'none';
-
+            detailedInfoPanel.querySelector('#tab-about-details')?.classList.add('active');
+            const episodesTabButton = detailedInfoTabsContainer?.querySelector('.tab-button[data-tab-target="#tab-episodes-details"]');
+            if (episodesTabButton) {
+                episodesTabButton.style.display = mediaType === 'tv' ? 'inline-flex' : 'none';
+                if (mediaType !== 'tv' && detailedInfoEpisodesTabPane) detailedInfoEpisodesTabPane.innerHTML = '<p>Сезоны и серии доступны только для сериалов.</p>';
+            }
         } catch (error) { 
             console.error('Ошибка при получении или обработке деталей фильма/сериала:', error); 
-            // detailedInfoPanel.querySelector('.loading-indicator-details')?.style.display = 'none';
         }
     }
 
-    function closeDetailedInfo() {
+    function closeDetailedInfo() { 
         return new Promise((resolve) => {
             if (!detailedInfoPanel || !detailedInfoPanel.classList.contains('expanded')) {
                 resolve();
@@ -449,10 +464,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             delete detailedInfoPanel.dataset.currentTmdbId;
 
             const onTransitionEnd = (event) => {
-                // Убедимся, что это transition для max-height или opacity
-                if (event.propertyName === 'max-height' || event.propertyName === 'opacity') {
-                     // Не перемещаем панель, display: none сработает из-за max-height:0 и opacity:0 в CSS
-                    if (!detailedInfoPanel.classList.contains('expanded')) { // Дополнительная проверка
+                if (event.target === detailedInfoPanel && (event.propertyName === 'max-height' || event.propertyName === 'opacity')) {
+                    if (!detailedInfoPanel.classList.contains('expanded')) {
                        detailedInfoPanel.style.display = 'none';
                     }
                     detailedInfoPanel.removeEventListener('transitionend', onTransitionEnd);
@@ -461,20 +474,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             detailedInfoPanel.addEventListener('transitionend', onTransitionEnd);
 
-            // Fallback, если transitionend не сработает
             setTimeout(() => {
                 if (detailedInfoPanel.style.display !== 'none' && !detailedInfoPanel.classList.contains('expanded')) {
                     detailedInfoPanel.style.display = 'none';
                     detailedInfoPanel.removeEventListener('transitionend', onTransitionEnd);
                 }
-                resolve(); // Всегда разрешаем Promise
-            }, 550); // Чуть больше времени анимации
+                resolve(); 
+            }, 550); 
         });
     }
 
     detailedInfoCloseBtn?.addEventListener('click', closeDetailedInfo);
     
-    detailedInfoTabsContainer?.addEventListener('click', (event) => {
+    detailedInfoTabsContainer?.addEventListener('click', (event) => { 
         const targetButton = event.target.closest('.tab-button');
         if (!targetButton || targetButton.classList.contains('active')) return;
         
@@ -486,7 +498,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (targetPaneId) detailedInfoPanel.querySelector(targetPaneId)?.classList.add('active');
     });
 
-    // --- Логика поиска и фильтров (остается без изменений) ---
+    // --- Логика поиска и фильтров ---
     if (newSearchButton && newSearchModal) { 
         function openSearchModalWindow() {
             if(!newSearchModal) return;
@@ -761,22 +773,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // --- Инициализация ---
-    // Убедимся, что панель деталей изначально скрыта правильно
-    if (detailedInfoPanel) {
+    if (detailedInfoPanel) { 
         detailedInfoPanel.classList.remove('expanded');
         detailedInfoPanel.style.display = 'none';
     }
 
     loadAndDisplayHeroContent();
     updateUserProfileDisplay();
-    if (popularShelf) renderShelf(popularShelf, placeholderMovies);
-    if (nowPlayingShelf) renderShelf(nowPlayingShelf, placeholderMovies.slice(0, 3).reverse()); // Меньше для примера
+    if (popularShelf) renderShelf(popularShelf, placeholderMovies.slice(0, 7));
+    if (nowPlayingShelf) renderShelf(nowPlayingShelf, placeholderMovies.slice(7, 12).reverse());
     
-    handlePopularSectionVisibility(); // Если эта функция еще используется
+    handlePopularSectionVisibility(); 
     window.addEventListener('scroll', handlePopularSectionVisibility, { passive: true });
 
     if (navbar) window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 20), { passive: true });
-    navbarButtons.forEach(button => {
+    
+    navbarButtons.forEach(button => { 
         button.addEventListener('click', function(event) {
             event.preventDefault();
             navbarButtons.forEach(btn => btn.classList.remove('active')); this.classList.add('active');

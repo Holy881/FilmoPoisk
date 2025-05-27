@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/home.css">
-    <link rel="icon" type="image/vnd.microsoft.icon" href="/images/favicon.ico" />
     <style>
         /* Стили для hero-video-container остаются здесь для простоты, но в идеале их тоже лучше перенести в SCSS */
         .hero-video-container {
@@ -64,7 +63,7 @@
                     <div class="search-results-placeholder">
                         <p>Введите ваш запрос для поиска...</p>
                     </div>
-                </div>
+                    </div>
                 <aside class="search-modal-sidebar">
                     <h3 class="filters-title">Фильтры</h3>
                     <div class="filter-group">
@@ -76,7 +75,7 @@
                             </button>
                             <div class="dropdown-menu">
                                 <p class="genres-loading-placeholder" style="padding: 8px 10px; color: #A0A0A0; font-size: 0.9em; font-style: italic;">Загрузка жанров...</p>
-                            </div>
+                                </div>
                         </div>
                     </div>
                     <div class="filter-group">
@@ -162,41 +161,47 @@
         </div>
 
     <div class="detailed-info-panel" id="detailed-info-panel">
-        <div class="detailed-info-backdrop"></div> <div class="detailed-info-content-wrapper">
-            <button class="detailed-info-close-btn" aria-label="Закрыть">
-                <i class="fas fa-times"></i>
-            </button>
-            <div class="detailed-info-header">
-                <img src="https://placehold.co/300x450/1a1a1a/333333?text=Постер" alt="Постер" class="detailed-info-poster">
-                <div class="detailed-info-main">
+        <button class="detailed-info-close-btn" aria-label="Закрыть">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="detailed-info-content-wrapper">
+            <div class="detailed-info-left-column">
+                <div class="detailed-info-scrollable-content">
                     <h1 class="detailed-info-title">Название фильма / сериала</h1>
                     <div class="detailed-info-meta">
-                        <span class="meta-rating"><i class="fas fa-star"></i> <span>N/A</span></span>
+                        <span class="meta-rating"><i class="fas fa-star"></i> <span class="rating-value">N/A</span></span>
                         <span class="meta-year">Год</span>
-                        <span class="meta-episodes">Эпизоды</span> <span class="meta-seasons">Сезоны</span> </div>
+                        <span class="meta-episodes">Эпизоды</span>
+                        <span class="meta-seasons">Сезоны</span>
+                        <span class="meta-age-rating">16+</span> 
+                    </div>
                     <p class="detailed-info-genres">Жанр 1, Жанр 2, Жанр 3</p>
-                    <div class="detailed-info-actions">
+                    
+                    <div class="detailed-info-tabs">
+                        <button class="tab-button active" data-tab-target="#tab-about-details">О сериале</button>
+                        <button class="tab-button" data-tab-target="#tab-episodes-details">Сезоны и серии</button>
+                    </div>
+                    <div class="detailed-info-tab-content">
+                        <div class="tab-pane active" id="tab-about-details">
+                            <p class="detailed-info-overview">Полное описание фильма или сериала будет здесь...</p>
+                        </div>
+                        <div class="tab-pane" id="tab-episodes-details">
+                            <p>Информация о сезонах и сериях (будет реализовано позже)...</p>
+                        </div>
+                    </div>
+                     <div class="detailed-info-actions">
                         <button class="action-button watch-now-btn"><i class="fas fa-play"></i> Смотреть</button>
                         <button class="action-button add-to-list-btn"><i class="fas fa-plus"></i> В список</button>
-                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="detailed-info-tabs">
-                <button class="tab-button active" data-tab-target="#tab-about">Описание</button>
-                <button class="tab-button" data-tab-target="#tab-episodes">Сезоны и серии</button>
-                </div>
-            <div class="detailed-info-tab-content">
-                <div class="tab-pane active" id="tab-about">
-                    <p class="detailed-info-overview">Полное описание фильма или сериала будет здесь...</p>
-                </div>
-                <div class="tab-pane" id="tab-episodes">
-                    <p>Информация о сезонах и сериях (будет реализовано позже)...</p>
-                </div>
+
+            <div class="detailed-info-right-column">
+                <img src="https://placehold.co/1280x720/0c0c0c/111111?text=Задник" alt="Задник фильма/сериала" class="detailed-info-backdrop-image">
             </div>
         </div>
     </div>
-
-
+    
     <script src="/js/home.js"></script>
 </body>
 </html>

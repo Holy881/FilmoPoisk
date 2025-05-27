@@ -11,7 +11,7 @@ $text-color: #E0E0E0;
 $text-secondary-color: #A0A0A0;
 $text-light-emphasis: #FFFFFF;
 $border-color: #383838;
-$accent-color: #E50914; // Пример акцентного цвета
+$accent-color: #E50914; 
 
 $interactive-hover-bg-color: #2a2a2a;
 $interactive-active-bg-color: #3a3a3a;
@@ -24,8 +24,8 @@ $rating-green: #4CAF50;
 
 $hero-height-value: 107vh;
 $navbar-height: 60px;
-$content-area-overlap: 300px; // Глубина наложения на hero.
-$shelf-padding: 20px; // Отступы для полок
+$content-area-overlap: 300px; 
+$shelf-padding: 20px; 
 
 // 2. Глобальные стили для кастомного скроллбара
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -33,7 +33,7 @@ $shelf-padding: 20px; // Отступы для полок
 ::-webkit-scrollbar-thumb { background-color: lighten($border-color, 10%); border-radius: 10px; border: 2px solid darken($input-bg-color, 10%);
     &:hover { background-color: lighten($border-color, 20%); }
 }
-body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown, .shelf-grid {
+body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown, .shelf-grid, .detailed-info-scrollable-content {
   scrollbar-width: thin;
   scrollbar-color: lighten($border-color, 10%) darken($input-bg-color, 10%);
 }
@@ -45,7 +45,7 @@ body {
     font-family: 'Inter', Arial, sans-serif;
     background-color: $bg-color;
     color: $text-color;
-    overflow-x: hidden; // Важно для предотвращения горизонтальной прокрутки всего документа
+    overflow-x: hidden; 
     padding-top: $navbar-height;
 }
 
@@ -65,7 +65,7 @@ input[type="number"] {
     align-items: center;
     flex-grow: 1;
     .range-input, .year-input, .rating-input {
-       padding-right: 28px; /* Место для стрелок */
+       padding-right: 28px;
        width: 100%;
     }
     .number-input-arrows {
@@ -111,7 +111,7 @@ input[type="number"] {
     &:active {
         transform: translateY(1px);
     }
-    &.active { // Для активных кнопок фильтров, например
+    &.active { 
         color: $interactive-text-color;
         background-color: $interactive-active-bg-color;
         border-color: $interactive-border-color;
@@ -124,21 +124,21 @@ input[type="number"] {
     left: 0;
     width: 100%;
     height: $navbar-height;
-    background-color: transparent; // Начальный фон
+    background-color: transparent; 
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
     box-sizing: border-box;
-    z-index: 1000; // Высокий z-index для навбара
+    z-index: 1000; 
     transition: background-color 0.3s ease, box-shadow 0.3s ease, border-bottom-color 0.3s ease;
-    border-bottom: 1px solid transparent; // Для эффекта при скролле
+    border-bottom: 1px solid transparent; 
 
     &.scrolled {
-         background-color: rgba(darken($bg-color, 2%), 0.9); // Полупрозрачный при скролле
+         background-color: rgba(darken($bg-color, 2%), 0.9); 
          border-bottom-color: $border-color;
          box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-         backdrop-filter: blur(5px); // Эффект размытия фона под навбаром
+         backdrop-filter: blur(5px); 
     }
 
     .navbar-left, .navbar-right {
@@ -156,35 +156,35 @@ input[type="number"] {
     .navbar-button {
         @extend .action-button;
         margin-right: 10px;
-        border-color: transparent; // Убираем рамку по умолчанию
+        border-color: transparent; 
         background-color: transparent;
         color: $text-secondary-color;
         text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
         padding: 8px 12px;
         &:hover {
-            background-color: $interactive-hover-bg-color; // Фон при наведении
+            background-color: $interactive-hover-bg-color; 
             color: $interactive-text-color;
         }
-        &.active { // Активная кнопка навигации
+        &.active { 
              background-color: $interactive-active-bg-color;
              color: $interactive-text-color;
         }
     }
     .navbar-profile-container {
-        position: relative; // Для позиционирования дропдауна
+        position: relative; 
     }
     .navbar-icon {
         @extend .action-button;
         background-color: transparent;
         border-color: transparent;
-        padding: 8px; // Уменьшаем паддинг для иконок
+        padding: 8px; 
         font-size: 1.3em;
         margin-left: 5px;
         color: $text-secondary-color;
-        width: 40px;  // Фиксированная ширина
-        height: 40px; // Фиксированная высота
+        width: 40px;  
+        height: 40px; 
         text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
-        display: inline-flex; // Для центрирования иконки внутри
+        display: inline-flex; 
         align-items: center;
         justify-content: center;
 
@@ -193,7 +193,7 @@ input[type="number"] {
             color: $interactive-text-color;
         }
 
-        #user-profile-icon-container { // Контейнер для иконки пользователя или аватара
+        #user-profile-icon-container { 
             display: flex;
             align-items: center;
             justify-content: center;
@@ -201,24 +201,24 @@ input[type="number"] {
             height: 100%;
         }
 
-        img.navbar-avatar { // Стили для загруженного аватара
-            width: 28px; // Размер аватара внутри иконки
+        img.navbar-avatar { 
+            width: 28px; 
             height: 28px;
             border-radius: 50%;
             object-fit: cover;
-            display: block; // Убирает лишние отступы у img
+            display: block; 
         }
     }
 
     .profile-dropdown {
         position: absolute;
-        top: calc(100% + 10px); // Позиционирование под иконкой профиля
+        top: calc(100% + 10px); 
         right: 0;
         background-color: $profile-dropdown-bg-color;
         border: 1px solid $border-color;
         border-radius: 8px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        z-index: 1001; // Выше других элементов навбара
+        z-index: 1001; 
         width: 200px;
         padding: 10px;
         visibility: hidden;
@@ -250,7 +250,7 @@ input[type="number"] {
             margin: 8px 0;
         }
         .dropdown-button {
-            @extend .action-button; // Наследуем стили базовой кнопки
+            @extend .action-button; 
             width: 100%;
             text-align: left;
             padding: 10px 12px;
@@ -264,9 +264,9 @@ input[type="number"] {
             &:hover {
                 background-color: lighten($profile-dropdown-bg-color, 8%);
                 color: $text-color;
-                border-color: transparent; // Убираем рамку при наведении, если не нужна
+                border-color: transparent; 
             }
-             &.logout-button:hover { // Специальный стиль для кнопки выхода
+             &.logout-button:hover { 
                 background-color: darken($rating-red, 10%);
                 color: $text-color;
             }
@@ -364,7 +364,6 @@ input[type="number"] {
     }
 }
 
-/* --- Стили для Hero секции --- */
 .hero {
     position: relative; width: 100%;
     height: $hero-height-value;
@@ -441,7 +440,6 @@ input[type="number"] {
     }
 }
 
-/* --- Новые стили для .content-area и "полок" --- */
 .content-area {
     position: relative;
     z-index: 3; 
@@ -555,11 +553,8 @@ input[type="number"] {
 .detailed-info-panel {
     position: relative; 
     width: 100%; 
-    background-color: darken($surface-color, 5%); 
     color: $text-color;
-    border-radius: 0 0 12px 12px; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    margin-top: 0; 
+    margin-top: 20px; 
     margin-bottom: 20px; 
     overflow: hidden; 
     display: none; 
@@ -571,79 +566,166 @@ input[type="number"] {
     transition: max-height 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), 
                 opacity 0.3s ease-in-out 0.1s, 
                 padding-top 0.5s cubic-bezier(0.25, 0.1, 0.25, 1),
-                padding-bottom 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+                padding-bottom 0.5s cubic-bezier(0.25, 0.1, 0.25, 1),
+                margin-top 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
 
     &.expanded {
         display: block; 
-        max-height: 3000px; 
+        max-height: 5000px; 
         opacity: 1;
-        padding-top: 25px; 
-        padding-bottom: 25px;
     }
 
-    .detailed-info-content-wrapper {
-        position: relative; 
-        z-index: 2;
-        max-width: 90%; 
-        margin: 0 auto;
-    }
-
-    .detailed-info-close-btn {
+    .detailed-info-close-btn { 
         position: absolute;
         top: 15px; 
         right: 15px;
-        background: transparent;
-        border: none;
+        background: rgba(darken($surface-color, 10%), 0.7);
+        border: 1px solid $border-color;
         color: $text-secondary-color;
-        font-size: 1.8em;
+        font-size: 1.5em; 
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
         cursor: pointer;
-        padding: 5px;
+        padding: 0;
         line-height: 1;
-        z-index: 3; 
-        transition: color 0.2s ease;
-        &:hover { color: $text-light-emphasis; }
-    }
-
-    .detailed-info-backdrop {
-        display: none !important;
-    }
-
-    .detailed-info-header {
-        display: flex; padding: 0; 
-        gap: 25px; border-bottom: 1px solid $border-color;
-        align-items: flex-start;
-        margin-bottom: 20px; 
-
-        .detailed-info-poster {
-            width: 180px; height: auto; aspect-ratio: 2/3; object-fit: cover;
-            border-radius: 6px; flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 15; 
+        transition: color 0.2s ease, background-color 0.2s ease;
+        &:hover { 
+            color: $text-light-emphasis; 
+            background-color: rgba(darken($surface-color, 5%), 0.9);
         }
+    }
+    
+    .detailed-info-content-wrapper {
+        display: flex; 
+        position: relative; 
+        background-color: darken($surface-color, 7%); 
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        min-height: 450px; // Можно настроить или убрать, если высота будет полностью зависеть от контента
+        overflow: hidden; 
+    }
 
-        .detailed-info-main {
-            flex-grow: 1;
-            .detailed-info-title { font-size: 2.2em; margin: 0 0 10px 0; font-weight: 600; color: $text-light-emphasis; }
-            .detailed-info-meta {
-                display: flex; flex-wrap: wrap; gap: 5px 15px; font-size: 0.9em;
-                color: $text-secondary-color; margin-bottom: 15px;
-                span { display: inline-flex; align-items: center; }
-                .meta-rating i { color: #f5c518; margin-right: 5px; }
-            }
-            .detailed-info-genres { font-size: 0.9em; color: $text-secondary-color; margin-bottom: 20px; line-height: 1.5; }
-            .detailed-info-actions {
-                display: flex; gap: 10px;
-                .action-button { padding: 10px 18px; font-size: 0.95em; i { margin-right: 7px; } }
-            }
+    .detailed-info-left-column {
+        flex: 0 0 58%; // Увеличиваем ширину левой колонки
+        max-width: 700px; // Опционально, максимальная ширина
+        background-color: rgba(darken($bg-color, 5%), 0.85); 
+        backdrop-filter: blur(10px) saturate(120%); 
+        padding: 30px 35px; // Немного увеличил паддинги
+        position: relative; 
+        z-index: 10; 
+        display: flex; 
+        flex-direction: column;
+        
+        &::after { // Градиент для плавного перехода вправо
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -60px; // Смещаем немного правее, чтобы перекрыть стык
+            width: 120px; // Ширина градиента
+            height: 100%;
+            background: linear-gradient(to right, rgba(darken($bg-color, 5%), 0.85) 0%, rgba(darken($bg-color, 5%), 0.75) 25%, rgba(darken($bg-color, 5%), 0) 100%);
+            pointer-events: none; 
+            z-index: 5; 
+        }
+    }
+
+    .detailed-info-scrollable-content {
+        overflow-y: auto; 
+        height: 100%; 
+        padding-right: 15px; // Немного увеличил отступ для скроллбара
+    }
+
+    // Стили для .detailed-info-poster-small удалены, так как элемент удален из HTML
+
+    .detailed-info-title-logo { 
+        max-width: 250px;
+        height: auto;
+        margin-bottom: 15px;
+    }
+    
+    .detailed-info-title { 
+        font-size: 2.2em; // Можно увеличить
+        margin: 0 0 12px 0; 
+        font-weight: 600; 
+        color: $text-light-emphasis; 
+        line-height: 1.2;
+    }
+    .detailed-info-meta {
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 10px 18px; // Немного увеличил gap
+        font-size: 0.95em; // Немного увеличил шрифт
+        color: $text-secondary-color; 
+        margin-bottom: 18px; // Немного увеличил отступ
+        align-items: center;
+        span { display: inline-flex; align-items: center; }
+        .meta-rating i { color: #f5c518; margin-right: 6px; font-size: 1em; }
+        .rating-value { color: $text-light-emphasis; font-weight: 500; }
+        .meta-age-rating {
+            background-color: rgba($text-secondary-color, 0.2);
+            padding: 3px 7px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+    }
+    .detailed-info-genres { 
+        font-size: 0.95em; // Немного увеличил шрифт
+        color: $text-secondary-color; 
+        margin-bottom: 25px; 
+        line-height: 1.6; 
+    }
+     .detailed-info-overview { 
+        font-size: 1em; 
+        line-height: 1.65; 
+        color: $text-color; 
+        margin-bottom: 30px;
+    }
+    .detailed-info-actions {
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 12px; // Немного увеличил gap
+        margin-top: auto; 
+        padding-top: 25px; 
+        .action-button { 
+            padding: 12px 22px; // Немного увеличил паддинги кнопок
+            font-size: 1em; 
+            i { margin-right: 8px; } 
+        }
+    }
+
+    .detailed-info-right-column {
+        flex: 1 1 42%; // Уменьшаем долю правой колонки, т.к. левая стала шире
+        position: relative; 
+        overflow: hidden; 
+        
+        .detailed-info-backdrop-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            object-position: center center; 
+            z-index: 1; 
         }
     }
 
     .detailed-info-tabs {
-        display: flex; padding: 0 $shelf-padding; border-bottom: 1px solid $border-color;
-        background-color: darken($surface-color, 2%);
-        margin-bottom: 20px; 
+        display: flex; 
+        border-bottom: 1px solid $border-color;
+        margin-top: 20px;
+        margin-bottom: 20px; // Увеличил отступ
 
         .tab-button {
             background: transparent; border: none; color: $text-secondary-color;
-            padding: 15px 20px; font-size: 1em; cursor: pointer; position: relative;
+            padding: 14px 20px; // Немного увеличил паддинги
+            font-size: 1em; 
+            cursor: pointer; position: relative;
             transition: color 0.2s ease;
             &:hover { color: $text-light-emphasis; }
             &.active {
@@ -657,16 +739,21 @@ input[type="number"] {
     }
 
     .detailed-info-tab-content {
-        padding: 0; 
         flex-grow: 1;
-        .tab-pane { display: none; &.active { display: block; }
-            .detailed-info-overview { font-size: 1em; line-height: 1.7; color: $text-color; }
+        .tab-pane { 
+            display: none; 
+            font-size: 0.95em; // Немного увеличил шрифт
+            line-height: 1.6;
+            color: $text-secondary-color;
+            &.active { display: block; }
         }
+    }
+    
+    .detailed-info-backdrop { 
+        display: none !important;
     }
 }
 
-
-/* --- Стили для результатов поиска (остаются как были) --- */
 .search-modal-main {
     .search-results-grid { display: flex; flex-direction: column; gap: 15px; padding-top: 15px; width: 100%; }
     .search-result-item {
@@ -703,13 +790,20 @@ input[type="number"] {
     .movie-tile { width: 160px; img.movie-poster-img { height: 240px; } }
     
     .detailed-info-panel {
-        .detailed-info-content-wrapper { max-width: 95%; }
-        .detailed-info-header { 
+        .detailed-info-content-wrapper { 
             flex-direction: column; 
-            align-items: center; 
-            text-align: center; 
-            .detailed-info-poster { margin-bottom: 20px; } 
-            .detailed-info-actions { justify-content: center; } 
+            min-height: auto; 
+        }
+        .detailed-info-left-column {
+            flex: 1 1 auto; 
+            max-width: 100%; 
+            border-radius: 12px 12px 0 0; 
+            &::after { display: none; } 
+        }
+        .detailed-info-right-column {
+            flex: 1 1 auto; 
+            min-height: 300px; 
+            border-radius: 0 0 12px 12px; 
         }
     }
 }
@@ -779,16 +873,17 @@ input[type="number"] {
         }
     }
     .movie-tile { width: 140px; img.movie-poster-img { height: 210px; } }
-    
+
     .detailed-info-panel {
-        .detailed-info-header { 
-            padding: 20px; 
-            .detailed-info-title { font-size: 1.8em; } 
-            .detailed-info-meta { font-size: 0.8em; } 
-            .detailed-info-actions .action-button { font-size: 0.9em; padding: 8px 15px; } 
+        .detailed-info-left-column {
+            padding: 20px 15px;
         }
-        .detailed-info-tabs .tab-button { padding: 12px 15px; font-size: 0.9em; }
-        .detailed-info-tab-content { padding: 20px; } 
+        .detailed-info-title { font-size: 1.6em; }
+        .detailed-info-meta { font-size: 0.85em; gap: 5px 10px; }
+        .detailed-info-genres { font-size: 0.85em; margin-bottom: 15px;}
+        .detailed-info-overview { font-size: 0.9em; margin-bottom: 20px;}
+        .detailed-info-actions .action-button { font-size: 0.9em; padding: 8px 15px; }
+        .detailed-info-tabs .tab-button { padding: 10px 15px; font-size: 0.9em; }
     }
 }
 
@@ -812,15 +907,17 @@ input[type="number"] {
     .movie-tile { width: 120px; img.movie-poster-img { height: 180px; } .movie-hover-details { min-height: 70px; h3 {font-size: 0.9em;} p {font-size: 0.75em; line-clamp: 2;} } }
     .hero .hero-overlay { padding: 0 5% calc(#{$content-area-overlap} - 120px); }
     .hero .hero-action-buttons-container { bottom: calc(#{$content-area-overlap} - 140px); }
-    
+
     .detailed-info-panel {
-        .detailed-info-content-wrapper { max-height: none; }
-        .detailed-info-header { 
-            .detailed-info-poster { width: 150px; } 
-            .detailed-info-title { font-size: 1.6em; } 
+        .detailed-info-left-column {
+            padding: 15px 10px;
         }
+        .detailed-info-title { font-size: 1.4em; }
+        .detailed-info-meta { font-size: 0.8em; }
+        .detailed-info-right-column { min-height: 250px; }
     }
     .movie-shelf#popular {
        &::before { top: -($content-area-overlap + 150px); } 
     }
 }
+

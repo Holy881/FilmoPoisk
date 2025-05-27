@@ -18,7 +18,7 @@
   background-color: #6b6b6b;
 }
 
-body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown, .shelf-grid {
+body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown, .shelf-grid, .detailed-info-scrollable-content {
   scrollbar-width: thin;
   scrollbar-color: #525252 #131313;
 }
@@ -53,7 +53,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   flex-grow: 1;
 }
 .number-input-container .range-input, .number-input-container .year-input, .number-input-container .rating-input {
-  padding-right: 28px; /* Место для стрелок */
+  padding-right: 28px;
   width: 100%;
 }
 .number-input-container .number-input-arrows {
@@ -537,7 +537,6 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   border-color: #5A5A5A;
 }
 
-/* --- Стили для Hero секции --- */
 .hero {
   position: relative;
   width: 100%;
@@ -713,7 +712,6 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   transition-delay: 0s;
 }
 
-/* --- Новые стили для .content-area и "полок" --- */
 .content-area {
   position: relative;
   z-index: 3;
@@ -861,11 +859,8 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
 .detailed-info-panel {
   position: relative;
   width: 100%;
-  background-color: #0d0d0d;
   color: #E0E0E0;
-  border-radius: 0 0 12px 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  margin-top: 0;
+  margin-top: 20px;
   margin-bottom: 20px;
   overflow: hidden;
   display: none;
@@ -873,112 +868,168 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   opacity: 0;
   padding-top: 0;
   padding-bottom: 0;
-  transition: max-height 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.3s ease-in-out 0.1s, padding-top 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), padding-bottom 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: max-height 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.3s ease-in-out 0.1s, padding-top 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), padding-bottom 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 .detailed-info-panel.expanded {
   display: block;
-  max-height: 3000px;
+  max-height: 5000px;
   opacity: 1;
-  padding-top: 25px;
-  padding-bottom: 25px;
-}
-.detailed-info-panel .detailed-info-content-wrapper {
-  position: relative;
-  z-index: 2;
-  max-width: 90%;
-  margin: 0 auto;
 }
 .detailed-info-panel .detailed-info-close-btn {
   position: absolute;
   top: 15px;
   right: 15px;
-  background: transparent;
-  border: none;
+  background: rgba(1, 1, 1, 0.7);
+  border: 1px solid #383838;
   color: #A0A0A0;
-  font-size: 1.8em;
+  font-size: 1.5em;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   cursor: pointer;
-  padding: 5px;
+  padding: 0;
   line-height: 1;
-  z-index: 3;
-  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
 .detailed-info-panel .detailed-info-close-btn:hover {
   color: #FFFFFF;
+  background-color: rgba(13, 13, 13, 0.9);
 }
-.detailed-info-panel .detailed-info-backdrop {
-  display: none !important;
-}
-.detailed-info-panel .detailed-info-header {
+.detailed-info-panel .detailed-info-content-wrapper {
   display: flex;
-  padding: 0;
-  gap: 25px;
-  border-bottom: 1px solid #383838;
-  align-items: flex-start;
-  margin-bottom: 20px;
+  position: relative;
+  background-color: #080808;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  min-height: 450px;
+  overflow: hidden;
 }
-.detailed-info-panel .detailed-info-header .detailed-info-poster {
-  width: 180px;
+.detailed-info-panel .detailed-info-left-column {
+  flex: 0 0 58%;
+  max-width: 700px;
+  background-color: rgba(0, 0, 0, 0.85);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+          backdrop-filter: blur(10px) saturate(120%);
+  padding: 30px 35px;
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+.detailed-info-panel .detailed-info-left-column::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -60px;
+  width: 120px;
+  height: 100%;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.75) 25%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+  z-index: 5;
+}
+.detailed-info-panel .detailed-info-scrollable-content {
+  overflow-y: auto;
+  height: 100%;
+  padding-right: 15px;
+}
+.detailed-info-panel .detailed-info-title-logo {
+  max-width: 250px;
   height: auto;
-  aspect-ratio: 2/3;
-  -o-object-fit: cover;
-     object-fit: cover;
-  border-radius: 6px;
-  flex-shrink: 0;
-}
-.detailed-info-panel .detailed-info-header .detailed-info-main {
-  flex-grow: 1;
-}
-.detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-title {
-  font-size: 2.2em;
-  margin: 0 0 10px 0;
-  font-weight: 600;
-  color: #FFFFFF;
-}
-.detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px 15px;
-  font-size: 0.9em;
-  color: #A0A0A0;
   margin-bottom: 15px;
 }
-.detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-meta span {
+.detailed-info-panel .detailed-info-title {
+  font-size: 2.2em;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+  color: #FFFFFF;
+  line-height: 1.2;
+}
+.detailed-info-panel .detailed-info-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  font-size: 0.95em;
+  color: #A0A0A0;
+  margin-bottom: 18px;
+  align-items: center;
+}
+.detailed-info-panel .detailed-info-meta span {
   display: inline-flex;
   align-items: center;
 }
-.detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-meta .meta-rating i {
+.detailed-info-panel .detailed-info-meta .meta-rating i {
   color: #f5c518;
-  margin-right: 5px;
+  margin-right: 6px;
+  font-size: 1em;
 }
-.detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-genres {
+.detailed-info-panel .detailed-info-meta .rating-value {
+  color: #FFFFFF;
+  font-weight: 500;
+}
+.detailed-info-panel .detailed-info-meta .meta-age-rating {
+  background-color: rgba(160, 160, 160, 0.2);
+  padding: 3px 7px;
+  border-radius: 3px;
   font-size: 0.9em;
-  color: #A0A0A0;
-  margin-bottom: 20px;
-  line-height: 1.5;
 }
-.detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions {
-  display: flex;
-  gap: 10px;
-}
-.detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .action-button, .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .navbar .navbar-button, .navbar .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .navbar-button, .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .navbar .navbar-icon, .navbar .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .navbar-icon, .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .navbar .profile-dropdown .dropdown-button, .navbar .profile-dropdown .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .dropdown-button, .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .dropdown-toggle, .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .search-modal .search-modal-sidebar .reset-filters-button, .search-modal .search-modal-sidebar .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .reset-filters-button, .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .hero .hero-action-buttons-container .hero-action-icon, .hero .hero-action-buttons-container .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .hero-action-icon {
-  padding: 10px 18px;
+.detailed-info-panel .detailed-info-genres {
   font-size: 0.95em;
+  color: #A0A0A0;
+  margin-bottom: 25px;
+  line-height: 1.6;
 }
-.detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .action-button i, .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .navbar .navbar-button i, .navbar .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .navbar-button i, .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .navbar .navbar-icon i, .navbar .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .navbar-icon i, .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .navbar .profile-dropdown .dropdown-button i, .navbar .profile-dropdown .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .dropdown-button i, .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle i, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .dropdown-toggle i, .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .search-modal .search-modal-sidebar .reset-filters-button i, .search-modal .search-modal-sidebar .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .reset-filters-button i, .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .hero .hero-action-buttons-container .hero-action-icon i, .hero .hero-action-buttons-container .detailed-info-panel .detailed-info-header .detailed-info-main .detailed-info-actions .hero-action-icon i {
-  margin-right: 7px;
+.detailed-info-panel .detailed-info-overview {
+  font-size: 1em;
+  line-height: 1.65;
+  color: #E0E0E0;
+  margin-bottom: 30px;
+}
+.detailed-info-panel .detailed-info-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 25px;
+}
+.detailed-info-panel .detailed-info-actions .action-button, .detailed-info-panel .detailed-info-actions .navbar .navbar-button, .navbar .detailed-info-panel .detailed-info-actions .navbar-button, .detailed-info-panel .detailed-info-actions .navbar .navbar-icon, .navbar .detailed-info-panel .detailed-info-actions .navbar-icon, .detailed-info-panel .detailed-info-actions .navbar .profile-dropdown .dropdown-button, .navbar .profile-dropdown .detailed-info-panel .detailed-info-actions .dropdown-button, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .detailed-info-panel .detailed-info-actions .dropdown-toggle, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .reset-filters-button, .search-modal .search-modal-sidebar .detailed-info-panel .detailed-info-actions .reset-filters-button, .detailed-info-panel .detailed-info-actions .hero .hero-action-buttons-container .hero-action-icon, .hero .hero-action-buttons-container .detailed-info-panel .detailed-info-actions .hero-action-icon {
+  padding: 12px 22px;
+  font-size: 1em;
+}
+.detailed-info-panel .detailed-info-actions .action-button i, .detailed-info-panel .detailed-info-actions .navbar .navbar-button i, .navbar .detailed-info-panel .detailed-info-actions .navbar-button i, .detailed-info-panel .detailed-info-actions .navbar .navbar-icon i, .navbar .detailed-info-panel .detailed-info-actions .navbar-icon i, .detailed-info-panel .detailed-info-actions .navbar .profile-dropdown .dropdown-button i, .navbar .profile-dropdown .detailed-info-panel .detailed-info-actions .dropdown-button i, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle i, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .detailed-info-panel .detailed-info-actions .dropdown-toggle i, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .reset-filters-button i, .search-modal .search-modal-sidebar .detailed-info-panel .detailed-info-actions .reset-filters-button i, .detailed-info-panel .detailed-info-actions .hero .hero-action-buttons-container .hero-action-icon i, .hero .hero-action-buttons-container .detailed-info-panel .detailed-info-actions .hero-action-icon i {
+  margin-right: 8px;
+}
+.detailed-info-panel .detailed-info-right-column {
+  flex: 1 1 42%;
+  position: relative;
+  overflow: hidden;
+}
+.detailed-info-panel .detailed-info-right-column .detailed-info-backdrop-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  -o-object-position: center center;
+     object-position: center center;
+  z-index: 1;
 }
 .detailed-info-panel .detailed-info-tabs {
   display: flex;
-  padding: 0 20px;
   border-bottom: 1px solid #383838;
-  background-color: #151515;
+  margin-top: 20px;
   margin-bottom: 20px;
 }
 .detailed-info-panel .detailed-info-tabs .tab-button {
   background: transparent;
   border: none;
   color: #A0A0A0;
-  padding: 15px 20px;
+  padding: 14px 20px;
   font-size: 1em;
   cursor: pointer;
   position: relative;
@@ -1002,22 +1053,21 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   border-radius: 2px 2px 0 0;
 }
 .detailed-info-panel .detailed-info-tab-content {
-  padding: 0;
   flex-grow: 1;
 }
 .detailed-info-panel .detailed-info-tab-content .tab-pane {
   display: none;
+  font-size: 0.95em;
+  line-height: 1.6;
+  color: #A0A0A0;
 }
 .detailed-info-panel .detailed-info-tab-content .tab-pane.active {
   display: block;
 }
-.detailed-info-panel .detailed-info-tab-content .tab-pane .detailed-info-overview {
-  font-size: 1em;
-  line-height: 1.7;
-  color: #E0E0E0;
+.detailed-info-panel .detailed-info-backdrop {
+  display: none !important;
 }
 
-/* --- Стили для результатов поиска (остаются как были) --- */
 .search-modal-main .search-results-grid {
   display: flex;
   flex-direction: column;
@@ -1150,18 +1200,21 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
     height: 240px;
   }
   .detailed-info-panel .detailed-info-content-wrapper {
-    max-width: 95%;
-  }
-  .detailed-info-panel .detailed-info-header {
     flex-direction: column;
-    align-items: center;
-    text-align: center;
+    min-height: auto;
   }
-  .detailed-info-panel .detailed-info-header .detailed-info-poster {
-    margin-bottom: 20px;
+  .detailed-info-panel .detailed-info-left-column {
+    flex: 1 1 auto;
+    max-width: 100%;
+    border-radius: 12px 12px 0 0;
   }
-  .detailed-info-panel .detailed-info-header .detailed-info-actions {
-    justify-content: center;
+  .detailed-info-panel .detailed-info-left-column::after {
+    display: none;
+  }
+  .detailed-info-panel .detailed-info-right-column {
+    flex: 1 1 auto;
+    min-height: 300px;
+    border-radius: 0 0 12px 12px;
   }
 }
 @media (max-width: 768px) {
@@ -1357,25 +1410,31 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   .movie-tile img.movie-poster-img {
     height: 210px;
   }
-  .detailed-info-panel .detailed-info-header {
-    padding: 20px;
+  .detailed-info-panel .detailed-info-left-column {
+    padding: 20px 15px;
   }
-  .detailed-info-panel .detailed-info-header .detailed-info-title {
-    font-size: 1.8em;
+  .detailed-info-panel .detailed-info-title {
+    font-size: 1.6em;
   }
-  .detailed-info-panel .detailed-info-header .detailed-info-meta {
-    font-size: 0.8em;
+  .detailed-info-panel .detailed-info-meta {
+    font-size: 0.85em;
+    gap: 5px 10px;
   }
-  .detailed-info-panel .detailed-info-header .detailed-info-actions .action-button, .detailed-info-panel .detailed-info-header .detailed-info-actions .navbar .navbar-button, .navbar .detailed-info-panel .detailed-info-header .detailed-info-actions .navbar-button, .detailed-info-panel .detailed-info-header .detailed-info-actions .navbar .navbar-icon, .navbar .detailed-info-panel .detailed-info-header .detailed-info-actions .navbar-icon, .detailed-info-panel .detailed-info-header .detailed-info-actions .navbar .profile-dropdown .dropdown-button, .navbar .profile-dropdown .detailed-info-panel .detailed-info-header .detailed-info-actions .dropdown-button, .detailed-info-panel .detailed-info-header .detailed-info-actions .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .detailed-info-panel .detailed-info-header .detailed-info-actions .dropdown-toggle, .detailed-info-panel .detailed-info-header .detailed-info-actions .search-modal .search-modal-sidebar .reset-filters-button, .search-modal .search-modal-sidebar .detailed-info-panel .detailed-info-header .detailed-info-actions .reset-filters-button, .detailed-info-panel .detailed-info-header .detailed-info-actions .hero .hero-action-buttons-container .hero-action-icon, .hero .hero-action-buttons-container .detailed-info-panel .detailed-info-header .detailed-info-actions .hero-action-icon {
+  .detailed-info-panel .detailed-info-genres {
+    font-size: 0.85em;
+    margin-bottom: 15px;
+  }
+  .detailed-info-panel .detailed-info-overview {
+    font-size: 0.9em;
+    margin-bottom: 20px;
+  }
+  .detailed-info-panel .detailed-info-actions .action-button, .detailed-info-panel .detailed-info-actions .navbar .navbar-button, .navbar .detailed-info-panel .detailed-info-actions .navbar-button, .detailed-info-panel .detailed-info-actions .navbar .navbar-icon, .navbar .detailed-info-panel .detailed-info-actions .navbar-icon, .detailed-info-panel .detailed-info-actions .navbar .profile-dropdown .dropdown-button, .navbar .profile-dropdown .detailed-info-panel .detailed-info-actions .dropdown-button, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .detailed-info-panel .detailed-info-actions .dropdown-toggle, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .reset-filters-button, .search-modal .search-modal-sidebar .detailed-info-panel .detailed-info-actions .reset-filters-button, .detailed-info-panel .detailed-info-actions .hero .hero-action-buttons-container .hero-action-icon, .hero .hero-action-buttons-container .detailed-info-panel .detailed-info-actions .hero-action-icon {
     font-size: 0.9em;
     padding: 8px 15px;
   }
   .detailed-info-panel .detailed-info-tabs .tab-button {
-    padding: 12px 15px;
+    padding: 10px 15px;
     font-size: 0.9em;
-  }
-  .detailed-info-panel .detailed-info-tab-content {
-    padding: 20px;
   }
 }
 @media (max-width: 480px) {
@@ -1439,14 +1498,17 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   .hero .hero-action-buttons-container {
     bottom: calc(300px - 140px);
   }
-  .detailed-info-panel .detailed-info-content-wrapper {
-    max-height: none;
+  .detailed-info-panel .detailed-info-left-column {
+    padding: 15px 10px;
   }
-  .detailed-info-panel .detailed-info-header .detailed-info-poster {
-    width: 150px;
+  .detailed-info-panel .detailed-info-title {
+    font-size: 1.4em;
   }
-  .detailed-info-panel .detailed-info-header .detailed-info-title {
-    font-size: 1.6em;
+  .detailed-info-panel .detailed-info-meta {
+    font-size: 0.8em;
+  }
+  .detailed-info-panel .detailed-info-right-column {
+    min-height: 250px;
   }
   .movie-shelf#popular::before {
     top: -450px;

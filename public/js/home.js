@@ -1093,7 +1093,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const displayTitle = movie.title || movie.name; 
 
             movieTile.innerHTML = `
-                <img src="${posterUrl}" alt="${displayTitle}" onerror="this.onerror=null;this.src='https://placehold.co/200x300/1a1a1a/ffffff?text=Ошибка';">
+                <img src="${posterUrl}" alt="${displayTitle}" onerror="this.onerror=null;this.src='/images/error.png';">
                 <div class="movie-details">
                     <h3>${displayTitle}</h3>
                     <p>${overview}</p>

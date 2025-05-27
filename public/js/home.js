@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const BACKDROP_SIZE_HERO = 'original';
     const POSTER_SIZE_SEARCH = 'w154';
 
+    const DEFAULT_VOLUME_LEVEL = 0.1; // 10% громкости
+    const VOLUME_ANIMATION_DURATION = 1500; // 1.5 секунды
+
     let searchTimeout;
     let allMovieGenresMap = new Map();
     let allTvGenresMap = new Map();
@@ -59,10 +62,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (targetVolumeRatio > 0 && media.isMuted()) {
                 media.unMute(); 
             }
-        } else { // HTML5 Video
+        } else { 
             startVolumeRatio = media.muted ? 0 : media.volume;
             if (targetVolumeRatio > 0 && media.muted) { 
-                media.muted = false; // Unmute before setting volume if target is > 0
+                media.muted = false; 
             }
         }
     
@@ -75,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 media.volume = targetVolumeRatio;
                 media.muted = (targetVolumeRatio === 0);
             }
-            updateSoundButtonIcon();
+            updateSoundButtonIcon(); // Обновляем иконку после установки громкости
             console.log(`[CLIENT DEBUG] Volume already at target. Target: ${targetVolumeRatio.toFixed(2)}`);
             return;
         }
@@ -95,17 +98,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     
             if (progress < 1) {
                 requestAnimationFrame(animationStep);
-            } else { // Animation finished
+            } else { 
                 if (isYouTube) {
                     media.setVolume(Math.round(targetVolumeRatio * 100));
                     if (targetVolumeRatio === 0 && !media.isMuted()) media.mute();
                     else if (targetVolumeRatio > 0 && media.isMuted()) media.unMute();
                 } else {
                     media.volume = targetVolumeRatio;
-                    media.muted = (targetVolumeRatio === 0); // Mute if target volume is 0
+                    media.muted = (targetVolumeRatio === 0); 
                 }
                 console.log(`[CLIENT DEBUG] Volume animation finished. Final volume ratio: ${targetVolumeRatio.toFixed(2)}`);
-                updateSoundButtonIcon();
+                updateSoundButtonIcon(); // Обновляем иконку в конце анимации
             }
         }
         requestAnimationFrame(animationStep);
@@ -115,9 +118,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!soundButton || !soundIcon) return;
         
         soundIcon.classList.remove('fa-volume-mute', 'fa-volume-off', 'fa-volume-low', 'fa-volume-up');
-        if (isHeroSoundActive) { // If sound is intended to be on (10%)
+        if (isHeroSoundActive) { 
             soundIcon.classList.add('fa-volume-low'); 
-        } else { // Sound is intended to be off (muted or 0%)
+        } else { 
             soundIcon.classList.add('fa-volume-mute');
         }
         console.log(`[CLIENT DEBUG] Updated sound icon. isHeroSoundActive: ${isHeroSoundActive}`);
@@ -182,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             heroFallbackImg.src = backdropUrl;
             heroFallbackImg.alt = `Задник для ${data.title}`;
             heroSection.dataset.videoType = data.video_info.type;
-            isHeroSoundActive = false; // Сбрасываем состояние звука при загрузке нового контента
+            isHeroSoundActive = false; // Звук по умолчанию выключен
 
             if (data.video_info.type === 'youtube' && data.video_info.key_or_url) {
                 heroSection.dataset.waitingForYt = 'true';
@@ -219,7 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         currentHeroVideoElement.src = videoSrc;
         currentHeroVideoElement.autoplay = true; 
-        currentHeroVideoElement.muted = true;    
+        currentHeroVideoElement.muted = true;    // Начинаем без звука - это ключ к автовоспроизведению!
         currentHeroVideoElement.loop = false;
         currentHeroVideoElement.controls = false;
         currentHeroVideoElement.playsInline = true; 
@@ -236,21 +239,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             heroSection.classList.add('video-playing');
             heroSection.classList.remove('poster-active');
             if (soundButton) soundButton.style.display = 'flex';
-            isHeroSoundActive = false; // Звук по умолчанию выключен
+            
+            isHeroSoundActive = false; // Убедимся, что звук считается выключенным
             updateSoundButtonIcon();    // Установить иконку в fa-volume-mute
+    
             currentHeroVideoElement.removeEventListener('playing', onPlayingHandler); 
         };
         currentHeroVideoElement.addEventListener('playing', onPlayingHandler);
     
         const onCanPlayHandler = () => {
             console.log(`[CLIENT DEBUG] HTML5 Video: Событие 'canplay' для ${videoSrc}. Готово к воспроизведению.`);
-            // Попытка воспроизвести, если autoplay не сработал (на всякий случай)
-            if (currentHeroVideoElement.paused) {
-                currentHeroVideoElement.play().catch(e => {
-                    console.warn(`[CLIENT DEBUG] HTML5 Video: Дополнительная попытка play() в 'canplay' не удалась или была не нужна. Ошибка (если есть):`, e);
+            if (currentHeroVideoElement.paused) { 
+                 currentHeroVideoElement.play().catch(e => {
+                    console.warn(`[CLIENT DEBUG] HTML5 Video: Дополнительная попытка play() в 'canplay' не удалась. Ошибка:`, e);
                 });
             }
-            isHeroSoundActive = false;
+            isHeroSoundActive = false; 
             updateSoundButtonIcon(); 
             currentHeroVideoElement.removeEventListener('canplay', onCanPlayHandler);
         };
@@ -295,6 +299,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         heroSection.classList.add('video-playing');
         heroSection.classList.remove('poster-active');
         if (soundButton) soundButton.style.display = 'flex';
+        
         isHeroSoundActive = false; // Звук по умолчанию выключен (т.к. mute:1 в playerVars)
         updateSoundButtonIcon(); 
     }
@@ -339,14 +344,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (event.data === YT.PlayerState.ENDED) {
             switchToHeroFallback(heroFallbackImg ? heroFallbackImg.src : null, false);
         }
-        // Дополнительная проверка для показа UI, если onReady не успел
         if (event.data === YT.PlayerState.PLAYING && !heroSection.classList.contains('video-playing')) {
              heroVideoContainer.style.opacity = '1';
              if(heroFallback) heroFallback.classList.remove('active');
              heroSection.classList.add('video-playing');
              heroSection.classList.remove('poster-active');
              if (soundButton) soundButton.style.display = 'flex';
-             isHeroSoundActive = false; // Убедимся, что звук считается выключенным
+             isHeroSoundActive = false; 
              updateSoundButtonIcon();
         }
     }
@@ -385,8 +389,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (soundButton && soundIcon) {
         soundButton.addEventListener('click', () => {
-            const targetVolumeRatioOn = 0.1; 
-            const targetVolumeRatioOff = 0.0;  
+            const targetVolumeOn = DEFAULT_VOLUME_LEVEL; 
+            const targetVolumeOff = 0.0;  
 
             let activeMedia = currentHeroVideoElement; 
             if (!activeMedia && heroYouTubePlayer && typeof heroYouTubePlayer.getPlayerState === 'function' && heroYouTubePlayer.getPlayerState() !== -1) {
@@ -401,29 +405,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isHtml5 = activeMedia === currentHeroVideoElement;
 
             if (isHeroSoundActive) { // Если звук сейчас включен (10%), выключаем его
-                animateVolume(activeMedia, targetVolumeRatioOff, 500);
+                animateVolume(activeMedia, targetVolumeOff, VOLUME_ANIMATION_DURATION);
                 isHeroSoundActive = false;
             } else { // Если звук выключен, включаем его до 10%
                 if (isHtml5 && currentHeroVideoElement.paused) {
                     console.log("[CLIENT DEBUG] HTML5 video was paused, attempting to play on sound toggle ON.");
                     currentHeroVideoElement.play().then(() => {
                         console.log("[CLIENT DEBUG] Play successful after sound button click for paused video.");
-                        // Убедимся, что muted = false перед анимацией громкости
-                        if (currentHeroVideoElement.muted) currentHeroVideoElement.muted = false;
-                        animateVolume(activeMedia, targetVolumeRatioOn, 100);
+                        animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION);
                     }).catch(e => {
                         console.warn("[CLIENT DEBUG] Error trying to play HTML5 video on sound toggle ON:", e);
-                        if (currentHeroVideoElement.muted) currentHeroVideoElement.muted = false;
-                        animateVolume(activeMedia, targetVolumeRatioOn, 1000); 
+                        // Все равно пытаемся анимировать громкость, т.к. muted уже будет false из animateVolume
+                        animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION); 
                     });
                 } else if (!isHtml5 && heroYouTubePlayer) { // YouTube
-                    heroYouTubePlayer.playVideo(); 
-                    if (heroYouTubePlayer.isMuted()) heroYouTubePlayer.unMute(); // Явно размьютим перед анимацией
-                    animateVolume(activeMedia, targetVolumeRatioOn, 100);
-                } else { 
-                     if (isHtml5 && currentHeroVideoElement.muted) currentHeroVideoElement.muted = false;
-                     else if (!isHtml5 && heroYouTubePlayer && heroYouTubePlayer.isMuted()) heroYouTubePlayer.unMute();
-                     animateVolume(activeMedia, targetVolumeRatioOn, 1000);
+                    heroYouTubePlayer.playVideo(); // Убедимся, что играет
+                    animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION);
+                } else { // HTML5 уже играет или это не HTML5 (но не YouTube), просто анимируем громкость
+                     animateVolume(activeMedia, targetVolumeOn, VOLUME_ANIMATION_DURATION);
                 }
                 isHeroSoundActive = true;
             }

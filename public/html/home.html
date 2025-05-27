@@ -150,15 +150,30 @@
     <div class="content-area">
         <section class="movie-shelf" id="popular">
             <h2>Популярное</h2>
-            <div class="shelf-grid">
+            <div class="shelf-grid-wrapper">
+                <div class="shelf-controls">
+                    <button class="shelf-arrow prev-arrow" aria-label="Предыдущие"><i class="fas fa-chevron-left"></i></button>
+                    <button class="shelf-arrow next-arrow" aria-label="Следующие"><i class="fas fa-chevron-right"></i></button>
                 </div>
+                <div class="shelf-grid">
+                    {/* Карточки фильмов */}
+                </div>
+            </div>
         </section>
         <section class="movie-shelf" id="now-playing">
             <h2>Сейчас смотрят</h2>
-            <div class="shelf-grid">
+            <div class="shelf-grid-wrapper">
+                <div class="shelf-controls">
+                    <button class="shelf-arrow prev-arrow" aria-label="Предыдущие"><i class="fas fa-chevron-left"></i></button>
+                    <button class="shelf-arrow next-arrow" aria-label="Следующие"><i class="fas fa-chevron-right"></i></button>
                 </div>
+                <div class="shelf-grid">
+                    {/* Карточки фильмов */}
+                </div>
+            </div>
         </section>
-        </div>
+        {/* Панель детальной информации будет вставляться сюда через JS */}
+    </div>
 
     <div class="detailed-info-panel" id="detailed-info-panel">
         <button class="detailed-info-close-btn" aria-label="Закрыть">
@@ -185,7 +200,7 @@
                             <p class="detailed-info-overview">Полное описание фильма или сериала будет здесь...</p>
                         </div>
                         <div class="tab-pane" id="tab-episodes-details">
-                            <p>Информация о сезонах и сериях (будет реализовано позже)...</p>
+                            {/* Контент для сезонов будет здесь */}
                         </div>
                     </div>
                      <div class="detailed-info-actions">

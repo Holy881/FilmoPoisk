@@ -9,7 +9,7 @@ $dropdown-bg-color: #222222;
 $profile-dropdown-bg-color: #282828;
 $text-color: #E0E0E0;
 $text-secondary-color: #A0A0A0;
-$text-light-emphasis: #FFFFFF; // Используется для белой рамки
+$text-light-emphasis: #FFFFFF; 
 $border-color: #383838;
 $accent-color: #E50914; 
 
@@ -26,6 +26,8 @@ $hero-height-value: 107vh;
 $navbar-height: 60px;
 $content-area-overlap: 300px; 
 $shelf-padding: 20px; 
+$shelf-arrow-width: 50px; // Ширина области стрелки/градиента
+$shelf-arrow-icon-size: 1.5em; // Размер иконки стрелки
 
 // 2. Глобальные стили для кастомного скроллбара
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -33,7 +35,7 @@ $shelf-padding: 20px;
 ::-webkit-scrollbar-thumb { background-color: lighten($border-color, 10%); border-radius: 10px; border: 2px solid darken($input-bg-color, 10%);
     &:hover { background-color: lighten($border-color, 20%); }
 }
-body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown, .shelf-grid, .detailed-info-scrollable-content {
+body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown, .shelf-grid, .detailed-info-scrollable-content, #tab-episodes-details .seasons-grid {
   scrollbar-width: thin;
   scrollbar-color: lighten($border-color, 10%) darken($input-bg-color, 10%);
 }
@@ -461,7 +463,8 @@ input[type="number"] {
 }
 
 .movie-shelf {
-    padding: $shelf-padding $shelf-padding 30px $shelf-padding;
+    padding-top: $shelf-padding; 
+    padding-bottom: 30px;       
     position: relative; 
 
     h2 {
@@ -469,21 +472,110 @@ input[type="number"] {
         margin-bottom: 15px;
         color: $text-light-emphasis;
         font-weight: 600;
-        padding-left: 5px; 
+        padding-left: $shelf-padding; 
         text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+    }
+
+    .shelf-grid-wrapper {
+        position: relative;
+        margin: 0 $shelf-padding; 
+        overflow: hidden; 
+        
+        // Градиентные тени-области для стрелок
+        .shelf-arrow-overlay {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: $shelf-arrow-width; // Ширина области равна ширине стрелки
+            z-index: 6; // Над плитками, под самой иконкой стрелки
+            pointer-events: none; // Сама область не кликабельна, кликабельна кнопка-стрелка
+            opacity: 0;
+            transition: opacity 0.25s ease-in-out;
+            display: flex; // Для центрирования иконки стрелки внутри
+            align-items: center;
+
+            &.prev-overlay {
+                left: 0;
+                background: linear-gradient(to right, rgba($bg-color, 0.85) 0%, rgba($bg-color, 0.7) 30%, rgba($bg-color, 0) 100%);
+                justify-content: flex-start;
+            }
+            &.next-overlay {
+                right: 0;
+                background: linear-gradient(to left, rgba($bg-color, 0.85) 0%, rgba($bg-color, 0.7) 30%, rgba($bg-color, 0) 100%);
+                justify-content: flex-end;
+            }
+        }
     }
 
     .shelf-grid {
         display: flex;
-        overflow-x: auto;
+        overflow-x: hidden; 
         overflow-y: hidden; 
         gap: 15px;
         padding-bottom: 15px; 
-
-        &::-webkit-scrollbar { height: 6px; }
-        &::-webkit-scrollbar-thumb { background-color: lighten($border-color, 5%); border-radius: 3px; }
-        &::-webkit-scrollbar-track { background: darken($surface-color, 5%); border-radius: 3px; }
+        scroll-behavior: smooth; 
+        // Убраны внутренние отступы, чтобы плитки доходили до краев wrapper'а, где будет градиент
     }
+    
+    .shelf-arrow {
+        position: absolute;
+        top: 50%; // Центрируем иконку по вертикали внутри области градиента
+        transform: translateY(-50%);
+        background-color: transparent; // Кнопка прозрачна, виден градиент под ней
+        color: rgba($text-light-emphasis, 0.7);
+        border: none;
+        width: $shelf-arrow-width; // Кнопка занимает всю ширину градиентной области
+        height: 100%; // И всю высоту
+        font-size: $shelf-arrow-icon-size;
+        cursor: pointer;
+        z-index: 10; 
+        display: flex; // Используется для центрирования иконки, если нужно
+        align-items: center;
+        // justify-content уже будет у родителя .shelf-arrow-overlay
+        
+        opacity: 0; 
+        visibility: hidden;
+        transition: opacity 0.25s ease-in-out, visibility 0s 0.25s, color 0.2s ease;
+        pointer-events: none;
+
+        i { 
+            transition: transform 0.2s ease-out;
+            padding: 0 10px; // Отступы для иконки внутри кнопки
+        }
+
+        &:hover {
+            color: $text-light-emphasis;
+            i {
+                transform: scale(1.1);
+            }
+        }
+        
+        &.visible { 
+            pointer-events: auto; 
+        }
+
+        &.prev-arrow {
+            left: 0; 
+        }
+        &.next-arrow {
+            right: 0; 
+        }
+    }
+    
+    .shelf-grid-wrapper:hover {
+        .shelf-arrow.prev-arrow.visible,
+        .shelf-arrow.next-arrow.visible {
+            opacity: 1;
+            visibility: visible;
+            transition-delay: 0s; 
+        }
+        .shelf-arrow-overlay.prev-overlay.visible, // Показываем оверлей, если стрелка видима
+        .shelf-arrow-overlay.next-overlay.visible {
+            opacity: 1;
+            pointer-events: auto; // Позволяем событиям проходить на стрелку
+        }
+    }
+
 
     &#popular { 
         opacity: 1;
@@ -498,17 +590,16 @@ input[type="number"] {
     }
 }
 
-// ОБНОВЛЕННЫЕ СТИЛИ для .movie-tile
 .movie-tile {
     position: relative;
     width: 180px;
     flex-shrink: 0;
     border-radius: 8px;
-    overflow: visible; // Чтобы стрелка была видна
+    overflow: visible; 
     background-color: $surface-color;
     cursor: pointer;
     transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; 
-    border: 2px solid transparent; // Место для рамки
+    border: 2px solid transparent; 
 
     &:hover {
         transform: scale(1.05);
@@ -521,7 +612,7 @@ input[type="number"] {
     }
 
     &.active-tile-details {
-        border-color: $text-light-emphasis; // Белая рамка
+        border-color: $text-light-emphasis; 
         z-index: 6; 
 
         &::after { 
@@ -534,7 +625,7 @@ input[type="number"] {
             height: 0;
             border-left: 8px solid transparent;
             border-right: 8px solid transparent;
-            border-top: 8px solid $text-light-emphasis; // Белая стрелка
+            border-top: 8px solid $text-light-emphasis; 
         }
     }
 
@@ -546,7 +637,7 @@ input[type="number"] {
         border-radius: 6px; 
     }
 
-    .movie-rating { // Использует @extend .rating-display-badge
+    .movie-rating { 
         @extend .rating-display-badge; 
         position: absolute; 
         top: 8px;
@@ -573,7 +664,6 @@ input[type="number"] {
     }
 }
 
-// ОБЩИЕ СТИЛИ ДЛЯ ЗНАЧКА РЕЙТИНГА
 .rating-display-badge {
     display: inline-block; 
     padding: 4px 8px;
@@ -594,18 +684,15 @@ input[type="number"] {
     }
 }
 
-/* --- ИЗМЕНЕННЫЕ СТИЛИ для выдвигаемой панели --- */
 .detailed-info-panel {
     position: relative; 
     width: 100%; 
     color: $text-color;
-    margin-top: 8px; // УМЕНЬШЕН зазор сверху
+    margin-top: 8px; 
     margin-bottom: 20px; 
     display: none; 
-
     opacity: 0; 
-    transition: opacity 0.3s ease-in-out, 
-                margin-top 0.3s ease-in-out; 
+    transition: opacity 0.3s ease-in-out, margin-top 0.3s ease-in-out; 
 
     &.expanded {
         display: block; 
@@ -700,7 +787,7 @@ input[type="number"] {
             align-items: center; 
             &:empty { display: none; } 
         }
-        .meta-rating-display { // Использует @extend .rating-display-badge
+        .meta-rating-display { 
             @extend .rating-display-badge; 
             font-size: 0.95em; 
             margin-right: 10px; 
@@ -772,13 +859,28 @@ input[type="number"] {
     }
 
     .detailed-info-tab-content {
-        flex-grow: 1;
+        position: relative; 
+        min-height: 250px; 
+        
         .tab-pane { 
-            display: none; 
             font-size: 0.95em; 
             line-height: 1.6;
             color: $text-secondary-color;
-            &.active { display: block; }
+            
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0s 0.3s; 
+
+            &.active { 
+                opacity: 1;
+                visibility: visible;
+                transition-delay: 0s; 
+                position: relative; 
+            }
         }
     }
     
@@ -814,13 +916,13 @@ input[type="number"] {
 
 @keyframes spinner { to { transform: rotate(360deg); } }
 
-/* Адаптивность */
 @media (max-width: 1024px) {
-    .hero .hero-content-display .hero-title { font-size: 2.8em; }
-    .hero .hero-content-display .hero-description { font-size: 1.05em; max-width: 70%; }
-    .content-area { margin-top: -$content-area-overlap + 80px; }
-    .movie-shelf h2 { font-size: 1.6em; }
-    .movie-tile { width: 160px; img.movie-poster-img { height: 240px; } }
+    .movie-shelf {
+        h2 { font-size: 1.6em; }
+        .shelf-grid-wrapper { margin: 0 $shelf-padding / 1.5; } 
+         h2 { padding-left: $shelf-padding / 1.5; }
+    }
+     .movie-tile { width: 160px; img.movie-poster-img { height: 240px; } }
     
     .detailed-info-panel {
         .detailed-info-content-wrapper { 
@@ -896,14 +998,19 @@ input[type="number"] {
       padding-top: 0; margin-top: -$content-area-overlap + 100px;
     }
     .movie-shelf {
-        padding: 15px;
-        h2 { font-size: 1.4em; }
-        .shelf-grid { gap: 10px; }
-        &#popular {
-            margin-top: 0;
-            padding-top: 10px;
-            &::before { height: 80px; top: -($content-area-overlap + 100px); } 
-            &.hidden-on-scroll { transform: translateY(20px); }
+        padding-top: 15px;
+        padding-bottom: 20px;
+        h2 { font-size: 1.4em; padding-left: 15px; }
+        .shelf-grid-wrapper { margin: 0 10px; } 
+        .shelf-arrow { 
+            width: $shelf-arrow-width * 0.8;
+            height: $shelf-arrow-width * 0.8; // Делаем высоту такой же, как ширина для круглых кнопок
+            font-size: 1em;
+        }
+        .shelf-grid-wrapper {
+            .shelf-arrow-overlay { // Для мобильных можно сделать градиент меньше или убрать
+                 width: $shelf-arrow-width * 0.8;
+            }
         }
     }
     .movie-tile { width: 140px; img.movie-poster-img { height: 210px; } }
@@ -922,35 +1029,86 @@ input[type="number"] {
 }
 
 @media (max-width: 480px) {
-    .navbar {
-        .navbar-left .navbar-brand { font-size: 1.2em;}
-        .navbar-left .navbar-button { padding: 10px; font-size: 0.9em;}
-        .navbar-right .navbar-icon { font-size: 1.2em; }
-    }
-    .search-modal-main .search-modal-input { font-size: 1em; padding: 12px 15px; }
-    .search-result-item .search-result-main-info .search-result-title { font-size: 1.1em; }
-    .search-result-item .search-result-overview { font-size: 0.85em; }
-
-    .hero .hero-content-display {
-        .hero-title { font-size: 1.6em; }
-        .hero-description { font-size: 0.85em; -webkit-line-clamp: 2; line-clamp: 2; }
-        .hero-button.action-button { padding: 8px 15px; font-size: 0.9em; }
-    }
-    .content-area { margin-top: -$content-area-overlap + 150px; }
-    .movie-shelf h2 {font-size: 1.3em;}
-    .movie-tile { width: 120px; img.movie-poster-img { height: 180px; } .movie-hover-details { min-height: 70px; h3 {font-size: 0.9em;} p {font-size: 0.75em; line-clamp: 2;} } }
-    .hero .hero-overlay { padding: 0 5% calc(#{$content-area-overlap} - 120px); }
-    .hero .hero-action-buttons-container { bottom: calc(#{$content-area-overlap} - 140px); }
-
-    .detailed-info-panel {
-        .detailed-info-left-column {
-            padding: 15px 10px;
+    .movie-shelf {
+        h2 {font-size: 1.3em; padding-left: 10px;}
+        .shelf-grid-wrapper { margin: 0 5px; } 
+         .shelf-arrow { 
+            width: $shelf-arrow-width * 0.7;
+            height: $shelf-arrow-width * 0.7;
+            font-size: 0.9em;
         }
-        .detailed-info-title { font-size: 1.4em; }
-        .detailed-info-meta { font-size: 0.8em; }
-        .detailed-info-right-column { min-height: 250px; }
+         .shelf-grid-wrapper {
+            .shelf-arrow-overlay {
+                 width: $shelf-arrow-width * 0.7;
+            }
+        }
     }
-    .movie-shelf#popular {
-       &::before { top: -($content-area-overlap + 150px); } 
+    .movie-tile { width: 120px; img.movie-poster-img { height: 180px; } .movie-hover-details { min-height: 70px; h3 {font-size: 0.9em;} p {font-size: 0.75em; line-clamp: 2;} } }
+    
+    // ... (остальные адаптивные стили)
+}
+
+// Стили для вкладки "Сезоны и серии"
+#tab-episodes-details {
+    .seasons-grid {
+        display: flex;
+        flex-wrap: wrap; 
+        gap: 16px;       
+        padding: 10px 0; 
+        max-height: 450px; 
+        overflow-y: auto;  
+    }
+
+    .season-card {
+        background-color: lighten($surface-color, 3%); 
+        border-radius: 6px;      
+        overflow: hidden;        
+        width: 150px;            
+        border: 1px solid $border-color; 
+        cursor: default; 
+        
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+
+        &.visible { 
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .season-poster-img {
+            width: 100%;
+            height: 225px; 
+            object-fit: cover; 
+            display: block;    
+            background-color: $bg-color; 
+        }
+
+        .season-info {
+            padding: 10px 8px; 
+
+            .season-title {
+                font-size: 0.9em; 
+                font-weight: 500;
+                color: $text-color;
+                margin: 0 0 4px 0; 
+                white-space: nowrap;     
+                overflow: hidden;        
+                text-overflow: ellipsis; 
+            }
+
+            .season-episode-count {
+                font-size: 0.8em; 
+                color: $text-secondary-color;
+                margin: 0;
+            }
+        }
+    }
+
+    p { 
+        color: $text-secondary-color;
+        font-size: 0.95em;
+        padding: 15px 5px;
+        text-align: center;
     }
 }

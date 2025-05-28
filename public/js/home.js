@@ -16,8 +16,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Элементы для "Полок" и детальной информации ---
     const contentArea = document.querySelector('.content-area');
-    // const popularShelf = document.getElementById('popular'); // Получим позже в initShelves
-    // const nowPlayingShelf = document.getElementById('now-playing'); // Получим позже в initShelves
 
     const detailedInfoPanel = document.getElementById('detailed-info-panel');
     const detailedInfoCloseBtn = detailedInfoPanel?.querySelector('.detailed-info-close-btn');
@@ -80,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const DEFAULT_VOLUME_LEVEL = 0.1;
     const VOLUME_ANIMATION_DURATION = 1500;
-    const SHELF_SCROLL_AMOUNT_PX = 200; // Количество пикселей для прокрутки за раз (можно настроить)
+    const popularScrollThreshold = 50;
 
 
     let searchTimeout;
@@ -92,11 +90,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentUserData = null;
     let currentlyOpenShelfForDetails = null;
     let currentActiveMovieTile = null;
-    let currentActiveTabPane = null; 
+    let currentActiveTabPane = null;
 
 
     const DEFAULT_AVATAR_PATH = '/images/default-avatar.png';
-    // Увеличим количество фильмов для примера
     const placeholderMovies = [
         { id: 1, tmdb_id: 550, media_type: 'movie', title: 'Бойцовский клуб', name: 'Бойцовский клуб', poster_path: '/pB8BM7pdSp6B6Ih7QZ4DrQ3pmJK.jpg', vote_average: 8.43, overview: 'Сотрудник страховой компании страдает хронической бессонницей и отчаянно пытается вырваться из мучительно скучной жизни. Однажды он встречает Тайлера Дёрдена, харизматичного торговца мылом с извращённой философией. Тайлер уверен, что самосовершенствование — удел слабых, а саморазрушение — единственное, ради чего стоит жить.', release_date: '1999-10-15', first_air_date: null, genres: [{id: 18, name: 'Драма'}], number_of_episodes: null, number_of_seasons: null },
         { id: 2, tmdb_id: 1399, media_type: 'tv', title: 'Игра престолов', name: 'Игра престолов', poster_path: '/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg', vote_average: 8.4, overview: 'К концу подходит время благоденствия, и лето, длившееся почти десятилетие, угасает. Вокруг средоточия власти Семи королевств, Железного трона, зреет заговор, и в это непростое время король решает искать поддержки у друга юности Эддарда Старка. В мире, где все — от короля до наемника — рвутся к власти, плетут интриги и готовы вонзить нож в спину, есть место и благородству, состраданию и любви. Между тем, никто не замечает пробуждения тьмы из легенд далеко на Севере — и лишь Стена защищает живых к югу от нее.', release_date: null, first_air_date: '2011-04-17', genres: [{id: 10765, name: 'Sci-Fi & Fantasy'}, {id: 18, name: 'Драма'}, {id: 10759, name: 'Action & Adventure'}], number_of_episodes: 73, number_of_seasons: 8 },
@@ -106,9 +103,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: 6, tmdb_id: 680, media_type: 'movie', title: 'Криминальное чтиво', name: 'Криминальное чтиво', poster_path: '/9VqZ3Yeling8oAhG7q4CVK83z3s.jpg', vote_average: 8.5, overview: 'Двое бандитов Винсент Вега и Джулс Винфилд ведут философские беседы в перерывах между разборками и решением проблем с должниками криминального босса Марселласа Уоллеса.', release_date: '1994-09-10', first_air_date: null, genres: [{id: 53, name: 'Триллер'}, {id: 80, name: 'Криминал'}], number_of_episodes: null, number_of_seasons: null },
         { id: 7, tmdb_id: 13, media_type: 'movie', title: 'Форрест Гамп', name: 'Форрест Гамп', poster_path: '/saHP97rTPS5eLmrHHqup634AhaK.jpg', vote_average: 8.5, overview: 'Сидя на автобусной остановке, Форрест Гамп — не очень умный, но добрый и открытый парень — рассказывает случайным попутчикам историю своей необыкновенной жизни.', release_date: '1994-06-23', first_air_date: null, genres: [{id: 35, name: 'Комедия'}, {id: 18, name: 'Драма'}, {id: 10749, name: 'Мелодрама'}], number_of_episodes: null, number_of_seasons: null },
         { id: 8, tmdb_id: 278, media_type: 'movie', title: 'Побег из Шоушенка', name: 'Побег из Шоушенка', poster_path: '/sBEBQCn6AU17NBw3fz2qsUj3R23.jpg', vote_average: 8.7, overview: 'Бухгалтер Энди Дюфрейн обвинён в убийстве собственной жены и её любовника. Оказавшись в тюрьме под названием Шоушенк, он сталкивается со всеми ужасами тюремной жизни.', release_date: '1994-09-23', first_air_date: null, genres: [{id: 18, name: 'Драма'}, {id: 80, name: 'Криминал'}], number_of_episodes: null, number_of_seasons: null },
-        { id: 9, tmdb_id: 1416, media_type: 'tv', title: 'Атака титанов', name: 'Атака титанов', poster_path: '/hTP1M40IOF93zQ4X32h2VdC0H3G.jpg', vote_average: 8.6, overview: 'С тех пор, как человечество было почти уничтожено гигантскими гуманоидами, называемыми титанами, прошло сто лет. Титаны обычно имеют несколько этажей в высоту, кажутся неразумными, пожирают людей и, что хуже всего, делают это ради удовольствия, а не как источник пищи.', release_date: null, first_air_date: '2013-04-07', genres: [{id: 10765, name: 'Sci-Fi & Fantasy'}, {id: 16, name: 'Анимация'}, {id: 10759, name: 'Action & Adventure'}], number_of_episodes: 89, number_of_seasons: 4 },
+        { id: 9, tmdb_id: 1429, media_type: 'tv', title: 'Атака титанов', name: 'Атака титанов', poster_path: '/9whSxgqSW7dPIIMJyM4WG3BYVo7.jpg', vote_average: 8.6, overview: 'С тех пор, как человечество было почти уничтожено гигантскими гуманоидами, называемыми титанами, прошло сто лет. Титаны обычно имеют несколько этажей в высоту, кажутся неразумными, пожирают людей и, что хуже всего, делают это ради удовольствия, а не как источник пищи.', release_date: null, first_air_date: '2013-04-07', genres: [{id: 10765, name: 'Sci-Fi & Fantasy'}, {id: 16, name: 'Анимация'}, {id: 10759, name: 'Action & Adventure'}], number_of_episodes: 89, number_of_seasons: 4 },
         { id: 10, tmdb_id: 60625, media_type: 'tv', title: 'Ванпанчмен', name: 'Ванпанчмен', poster_path: '/mzzh978T3DO2USc1g8hS05b2j2.jpg', vote_average: 8.4, overview: 'История о Сайтаме, обычном парне, который стал супергероем от скуки. После трёх лет «специальных» тренировок он стал настолько сильным, что может победить любого противника одним ударом.', release_date: null, first_air_date: '2015-10-05', genres: [{id: 10759, name: 'Action & Adventure'}, {id: 16, name: 'Анимация'}, {id: 35, name: 'Комедия'}, {id: 10765, name: 'Sci-Fi & Fantasy'}], number_of_episodes: 24, number_of_seasons: 2 },
-        { id: 11, tmdb_id: 76479, media_type: 'tv', title: 'Ведьмак', name: 'Ведьмак', poster_path: '/mK2I9hWrCM21x3CFgzK8X5xV2C5.jpg', vote_average: 8.1, overview: 'Геральт из Ривии, наёмный охотник на чудовищ, перенёсший мутации, идёт навстречу своей судьбе в неспокойном мире, где люди часто оказываются куда хуже чудовищ.', release_date: null, first_air_date: '2019-12-20', genres: [{id: 18, name: 'Драма'}, {id: 10759, name: 'Action & Adventure'}, {id: 10765, name: 'Sci-Fi & Fantasy'}], number_of_episodes: 24, number_of_seasons: 3 },
+        { id: 11, tmdb_id: 71912, media_type: 'tv', title: 'Ведьмак', name: 'Ведьмак', poster_path: '/rY2c2LhN07CRKlAbRaDZxN2XjvK.jpg', vote_average: 8.1, overview: 'Геральт из Ривии, наёмный охотник на чудовищ, перенёсший мутации, идёт навстречу своей судьбе в неспокойном мире, где люди часто оказываются куда хуже чудовищ.', release_date: null, first_air_date: '2019-12-20', genres: [{id: 18, name: 'Драма'}, {id: 10759, name: 'Action & Adventure'}, {id: 10765, name: 'Sci-Fi & Fantasy'}], number_of_episodes: 24, number_of_seasons: 3 },
         { id: 12, tmdb_id: 456, media_type: 'movie', title: 'Аватар', name: 'Аватар', poster_path: '/jRXYjXNq0Cs2TcYVbL9qPqHqrA1.jpg', vote_average: 7.5, overview: 'Джейк Салли — бывший морской пехотинец, прикованный к инвалидному креслу. Несмотря на немощное тело, Джейк в душе по-прежнему остается воином. Он получает задание совершить путешествие в несколько световых лет к базе землян на планете Пандора, где корпорации добывают редкий минерал, имеющий огромное значение для выхода Земли из энергетического кризиса.', release_date: '2009-12-10', first_air_date: null, genres: [{id: 28, name: 'Боевик'}, {id: 12, name: 'Приключения'}, {id: 14, name: 'Фэнтези'}, {id: 878, name: 'Фантастика'}], number_of_episodes: null, number_of_seasons: null },
         { id: 13, tmdb_id: 19995, media_type: 'movie', title: 'Аватар: Путь воды', name: 'Аватар: Путь воды', poster_path: '/z5mkvXY3sV0Xo23A0MttYaK2m2j.jpg', vote_average: 7.7, overview: 'После принятия образа аватара солдат Джейк Салли становится предводителем народа на`ви и берет на себя миссию по защите новых друзей от корыстных бизнесменов с Земли. Теперь ему есть за кого бороться — с Джейком его прекрасная возлюбленная Нейтири. Когда на Пандору возвращаются до зубов вооруженные земляне, Джейк готов дать им отпор.', release_date: '2022-12-14', first_air_date: null, genres: [{id: 878, name: 'Фантастика'}, {id: 12, name: 'Приключения'}, {id: 28, name: 'Боевик'}], number_of_episodes: null, number_of_seasons: null },
         { id: 14, tmdb_id: 634649, media_type: 'movie', title: 'Человек-паук: Нет пути домой', name: 'Человек-паук: Нет пути домой', poster_path: '/uJYYizSuA9Y3DCs0qS4qWvHfZg4.jpg', vote_average: 8.0, overview: 'Впервые в киноистории Человека-паука наш дружелюбный герой разоблачен. Теперь супергеройские подвиги стали неотделимы от его обычной жизни. Когда он просит помощи у Доктора Стрэнджа, ситуация только усугубляется. И Питер Паркер должен как никогда раньше ощутить, что значит быть Человеком-пауком.', release_date: '2021-12-15', first_air_date: null, genres: [{id: 28, name: 'Боевик'}, {id: 12, name: 'Приключения'}, {id: 878, name: 'Фантастика'}], number_of_episodes: null, number_of_seasons: null },
@@ -117,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     function handlePopularSectionVisibility() {
-        const popularShelfElement = document.getElementById('popular'); // Получаем элемент здесь
+        const popularShelfElement = document.getElementById('popular');
         if (!popularShelfElement) return;
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         popularShelfElement.classList.toggle('hidden-on-scroll', scrollTop <= popularScrollThreshold);
@@ -347,12 +344,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const grid = shelfElement.querySelector('.shelf-grid');
         if (!grid) return;
         grid.innerHTML = '';
-        // Отображаем до 15 элементов
         const moviesToDisplay = moviesData.slice(0, 15);
         moviesToDisplay.forEach(movie => {
             grid.appendChild(createMovieTile(movie));
         });
-        updateShelfControls(shelfElement); // Обновляем состояние стрелок после рендера
+        // Вызываем updateShelfControls ПОСЛЕ добавления всех плиток,
+        // чтобы размеры были корректно рассчитаны браузером.
+        // requestAnimationFrame гарантирует, что это произойдет перед следующей отрисовкой.
+        requestAnimationFrame(() => {
+            updateShelfControls(shelfElement);
+        });
     }
 
     function applyRatingStyles(targetElement, ratingValue) {
@@ -377,7 +378,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function renderSeasonsDisplay(seasonsDetails, parentContainer, tvId, mediaType) {
-        parentContainer.innerHTML = ''; 
+        parentContainer.innerHTML = '';
 
         if (!seasonsDetails || seasonsDetails.length === 0) {
             parentContainer.innerHTML = '<p>Информация о сезонах не найдена.</p>';
@@ -389,7 +390,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         seasonsDetails.forEach((season, index) => {
             if (season.season_number === 0 && !season.poster_path) {
-                return; 
+                return;
             }
             if (!season || typeof season.season_number === 'undefined') {
                 return;
@@ -398,9 +399,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const seasonCard = document.createElement('div');
             seasonCard.className = 'season-card';
 
-            const posterPath = season.poster_path 
-                ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_SEASON_CARD}${season.poster_path}` 
-                : '/images/default-poster.jpg'; 
+            const posterPath = season.poster_path
+                ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_SEASON_CARD}${season.poster_path}`
+                : '/images/default-poster.jpg';
 
             const episodeCount = season.episode_count || (season.episodes ? season.episodes.length : 0);
 
@@ -411,12 +412,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <p class="season-episode-count">${episodeCount} серий</p>
                 </div>
             `;
-            
+
             seasonsGrid.appendChild(seasonCard);
             requestAnimationFrame(() => {
                 setTimeout(() => {
                     seasonCard.classList.add('visible');
-                }, index * 100); 
+                }, index * 100);
             });
         });
         parentContainer.appendChild(seasonsGrid);
@@ -483,15 +484,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         detailedInfoPanel.dataset.currentTmdbId = String(itemData.id);
-        
+
         const aboutTabPane = detailedInfoPanel.querySelector('#tab-about-details');
         const episodesTabPane = detailedInfoPanel.querySelector('#tab-episodes-details');
         const episodesTabButton = detailedInfoTabsContainer?.querySelector('.tab-button[data-tab-target="#tab-episodes-details"]');
 
         detailedInfoTabsContainer?.querySelector('.tab-button.active')?.classList.remove('active');
         detailedInfoTabsContainer?.querySelector('.tab-button[data-tab-target="#tab-about-details"]')?.classList.add('active');
-        
-        if (currentActiveTabPane) currentActiveTabPane.classList.remove('active');
+
+        if (currentActiveTabPane && currentActiveTabPane !== aboutTabPane) currentActiveTabPane.classList.remove('active');
         if (aboutTabPane) aboutTabPane.classList.add('active');
         currentActiveTabPane = aboutTabPane;
 
@@ -500,9 +501,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 episodesTabButton.style.display = 'inline-flex';
                 if (itemData.all_season_details && itemData.all_season_details.length > 0) {
                     renderSeasonsDisplay(itemData.all_season_details, episodesTabPane, itemData.id, itemMediaType);
-                } else if (itemData.seasons && itemData.seasons.length > 0) { 
+                } else if (itemData.seasons && itemData.seasons.length > 0) {
                     const fallbackSeasonsData = itemData.seasons.map(s => ({
-                        ...s, 
+                        ...s,
                         episode_count: s.episode_count || 0,
                         poster_path: s.poster_path || null
                     }));
@@ -511,7 +512,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 else {
                     episodesTabPane.innerHTML = '<p>Для данного сериала нет информации о сезонах.</p>';
                 }
-            } else { 
+            } else {
                 episodesTabButton.style.display = 'none';
                 episodesTabPane.innerHTML = '<p>Сезоны и серии доступны только для сериалов.</p>';
             }
@@ -561,22 +562,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (needsMove) {
                     detailedInfoPanel.style.transition = 'opacity 0.15s ease-out';
                     detailedInfoPanel.style.opacity = '0';
-                    await new Promise(resolve => setTimeout(resolve, 150)); 
-                    
-                    newParentShelf.after(detailedInfoPanel); 
-                    populatePanelData(data, mediaType); 
+                    await new Promise(resolve => setTimeout(resolve, 150));
+
+                    newParentShelf.after(detailedInfoPanel);
+                    populatePanelData(data, mediaType);
                     currentlyOpenShelfForDetails = newParentShelf;
-                    
-                    detailedInfoPanel.style.opacity = '1'; 
-                } else { 
+
+                    detailedInfoPanel.style.opacity = '1';
+                } else {
                     if (detailedInfoContentWrapper) {
                         detailedInfoContentWrapper.style.transition = 'opacity 0.2s ease-out';
                         detailedInfoContentWrapper.style.opacity = '0';
                         await new Promise(resolve => setTimeout(resolve, 200));
-                        populatePanelData(data, mediaType); 
+                        populatePanelData(data, mediaType);
                         detailedInfoContentWrapper.style.opacity = '1';
                     } else {
-                        populatePanelData(data, mediaType); 
+                        populatePanelData(data, mediaType);
                     }
                 }
                 const navbarHeight = navbar?.offsetHeight || 0;
@@ -588,7 +589,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (error) {
                 console.error('Ошибка при обновлении деталей в открытой панели:', error);
             }
-        } else { 
+        } else {
             try {
                 const response = await fetch(`/api/tmdb/details/${mediaType}/${tmdbId}?language=ru-RU`);
                 if (!response.ok) {
@@ -598,19 +599,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const data = await response.json();
                 if (!data) throw new Error('Данные не получены.');
 
-                populatePanelData(data, mediaType); 
-                newParentShelf.after(detailedInfoPanel); 
-                
+                populatePanelData(data, mediaType);
+                newParentShelf.after(detailedInfoPanel);
+
                 if (currentActiveMovieTile) {
                     currentActiveMovieTile.classList.remove('active-tile-details');
                 }
                 clickedTileElement.classList.add('active-tile-details');
                 currentActiveMovieTile = clickedTileElement;
 
-                detailedInfoPanel.style.display = 'block'; 
+                detailedInfoPanel.style.display = 'block';
                 requestAnimationFrame(() => {
-                    requestAnimationFrame(() => { 
-                        detailedInfoPanel.classList.add('expanded'); 
+                    requestAnimationFrame(() => {
+                        detailedInfoPanel.classList.add('expanded');
                         currentlyOpenShelfForDetails = newParentShelf;
 
                         const navbarHeight = navbar?.offsetHeight || 0;
@@ -638,7 +639,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 currentActiveMovieTile = null;
             }
 
-            detailedInfoPanel.classList.remove('expanded'); 
+            detailedInfoPanel.classList.remove('expanded');
             currentlyOpenShelfForDetails = null;
             delete detailedInfoPanel.dataset.currentTmdbId;
 
@@ -653,13 +654,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             detailedInfoPanel.addEventListener('transitionend', onTransitionEnd);
 
-            setTimeout(() => { 
+            setTimeout(() => {
                 if (detailedInfoPanel.style.display !== 'none' && !detailedInfoPanel.classList.contains('expanded')) {
                     detailedInfoPanel.style.display = 'none';
-                    detailedInfoPanel.removeEventListener('transitionend', onTransitionEnd); 
+                    detailedInfoPanel.removeEventListener('transitionend', onTransitionEnd);
                 }
-                resolve(); 
-            }, 350); 
+                resolve();
+            }, 350);
         });
     }
 
@@ -687,7 +688,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     requestAnimationFrame(() => {
                         setTimeout(() => {
                             card.classList.add('visible');
-                        }, index * 75); 
+                        }, index * 75);
                     });
                 });
             }
@@ -695,57 +696,111 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     function updateShelfControls(shelfElement) {
+        const gridWrapper = shelfElement.querySelector('.shelf-grid-wrapper');
         const grid = shelfElement.querySelector('.shelf-grid');
         const prevArrow = shelfElement.querySelector('.prev-arrow');
         const nextArrow = shelfElement.querySelector('.next-arrow');
 
-        if (!grid || !prevArrow || !nextArrow) return;
+        if (!gridWrapper || !grid || !prevArrow || !nextArrow) {
+            if (prevArrow) prevArrow.classList.remove('visible');
+            if (nextArrow) nextArrow.classList.remove('visible');
+            if (gridWrapper) {
+                gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll');
+            }
+            return;
+        }
 
-        const scrollLeft = grid.scrollLeft;
-        const scrollWidth = grid.scrollWidth;
-        const clientWidth = grid.clientWidth;
-        
-        // Показываем левую стрелку, если есть куда скроллить влево
-        prevArrow.classList.toggle('visible', scrollLeft > 0);
-        // Показываем правую стрелку, если есть куда скроллить вправо
-        nextArrow.classList.toggle('visible', scrollLeft < (scrollWidth - clientWidth -1)); // -1 для точности
+        requestAnimationFrame(() => {
+            const scrollLeft = Math.round(grid.scrollLeft);
+            const scrollWidth = grid.scrollWidth;
+            const clientWidth = grid.clientWidth;
+            const childrenCount = grid.children.length;
+
+            // Если нет дочерних элементов (плиток), стрелки не нужны
+            if (childrenCount === 0) {
+                prevArrow.classList.remove('visible');
+                nextArrow.classList.remove('visible');
+                gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll');
+                return;
+            }
+            
+            // Условие для возможности прокрутки влево
+            const canScrollLeft = scrollLeft > 1; // Небольшой допуск
+
+            // Условие для возможности прокрутки вправо
+            // (scrollWidth - clientWidth) - это максимальное значение scrollLeft
+            // Используем допуск, чтобы избежать проблем с округлением
+            const canScrollRight = (scrollWidth - clientWidth - scrollLeft) > 1;
+
+            prevArrow.classList.toggle('visible', canScrollLeft);
+            nextArrow.classList.toggle('visible', canScrollRight);
+
+            gridWrapper.classList.toggle('has-prev-scroll', canScrollLeft);
+            gridWrapper.classList.toggle('has-next-scroll', canScrollRight);
+        });
     }
 
     function initShelves() {
         document.querySelectorAll('.movie-shelf').forEach(shelfElement => {
+            const gridWrapper = shelfElement.querySelector('.shelf-grid-wrapper');
             const grid = shelfElement.querySelector('.shelf-grid');
             const prevArrow = shelfElement.querySelector('.prev-arrow');
             const nextArrow = shelfElement.querySelector('.next-arrow');
 
-            if (!grid || !prevArrow || !nextArrow) return;
+            if (!gridWrapper || !grid || !prevArrow || !nextArrow) {
+                console.warn('Не найдены все необходимые элементы для полки:', shelfElement);
+                return;
+            }
+
+            // Изначально скрываем стрелки и градиенты
+            prevArrow.classList.remove('visible');
+            nextArrow.classList.remove('visible');
+            gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll');
+
+            const getScrollAmount = () => {
+                const firstTile = grid.querySelector('.movie-tile');
+                if (firstTile) {
+                    const tileWidth = firstTile.offsetWidth;
+                    const gap = parseFloat(getComputedStyle(grid).gap) || 15;
+                    return tileWidth + gap;
+                }
+                return grid.clientWidth * 0.8; // Фоллбэк
+            };
 
             prevArrow.addEventListener('click', () => {
-                const firstVisibleTile = Array.from(grid.children).find(child => {
-                    const rect = child.getBoundingClientRect();
-                    const gridRect = grid.getBoundingClientRect();
-                    return rect.left >= gridRect.left;
-                });
-                const scrollAmount = firstVisibleTile ? firstVisibleTile.offsetWidth + parseFloat(getComputedStyle(grid).gap || 0) : SHELF_SCROLL_AMOUNT_PX;
-                grid.scrollLeft -= scrollAmount;
+                grid.scrollBy({ left: -getScrollAmount(), behavior: 'smooth' });
             });
 
             nextArrow.addEventListener('click', () => {
-                 const firstVisibleTile = Array.from(grid.children).find(child => {
-                    const rect = child.getBoundingClientRect();
-                    const gridRect = grid.getBoundingClientRect();
-                    return rect.left >= gridRect.left;
-                });
-                const scrollAmount = firstVisibleTile ? firstVisibleTile.offsetWidth + parseFloat(getComputedStyle(grid).gap || 0) : SHELF_SCROLL_AMOUNT_PX;
-                grid.scrollLeft += scrollAmount;
+                grid.scrollBy({ left: getScrollAmount(), behavior: 'smooth' });
             });
+
+            const observerCallback = (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Даем немного времени для отрисовки и загрузки изображений
+                        setTimeout(() => {
+                            updateShelfControls(shelfElement);
+                        }, 200); // Можно увеличить задержку, если проблема остается
+                    } else {
+                        // Если полка не видна, стрелки тоже не должны быть видны
+                        prevArrow.classList.remove('visible');
+                        nextArrow.classList.remove('visible');
+                        gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll');
+                    }
+                });
+            };
             
-            // Обновляем состояние стрелок при прокрутке грида
+            const shelfObserver = new IntersectionObserver(observerCallback, { threshold: 0.01 }); // Сработает даже если виден 1%
+            shelfObserver.observe(shelfElement);
+
+
             grid.addEventListener('scroll', () => updateShelfControls(shelfElement), { passive: true });
-            // Также обновляем при изменении размера окна (может повлиять на видимость)
             window.addEventListener('resize', () => updateShelfControls(shelfElement), { passive: true });
-            
-            // Первоначальное обновление состояния стрелок
-            updateShelfControls(shelfElement);
+
+            // Первоначальное обновление (может быть избыточным из-за IntersectionObserver, но для подстраховки)
+            // Убираем этот setTimeout, так как IntersectionObserver должен справиться
+            // setTimeout(() => updateShelfControls(shelfElement), 250);
         });
     }
 
@@ -1039,6 +1094,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // --- Инициализация ---
     if (detailedInfoPanel) {
         detailedInfoPanel.classList.remove('expanded');
         detailedInfoPanel.style.display = 'none';
@@ -1047,15 +1103,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     loadAndDisplayHeroContent();
     updateUserProfileDisplay();
-    
-    // Заполнение полок
+
     const popularShelfElement = document.getElementById('popular');
     const nowPlayingShelfElement = document.getElementById('now-playing');
 
-    if (popularShelfElement) renderShelf(popularShelfElement, placeholderMovies); // Теперь передаем все 15
-    if (nowPlayingShelfElement) renderShelf(nowPlayingShelfElement, [...placeholderMovies].reverse().slice(0,15)); // И здесь 15 в обратном порядке
+    if (popularShelfElement) renderShelf(popularShelfElement, placeholderMovies);
+    if (nowPlayingShelfElement) renderShelf(nowPlayingShelfElement, [...placeholderMovies].reverse().slice(0,15));
 
-    initShelves(); // Инициализация стрелок для всех полок
+    initShelves();
 
     handlePopularSectionVisibility();
     window.addEventListener('scroll', handlePopularSectionVisibility, { passive: true });

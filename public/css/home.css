@@ -18,7 +18,7 @@
   background-color: #6b6b6b;
 }
 
-body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown, .shelf-grid, .detailed-info-scrollable-content, #tab-episodes-details .seasons-grid {
+body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown, .detailed-info-scrollable-content, #tab-episodes-details .seasons-grid {
   scrollbar-width: thin;
   scrollbar-color: #525252 #131313;
 }
@@ -747,46 +747,52 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
 .movie-shelf .shelf-grid-wrapper {
   position: relative;
   margin: 0 20px;
-  overflow: hidden;
 }
-.movie-shelf .shelf-grid-wrapper .shelf-arrow-overlay {
+.movie-shelf .shelf-grid-wrapper::before, .movie-shelf .shelf-grid-wrapper::after {
+  content: "";
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 50px;
+  width: 100px;
   z-index: 6;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.25s ease-in-out;
-  display: flex;
-  align-items: center;
 }
-.movie-shelf .shelf-grid-wrapper .shelf-arrow-overlay.prev-overlay {
+.movie-shelf .shelf-grid-wrapper::before {
   left: 0;
-  background: linear-gradient(to right, rgba(13, 13, 13, 0.85) 0%, rgba(13, 13, 13, 0.7) 30%, rgba(13, 13, 13, 0) 100%);
-  justify-content: flex-start;
+  background: linear-gradient(to right, rgba(13, 13, 13, 0.95) 0%, rgba(13, 13, 13, 0.85) 30%, rgba(13, 13, 13, 0.5) 60%, rgba(13, 13, 13, 0) 100%);
 }
-.movie-shelf .shelf-grid-wrapper .shelf-arrow-overlay.next-overlay {
+.movie-shelf .shelf-grid-wrapper::after {
   right: 0;
-  background: linear-gradient(to left, rgba(13, 13, 13, 0.85) 0%, rgba(13, 13, 13, 0.7) 30%, rgba(13, 13, 13, 0) 100%);
-  justify-content: flex-end;
+  background: linear-gradient(to left, rgba(13, 13, 13, 0.95) 0%, rgba(13, 13, 13, 0.85) 30%, rgba(13, 13, 13, 0.5) 60%, rgba(13, 13, 13, 0) 100%);
+}
+.movie-shelf .shelf-grid-wrapper.has-prev-scroll::before {
+  opacity: 1;
+}
+.movie-shelf .shelf-grid-wrapper.has-next-scroll::after {
+  opacity: 1;
 }
 .movie-shelf .shelf-grid {
   display: flex;
-  overflow-x: hidden;
+  overflow-x: scroll;
   overflow-y: hidden;
   gap: 15px;
   padding-bottom: 15px;
   scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+.movie-shelf .shelf-grid::-webkit-scrollbar {
+  display: none;
 }
 .movie-shelf .shelf-arrow {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   background-color: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
   border: none;
-  width: 50px;
+  width: 100px;
   height: 100%;
   font-size: 1.5em;
   cursor: pointer;
@@ -800,33 +806,32 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
 }
 .movie-shelf .shelf-arrow i {
   transition: transform 0.2s ease-out;
-  padding: 0 10px;
+}
+.movie-shelf .shelf-arrow.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
 }
 .movie-shelf .shelf-arrow:hover {
   color: #FFFFFF;
 }
 .movie-shelf .shelf-arrow:hover i {
-  transform: scale(1.1);
-}
-.movie-shelf .shelf-arrow.visible {
-  pointer-events: auto;
+  transform: scale(1.15);
 }
 .movie-shelf .shelf-arrow.prev-arrow {
   left: 0;
+  justify-content: flex-start;
+}
+.movie-shelf .shelf-arrow.prev-arrow i {
+  padding-left: 15px;
 }
 .movie-shelf .shelf-arrow.next-arrow {
   right: 0;
+  justify-content: flex-end;
 }
-.movie-shelf .shelf-grid-wrapper:hover .shelf-arrow.prev-arrow.visible,
-.movie-shelf .shelf-grid-wrapper:hover .shelf-arrow.next-arrow.visible {
-  opacity: 1;
-  visibility: visible;
-  transition-delay: 0s;
-}
-.movie-shelf .shelf-grid-wrapper:hover .shelf-arrow-overlay.prev-overlay.visible,
-.movie-shelf .shelf-grid-wrapper:hover .shelf-arrow-overlay.next-overlay.visible {
-  opacity: 1;
-  pointer-events: auto;
+.movie-shelf .shelf-arrow.next-arrow i {
+  padding-right: 15px;
 }
 .movie-shelf#popular {
   opacity: 1;
@@ -997,10 +1002,8 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   background-color: #080808;
   border-radius: 12px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-  min-height: 450px;
+  min-height: 770px;
   overflow: hidden;
-  padding-top: 25px;
-  padding-bottom: 25px;
   transition: opacity 0.25s ease-in-out;
 }
 .detailed-info-panel .detailed-info-left-column {
@@ -1033,7 +1036,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
 }
 .detailed-info-panel .detailed-info-title {
   font-size: 2.2em;
-  margin: 0 0 12px 0;
+  margin: 12px 0 12px 0;
   font-weight: 600;
   color: #FFFFFF;
   line-height: 1.2;
@@ -1074,11 +1077,12 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: auto;
+  margin-top: 10px;
   padding-top: 25px;
 }
 .detailed-info-panel .detailed-info-actions .action-button, .detailed-info-panel .detailed-info-actions .navbar .navbar-button, .navbar .detailed-info-panel .detailed-info-actions .navbar-button, .detailed-info-panel .detailed-info-actions .navbar .navbar-icon, .navbar .detailed-info-panel .detailed-info-actions .navbar-icon, .detailed-info-panel .detailed-info-actions .navbar .profile-dropdown .dropdown-button, .navbar .profile-dropdown .detailed-info-panel .detailed-info-actions .dropdown-button, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .detailed-info-panel .detailed-info-actions .dropdown-toggle, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .reset-filters-button, .search-modal .search-modal-sidebar .detailed-info-panel .detailed-info-actions .reset-filters-button, .detailed-info-panel .detailed-info-actions .hero .hero-action-buttons-container .hero-action-icon, .hero .hero-action-buttons-container .detailed-info-panel .detailed-info-actions .hero-action-icon {
   padding: 12px 22px;
+  margin-bottom: 12px;
   font-size: 1em;
 }
 .detailed-info-panel .detailed-info-actions .action-button i, .detailed-info-panel .detailed-info-actions .navbar .navbar-button i, .navbar .detailed-info-panel .detailed-info-actions .navbar-button i, .detailed-info-panel .detailed-info-actions .navbar .navbar-icon i, .navbar .detailed-info-panel .detailed-info-actions .navbar-icon i, .detailed-info-panel .detailed-info-actions .navbar .profile-dropdown .dropdown-button i, .navbar .profile-dropdown .detailed-info-panel .detailed-info-actions .dropdown-button i, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle i, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .detailed-info-panel .detailed-info-actions .dropdown-toggle i, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .reset-filters-button i, .search-modal .search-modal-sidebar .detailed-info-panel .detailed-info-actions .reset-filters-button i, .detailed-info-panel .detailed-info-actions .hero .hero-action-buttons-container .hero-action-icon i, .hero .hero-action-buttons-container .detailed-info-panel .detailed-info-actions .hero-action-icon i {
@@ -1275,10 +1279,10 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
     font-size: 1.6em;
   }
   .movie-shelf .shelf-grid-wrapper {
-    margin: 0 13.3333333333px;
+    margin: 0 20px;
   }
   .movie-shelf h2 {
-    padding-left: 13.3333333333px;
+    padding-left: 20px;
   }
   .movie-tile {
     width: 160px;
@@ -1484,12 +1488,12 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
     margin: 0 10px;
   }
   .movie-shelf .shelf-arrow {
-    width: 40px;
-    height: 40px;
+    width: 80px;
+    height: 80px;
     font-size: 1em;
   }
-  .movie-shelf .shelf-grid-wrapper .shelf-arrow-overlay {
-    width: 40px;
+  .movie-shelf .shelf-grid-wrapper::before, .movie-shelf .shelf-grid-wrapper::after {
+    width: 80px;
   }
   .movie-tile {
     width: 140px;
@@ -1533,12 +1537,12 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
     margin: 0 5px;
   }
   .movie-shelf .shelf-arrow {
-    width: 35px;
-    height: 35px;
+    width: 70px;
+    height: 70px;
     font-size: 0.9em;
   }
-  .movie-shelf .shelf-grid-wrapper .shelf-arrow-overlay {
-    width: 35px;
+  .movie-shelf .shelf-grid-wrapper::before, .movie-shelf .shelf-grid-wrapper::after {
+    width: 70px;
   }
   .movie-tile {
     width: 120px;

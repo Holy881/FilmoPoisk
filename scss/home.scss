@@ -9,9 +9,9 @@ $dropdown-bg-color: #222222;
 $profile-dropdown-bg-color: #282828;
 $text-color: #E0E0E0;
 $text-secondary-color: #A0A0A0;
-$text-light-emphasis: #FFFFFF; 
+$text-light-emphasis: #FFFFFF;
 $border-color: #383838;
-$accent-color: #E50914; 
+$accent-color: #E50914;
 
 $interactive-hover-bg-color: #2a2a2a;
 $interactive-active-bg-color: #3a3a3a;
@@ -24,9 +24,10 @@ $rating-green: #4CAF50;
 
 $hero-height-value: 107vh;
 $navbar-height: 60px;
-$content-area-overlap: 300px; 
-$shelf-padding: 20px; 
-$shelf-arrow-width: 50px; // Ширина области стрелки/градиента
+$content-area-overlap: 300px;
+$shelf-padding: 20px;
+// Скорректированная ширина для градиента, как на скриншоте
+$shelf-arrow-width: 100px; // Было 50px
 $shelf-arrow-icon-size: 1.5em; // Размер иконки стрелки
 
 // 2. Глобальные стили для кастомного скроллбара
@@ -35,7 +36,8 @@ $shelf-arrow-icon-size: 1.5em; // Размер иконки стрелки
 ::-webkit-scrollbar-thumb { background-color: lighten($border-color, 10%); border-radius: 10px; border: 2px solid darken($input-bg-color, 10%);
     &:hover { background-color: lighten($border-color, 20%); }
 }
-body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown, .shelf-grid, .detailed-info-scrollable-content, #tab-episodes-details .seasons-grid {
+body, .dropdown-menu, .search-modal-sidebar, .search-modal-main, .profile-dropdown, .detailed-info-scrollable-content, #tab-episodes-details .seasons-grid {
+  // .shelf-grid будет стилизован отдельно для скрытия скроллбара
   scrollbar-width: thin;
   scrollbar-color: lighten($border-color, 10%) darken($input-bg-color, 10%);
 }
@@ -47,7 +49,7 @@ body {
     font-family: 'Inter', Arial, sans-serif;
     background-color: $bg-color;
     color: $text-color;
-    overflow-x: hidden; 
+    overflow-x: hidden;
     padding-top: $navbar-height;
 }
 
@@ -113,7 +115,7 @@ input[type="number"] {
     &:active {
         transform: translateY(1px);
     }
-    &.active { 
+    &.active {
         color: $interactive-text-color;
         background-color: $interactive-active-bg-color;
         border-color: $interactive-border-color;
@@ -126,21 +128,21 @@ input[type="number"] {
     left: 0;
     width: 100%;
     height: $navbar-height;
-    background-color: transparent; 
+    background-color: transparent;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
     box-sizing: border-box;
-    z-index: 1000; 
+    z-index: 1000;
     transition: background-color 0.3s ease, box-shadow 0.3s ease, border-bottom-color 0.3s ease;
-    border-bottom: 1px solid transparent; 
+    border-bottom: 1px solid transparent;
 
     &.scrolled {
-         background-color: rgba(darken($bg-color, 2%), 0.9); 
+         background-color: rgba(darken($bg-color, 2%), 0.9);
          border-bottom-color: $border-color;
          box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-         backdrop-filter: blur(5px); 
+         backdrop-filter: blur(5px);
     }
 
     .navbar-left, .navbar-right {
@@ -158,35 +160,35 @@ input[type="number"] {
     .navbar-button {
         @extend .action-button;
         margin-right: 10px;
-        border-color: transparent; 
+        border-color: transparent;
         background-color: transparent;
         color: $text-secondary-color;
         text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
         padding: 8px 12px;
         &:hover {
-            background-color: $interactive-hover-bg-color; 
+            background-color: $interactive-hover-bg-color;
             color: $interactive-text-color;
         }
-        &.active { 
+        &.active {
              background-color: $interactive-active-bg-color;
              color: $interactive-text-color;
         }
     }
     .navbar-profile-container {
-        position: relative; 
+        position: relative;
     }
     .navbar-icon {
         @extend .action-button;
         background-color: transparent;
         border-color: transparent;
-        padding: 8px; 
+        padding: 8px;
         font-size: 1.3em;
         margin-left: 5px;
         color: $text-secondary-color;
-        width: 40px;  
-        height: 40px; 
+        width: 40px;
+        height: 40px;
         text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
-        display: inline-flex; 
+        display: inline-flex;
         align-items: center;
         justify-content: center;
 
@@ -195,7 +197,7 @@ input[type="number"] {
             color: $interactive-text-color;
         }
 
-        #user-profile-icon-container { 
+        #user-profile-icon-container {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -203,24 +205,24 @@ input[type="number"] {
             height: 100%;
         }
 
-        img.navbar-avatar { 
-            width: 28px; 
+        img.navbar-avatar {
+            width: 28px;
             height: 28px;
             border-radius: 50%;
             object-fit: cover;
-            display: block; 
+            display: block;
         }
     }
 
     .profile-dropdown {
         position: absolute;
-        top: calc(100% + 10px); 
+        top: calc(100% + 10px);
         right: 0;
         background-color: $profile-dropdown-bg-color;
         border: 1px solid $border-color;
         border-radius: 8px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        z-index: 1001; 
+        z-index: 1001;
         width: 200px;
         padding: 10px;
         visibility: hidden;
@@ -252,7 +254,7 @@ input[type="number"] {
             margin: 8px 0;
         }
         .dropdown-button {
-            @extend .action-button; 
+            @extend .action-button;
             width: 100%;
             text-align: left;
             padding: 10px 12px;
@@ -266,9 +268,9 @@ input[type="number"] {
             &:hover {
                 background-color: lighten($profile-dropdown-bg-color, 8%);
                 color: $text-color;
-                border-color: transparent; 
+                border-color: transparent;
             }
-             &.logout-button:hover { 
+             &.logout-button:hover {
                 background-color: darken($rating-red, 10%);
                 color: $text-color;
             }
@@ -444,145 +446,153 @@ input[type="number"] {
 
 .content-area {
     position: relative;
-    z-index: 3; 
+    z-index: 3;
     margin-top: -$content-area-overlap;
-    background: transparent; 
-    padding-top: 0; 
+    background: transparent;
+    padding-top: 0;
 
-    &::before { 
+    &::before {
         content: '';
         position: absolute;
-        top: 0; 
+        top: 0;
         left: 0;
         width: 100%;
-        height: $content-area-overlap + 100px; 
+        height: $content-area-overlap + 100px;
         background: linear-gradient(to bottom, rgba($bg-color, 0) 0%, rgba($bg-color, 0.6) 40%, $bg-color 80%);
-        z-index: -1; 
-        pointer-events: none; 
+        z-index: -1;
+        pointer-events: none;
     }
 }
 
 .movie-shelf {
-    padding-top: $shelf-padding; 
-    padding-bottom: 30px;       
-    position: relative; 
+    padding-top: $shelf-padding;
+    padding-bottom: 30px;
+    position: relative;
 
     h2 {
         font-size: 1.8em;
         margin-bottom: 15px;
         color: $text-light-emphasis;
         font-weight: 600;
-        padding-left: $shelf-padding; 
+        padding-left: $shelf-padding;
         text-shadow: 0 1px 2px rgba(0,0,0,0.7);
     }
 
     .shelf-grid-wrapper {
         position: relative;
-        margin: 0 $shelf-padding; 
-        overflow: hidden; 
-        
-        // Градиентные тени-области для стрелок
-        .shelf-arrow-overlay {
+        margin: 0 $shelf-padding;
+        // overflow: hidden; // Это свойство уже есть и оно полезно для псевдоэлементов
+
+        // Псевдоэлементы для градиентов
+        &::before, &::after {
+            content: '';
             position: absolute;
             top: 0;
-            bottom: 0;
-            width: $shelf-arrow-width; // Ширина области равна ширине стрелки
-            z-index: 6; // Над плитками, под самой иконкой стрелки
-            pointer-events: none; // Сама область не кликабельна, кликабельна кнопка-стрелка
+            bottom: 0; // Растягиваем на всю высоту shelf-grid-wrapper
+            width: $shelf-arrow-width;
+            z-index: 6; // Над плитками, под иконками стрелок
+            pointer-events: none; // Сами градиенты не должны перехватывать клики
             opacity: 0;
             transition: opacity 0.25s ease-in-out;
-            display: flex; // Для центрирования иконки стрелки внутри
-            align-items: center;
+        }
 
-            &.prev-overlay {
-                left: 0;
-                background: linear-gradient(to right, rgba($bg-color, 0.85) 0%, rgba($bg-color, 0.7) 30%, rgba($bg-color, 0) 100%);
-                justify-content: flex-start;
-            }
-            &.next-overlay {
-                right: 0;
-                background: linear-gradient(to left, rgba($bg-color, 0.85) 0%, rgba($bg-color, 0.7) 30%, rgba($bg-color, 0) 100%);
-                justify-content: flex-end;
-            }
+        &::before { // Левый градиент
+            left: 0;
+            background: linear-gradient(to right, rgba($bg-color, 0.95) 0%, rgba($bg-color, 0.85) 30%, rgba($bg-color, 0.5) 60%, rgba($bg-color, 0) 100%);
+        }
+
+        &::after { // Правый градиент
+            right: 0;
+            background: linear-gradient(to left, rgba($bg-color, 0.95) 0%, rgba($bg-color, 0.85) 30%, rgba($bg-color, 0.5) 60%, rgba($bg-color, 0) 100%);
+        }
+
+        // Показываем градиенты на основе классов, добавляемых JS
+        // Эти классы должны добавляться/удаляться на .shelf-grid-wrapper
+        &.has-prev-scroll::before {
+            opacity: 1;
+        }
+        &.has-next-scroll::after {
+            opacity: 1;
         }
     }
 
     .shelf-grid {
         display: flex;
-        overflow-x: hidden; 
-        overflow-y: hidden; 
+        // overflow-x: auto; // КРИТИЧЕСКИ ВАЖНО для работы JS и появления стрелок/градиентов
+        // Если вы не хотите видеть полосу прокрутки, ее можно скрыть стилями ниже:
+        overflow-x: scroll; // Используем scroll, чтобы точно была возможность программной прокрутки
+        overflow-y: hidden;
         gap: 15px;
-        padding-bottom: 15px; 
-        scroll-behavior: smooth; 
-        // Убраны внутренние отступы, чтобы плитки доходили до краев wrapper'а, где будет градиент
+        padding-bottom: 15px; // Отступ для возможной полосы прокрутки или просто эстетический
+        scroll-behavior: smooth;
+        // Убираем внутренние отступы слева/справа, чтобы плитки заходили под градиент
+
+        // Скрытие стандартной полосы прокрутки
+        scrollbar-width: none; // Для Firefox
+        &::-webkit-scrollbar {
+            display: none; // Для Chrome, Safari, Opera
+        }
     }
-    
+
     .shelf-arrow {
         position: absolute;
-        top: 50%; // Центрируем иконку по вертикали внутри области градиента
+        top: 50%;
         transform: translateY(-50%);
-        background-color: transparent; // Кнопка прозрачна, виден градиент под ней
-        color: rgba($text-light-emphasis, 0.7);
+        background-color: transparent; // Сама кнопка стрелки прозрачна
+        color: rgba($text-light-emphasis, 0.6); // Немного прозрачнее по умолчанию
         border: none;
-        width: $shelf-arrow-width; // Кнопка занимает всю ширину градиентной области
-        height: 100%; // И всю высоту
+        width: $shelf-arrow-width; // Кнопка покрывает всю область градиента
+        height: 100%; // На всю высоту wrapper'а
         font-size: $shelf-arrow-icon-size;
         cursor: pointer;
-        z-index: 10; 
-        display: flex; // Используется для центрирования иконки, если нужно
+        z-index: 10; // Стрелки над градиентами
+        display: flex;
         align-items: center;
-        // justify-content уже будет у родителя .shelf-arrow-overlay
-        
-        opacity: 0; 
+        // justify-content: center; // Удалено, т.к. переопределяется ниже
+
+        opacity: 0; // По умолчанию невидимы
         visibility: hidden;
         transition: opacity 0.25s ease-in-out, visibility 0s 0.25s, color 0.2s ease;
-        pointer-events: none;
+        pointer-events: none; // Неактивны по умолчанию
 
-        i { 
+        i {
             transition: transform 0.2s ease-out;
-            padding: 0 10px; // Отступы для иконки внутри кнопки
+        }
+
+        // Делаем стрелку видимой, когда JS добавляет класс .visible
+        // Этот класс должен добавляться/удаляться на сам элемент .shelf-arrow
+        &.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transition-delay: 0s;
         }
 
         &:hover {
-            color: $text-light-emphasis;
+            color: $text-light-emphasis; // Ярче при наведении
             i {
-                transform: scale(1.1);
+                transform: scale(1.15);
             }
-        }
-        
-        &.visible { 
-            pointer-events: auto; 
         }
 
         &.prev-arrow {
-            left: 0; 
+            left: 0;
+            justify-content: flex-start; // Выравниваем иконку по началу для левой стрелки
+            i { padding-left: 15px; } // Отступ от края
         }
         &.next-arrow {
-            right: 0; 
-        }
-    }
-    
-    .shelf-grid-wrapper:hover {
-        .shelf-arrow.prev-arrow.visible,
-        .shelf-arrow.next-arrow.visible {
-            opacity: 1;
-            visibility: visible;
-            transition-delay: 0s; 
-        }
-        .shelf-arrow-overlay.prev-overlay.visible, // Показываем оверлей, если стрелка видима
-        .shelf-arrow-overlay.next-overlay.visible {
-            opacity: 1;
-            pointer-events: auto; // Позволяем событиям проходить на стрелку
+            right: 0;
+            justify-content: flex-end; // Выравниваем иконку по концу для правой стрелки
+            i { padding-right: 15px; } // Отступ от края
         }
     }
 
-
-    &#popular { 
+    &#popular {
         opacity: 1;
         transform: translateY(0);
         transition: opacity 0.4s ease-out, transform 0.4s ease-out;
 
-        &.hidden-on-scroll { 
+        &.hidden-on-scroll {
             opacity: 0;
             transform: translateY(50px);
             pointer-events: none;
@@ -595,16 +605,16 @@ input[type="number"] {
     width: 180px;
     flex-shrink: 0;
     border-radius: 8px;
-    overflow: visible; 
+    overflow: visible;
     background-color: $surface-color;
     cursor: pointer;
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; 
-    border: 2px solid transparent; 
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    border: 2px solid transparent;
 
     &:hover {
         transform: scale(1.05);
         box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-        z-index: 5; 
+        z-index: 5;
         .movie-hover-details {
             opacity: 1;
             transform: translateY(0);
@@ -612,20 +622,20 @@ input[type="number"] {
     }
 
     &.active-tile-details {
-        border-color: $text-light-emphasis; 
-        z-index: 6; 
+        border-color: $text-light-emphasis;
+        z-index: 6;
 
-        &::after { 
+        &::after {
             content: '';
             position: absolute;
-            bottom: -8px; 
+            bottom: -8px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
             border-left: 8px solid transparent;
             border-right: 8px solid transparent;
-            border-top: 8px solid $text-light-emphasis; 
+            border-top: 8px solid $text-light-emphasis;
         }
     }
 
@@ -634,16 +644,16 @@ input[type="number"] {
         height: 270px;
         object-fit: cover;
         display: block;
-        border-radius: 6px; 
+        border-radius: 6px;
     }
 
-    .movie-rating { 
-        @extend .rating-display-badge; 
-        position: absolute; 
+    .movie-rating {
+        @extend .rating-display-badge;
+        position: absolute;
         top: 8px;
         right: 8px;
         z-index: 2;
-        font-size: 0.8em; 
+        font-size: 0.8em;
     }
 
     .movie-hover-details {
@@ -665,48 +675,48 @@ input[type="number"] {
 }
 
 .rating-display-badge {
-    display: inline-block; 
+    display: inline-block;
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 0.9em; 
-    font-weight: 600; 
-    color: $text-light-emphasis; 
+    font-size: 0.9em;
+    font-weight: 600;
+    color: $text-light-emphasis;
     text-align: center;
-    line-height: 1.2; 
-    vertical-align: middle; 
+    line-height: 1.2;
+    vertical-align: middle;
 
     &.rating-red { background-color: $rating-red; }
     &.rating-gray { background-color: $rating-gray; }
     &.rating-green { background-color: $rating-green; }
-    &.rating-none { 
-        background-color: #4a4a4a; 
-        color: $text-secondary-color; 
+    &.rating-none {
+        background-color: #4a4a4a;
+        color: $text-secondary-color;
     }
 }
 
 .detailed-info-panel {
-    position: relative; 
-    width: 100%; 
+    position: relative;
+    width: 100%;
     color: $text-color;
-    margin-top: 8px; 
-    margin-bottom: 20px; 
-    display: none; 
-    opacity: 0; 
-    transition: opacity 0.3s ease-in-out, margin-top 0.3s ease-in-out; 
+    margin-top: 8px;
+    margin-bottom: 20px;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, margin-top 0.3s ease-in-out;
 
     &.expanded {
-        display: block; 
+        display: block;
         opacity: 1;
     }
 
-    .detailed-info-close-btn { 
+    .detailed-info-close-btn {
         position: absolute;
-        top: 20px; 
+        top: 20px;
         right: 20px;
         background: rgba(darken($surface-color, 10%), 0.7);
         border: 1px solid $border-color;
         color: $text-secondary-color;
-        font-size: 1.5em; 
+        font-size: 1.5em;
         width: 36px;
         height: 36px;
         border-radius: 50%;
@@ -716,135 +726,134 @@ input[type="number"] {
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 15; 
+        z-index: 15;
         transition: color 0.2s ease, background-color 0.2s ease;
-        &:hover { 
-            color: $text-light-emphasis; 
+        &:hover {
+            color: $text-light-emphasis;
             background-color: rgba(darken($surface-color, 5%), 0.9);
         }
     }
-    
+
     .detailed-info-content-wrapper {
-        display: flex; 
-        position: relative; 
-        background-color: darken($surface-color, 7%); 
+        display: flex;
+        position: relative;
+        background-color: darken($surface-color, 7%);
         border-radius: 12px;
         box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-        min-height: 450px; 
-        overflow: hidden; 
-        padding-top: 25px; 
-        padding-bottom: 25px;
-        transition: opacity 0.25s ease-in-out; 
+        min-height: 770px;
+        overflow: hidden;
+        transition: opacity 0.25s ease-in-out;
     }
-    
+
     .detailed-info-left-column {
-        flex: 0 0 58%; 
-        max-width: 700px; 
-        background-color: rgba(darken($bg-color, 5%), 0.85); 
-        backdrop-filter: blur(10px) saturate(120%); 
-        padding: 0 35px; 
-        position: relative; 
-        z-index: 10; 
-        display: flex; 
+        flex: 0 0 58%;
+        max-width: 700px;
+        background-color: rgba(darken($bg-color, 5%), 0.85);
+        backdrop-filter: blur(10px) saturate(120%);
+        padding: 0 35px;
+        position: relative;
+        z-index: 10;
+        display: flex;
         flex-direction: column;
-        
-        &::after { 
+
+        &::after {
             content: '';
             position: absolute;
             top: 0;
-            right: -60px; 
-            width: 120px; 
+            right: -60px;
+            width: 120px;
             height: 100%;
             background: linear-gradient(to right, rgba(darken($bg-color, 5%), 0.85) 0%, rgba(darken($bg-color, 5%), 0.75) 25%, rgba(darken($bg-color, 5%), 0) 100%);
-            pointer-events: none; 
-            z-index: 5; 
+            pointer-events: none;
+            z-index: 5;
         }
     }
 
     .detailed-info-scrollable-content {
-        overflow-y: auto; 
-        height: 100%; 
-        padding-right: 15px; 
+        overflow-y: auto;
+        height: 100%;
+        padding-right: 15px;
     }
-        
-    .detailed-info-title { 
-        font-size: 2.2em; 
-        margin: 0 0 12px 0; 
-        font-weight: 600; 
-        color: $text-light-emphasis; 
+
+    .detailed-info-title {
+        font-size: 2.2em;
+        margin: 12px 0 12px 0;
+        font-weight: 600;
+        color: $text-light-emphasis;
         line-height: 1.2;
     }
     .detailed-info-meta {
-        display: flex; 
-        flex-wrap: wrap; 
-        gap: 10px 18px; 
-        font-size: 0.95em; 
-        color: $text-secondary-color; 
-        margin-bottom: 18px; 
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 18px;
+        font-size: 0.95em;
+        color: $text-secondary-color;
+        margin-bottom: 18px;
         align-items: center;
-        span { 
-            display: inline-flex; 
-            align-items: center; 
-            &:empty { display: none; } 
+        span {
+            display: inline-flex;
+            align-items: center;
+            &:empty { display: none; }
         }
-        .meta-rating-display { 
-            @extend .rating-display-badge; 
-            font-size: 0.95em; 
-            margin-right: 10px; 
+        .meta-rating-display {
+            @extend .rating-display-badge;
+            font-size: 0.95em;
+            margin-right: 10px;
         }
     }
-    .detailed-info-genres { 
-        font-size: 0.95em; 
-        color: $text-secondary-color; 
-        margin-bottom: 25px; 
-        line-height: 1.6; 
+    .detailed-info-genres {
+        font-size: 0.95em;
+        color: $text-secondary-color;
+        margin-bottom: 25px;
+        line-height: 1.6;
     }
-     .detailed-info-overview { 
-        font-size: 1em; 
-        line-height: 1.65; 
-        color: $text-color; 
+     .detailed-info-overview {
+        font-size: 1em;
+        line-height: 1.65;
+        color: $text-color;
         margin-bottom: 30px;
     }
     .detailed-info-actions {
-        display: flex; 
-        flex-wrap: wrap; 
-        gap: 12px; 
-        margin-top: auto; 
-        padding-top: 25px; 
-        .action-button { 
-            padding: 12px 22px; 
-            font-size: 1em; 
-            i { margin-right: 8px; } 
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 10px;
+        padding-top: 25px;
+        .action-button {
+            padding: 12px 22px;
+            margin-bottom: 12px;
+            font-size: 1em;
+            i { margin-right: 8px; }
         }
     }
 
     .detailed-info-right-column {
-        flex: 1 1 42%; 
-        position: relative; 
-        overflow: hidden; 
-        
+        flex: 1 1 42%;
+        position: relative;
+        overflow: hidden;
+
         .detailed-info-backdrop-image {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; 
-            object-position: center center; 
-            z-index: 1; 
+            object-fit: cover;
+            object-position: center center;
+            z-index: 1;
         }
     }
 
     .detailed-info-tabs {
-        display: flex; 
+        display: flex;
         border-bottom: 1px solid $border-color;
         margin-top: 20px;
-        margin-bottom: 20px; 
+        margin-bottom: 20px;
 
         .tab-button {
             background: transparent; border: none; color: $text-secondary-color;
-            padding: 14px 20px; 
-            font-size: 1em; 
+            padding: 14px 20px;
+            font-size: 1em;
             cursor: pointer; position: relative;
             transition: color 0.2s ease;
             &:hover { color: $text-light-emphasis; }
@@ -859,32 +868,32 @@ input[type="number"] {
     }
 
     .detailed-info-tab-content {
-        position: relative; 
-        min-height: 250px; 
-        
-        .tab-pane { 
-            font-size: 0.95em; 
+        position: relative;
+        min-height: 250px;
+
+        .tab-pane {
+            font-size: 0.95em;
             line-height: 1.6;
             color: $text-secondary-color;
-            
+
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0s 0.3s; 
+            transition: opacity 0.3s ease-in-out, visibility 0s 0.3s;
 
-            &.active { 
+            &.active {
                 opacity: 1;
                 visibility: visible;
-                transition-delay: 0s; 
-                position: relative; 
+                transition-delay: 0s;
+                position: relative;
             }
         }
     }
-    
-    .detailed-info-backdrop { 
+
+    .detailed-info-backdrop {
         display: none !important;
     }
 }
@@ -919,35 +928,35 @@ input[type="number"] {
 @media (max-width: 1024px) {
     .movie-shelf {
         h2 { font-size: 1.6em; }
-        .shelf-grid-wrapper { margin: 0 $shelf-padding / 1.5; } 
-         h2 { padding-left: $shelf-padding / 1.5; }
+        .shelf-grid-wrapper { margin: 0 $shelf-padding}
+         h2 { padding-left: $shelf-padding}
     }
      .movie-tile { width: 160px; img.movie-poster-img { height: 240px; } }
-    
+
     .detailed-info-panel {
-        .detailed-info-content-wrapper { 
-            flex-direction: column; 
-            min-height: auto; 
+        .detailed-info-content-wrapper {
+            flex-direction: column;
+            min-height: auto;
         }
         .detailed-info-left-column {
-            flex: 1 1 auto; 
-            max-width: 100%; 
-            border-radius: 12px 12px 0 0; 
-            padding: 25px 20px; 
-            &::after { display: none; } 
+            flex: 1 1 auto;
+            max-width: 100%;
+            border-radius: 12px 12px 0 0;
+            padding: 25px 20px;
+            &::after { display: none; }
         }
         .detailed-info-right-column {
-            flex: 1 1 auto; 
-            min-height: 300px; 
-            border-radius: 0 0 12px 12px; 
+            flex: 1 1 auto;
+            min-height: 300px;
+            border-radius: 0 0 12px 12px;
         }
     }
 }
 
 @media (max-width: 768px) {
-    body { padding-top: 0; } 
+    body { padding-top: 0; }
     .navbar {
-        position: relative; 
+        position: relative;
         flex-direction: column; height: auto; align-items: stretch; padding: 0;
         background-color: darken($bg-color, 3%); border-bottom: 1px solid $border-color; z-index: 1000;
          .navbar-left {
@@ -983,7 +992,7 @@ input[type="number"] {
         .search-result-watch-btn { align-self: stretch; text-align: center; }
     }
      .hero {
-        margin-top: 0; 
+        margin-top: 0;
         height: auto; min-height: 60vh;
         .hero-overlay { padding: 0 5% calc(#{$content-area-overlap} - 80px); }
         .hero-action-buttons-container { bottom: calc(#{$content-area-overlap} - 100px); }
@@ -1001,16 +1010,18 @@ input[type="number"] {
         padding-top: 15px;
         padding-bottom: 20px;
         h2 { font-size: 1.4em; padding-left: 15px; }
-        .shelf-grid-wrapper { margin: 0 10px; } 
-        .shelf-arrow { 
+        .shelf-grid-wrapper { margin: 0 10px; }
+        .shelf-arrow {
             width: $shelf-arrow-width * 0.8;
             height: $shelf-arrow-width * 0.8; // Делаем высоту такой же, как ширина для круглых кнопок
             font-size: 1em;
         }
         .shelf-grid-wrapper {
-            .shelf-arrow-overlay { // Для мобильных можно сделать градиент меньше или убрать
+            // Для мобильных устройств градиент можно сделать меньше или убрать, если он мешает
+            // Здесь мы оставляем его таким же, как $shelf-arrow-width * 0.8 (ширина стрелки)
+             &::before, &::after {
                  width: $shelf-arrow-width * 0.8;
-            }
+             }
         }
     }
     .movie-tile { width: 140px; img.movie-poster-img { height: 210px; } }
@@ -1031,20 +1042,21 @@ input[type="number"] {
 @media (max-width: 480px) {
     .movie-shelf {
         h2 {font-size: 1.3em; padding-left: 10px;}
-        .shelf-grid-wrapper { margin: 0 5px; } 
-         .shelf-arrow { 
+        .shelf-grid-wrapper { margin: 0 5px; }
+         .shelf-arrow {
             width: $shelf-arrow-width * 0.7;
             height: $shelf-arrow-width * 0.7;
             font-size: 0.9em;
         }
          .shelf-grid-wrapper {
-            .shelf-arrow-overlay {
+            // Аналогично для очень маленьких экранов
+             &::before, &::after {
                  width: $shelf-arrow-width * 0.7;
-            }
+             }
         }
     }
     .movie-tile { width: 120px; img.movie-poster-img { height: 180px; } .movie-hover-details { min-height: 70px; h3 {font-size: 0.9em;} p {font-size: 0.75em; line-clamp: 2;} } }
-    
+
     // ... (остальные адаптивные стили)
 }
 
@@ -1052,60 +1064,60 @@ input[type="number"] {
 #tab-episodes-details {
     .seasons-grid {
         display: flex;
-        flex-wrap: wrap; 
-        gap: 16px;       
-        padding: 10px 0; 
-        max-height: 450px; 
-        overflow-y: auto;  
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 10px 0;
+        max-height: 450px;
+        overflow-y: auto;
     }
 
     .season-card {
-        background-color: lighten($surface-color, 3%); 
-        border-radius: 6px;      
-        overflow: hidden;        
-        width: 150px;            
-        border: 1px solid $border-color; 
-        cursor: default; 
-        
+        background-color: lighten($surface-color, 3%);
+        border-radius: 6px;
+        overflow: hidden;
+        width: 150px;
+        border: 1px solid $border-color;
+        cursor: default;
+
         opacity: 0;
         transform: translateY(20px);
         transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 
-        &.visible { 
+        &.visible {
             opacity: 1;
             transform: translateY(0);
         }
 
         .season-poster-img {
             width: 100%;
-            height: 225px; 
-            object-fit: cover; 
-            display: block;    
-            background-color: $bg-color; 
+            height: 225px;
+            object-fit: cover;
+            display: block;
+            background-color: $bg-color;
         }
 
         .season-info {
-            padding: 10px 8px; 
+            padding: 10px 8px;
 
             .season-title {
-                font-size: 0.9em; 
+                font-size: 0.9em;
                 font-weight: 500;
                 color: $text-color;
-                margin: 0 0 4px 0; 
-                white-space: nowrap;     
-                overflow: hidden;        
-                text-overflow: ellipsis; 
+                margin: 0 0 4px 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             .season-episode-count {
-                font-size: 0.8em; 
+                font-size: 0.8em;
                 color: $text-secondary-color;
                 margin: 0;
             }
         }
     }
 
-    p { 
+    p {
         color: $text-secondary-color;
         font-size: 0.95em;
         padding: 15px 5px;

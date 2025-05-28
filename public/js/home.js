@@ -36,8 +36,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const detailedInfoAddToListBtn = detailedInfoLeftColumn?.querySelector('.add-to-list-btn');
 
     const detailedInfoTabsContainer = detailedInfoLeftColumn?.querySelector('.detailed-info-tabs');
-    // const detailedInfoTabContent = detailedInfoLeftColumn?.querySelector('.detailed-info-tab-content'); // Не используется напрямую
-    // const detailedInfoTabPanes = detailedInfoLeftColumn?.querySelectorAll('.detailed-info-tab-content .tab-pane'); // Не используется напрямую
 
     const detailedInfoBackdropImage = detailedInfoPanel?.querySelector('.detailed-info-right-column .detailed-info-backdrop-image');
 
@@ -108,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: 14, tmdb_id: 634649, media_type: 'movie', title: 'Человек-паук: Нет пути домой', name: 'Человек-паук: Нет пути домой', poster_path: '/uJYYizSuA9Y3DCs0qS4qWvHfZg4.jpg', vote_average: 8.0, overview: 'Впервые в киноистории Человека-паука наш дружелюбный герой разоблачен. Теперь супергеройские подвиги стали неотделимы от его обычной жизни. Когда он просит помощи у Доктора Стрэнджа, ситуация только усугубляется. И Питер Паркер должен как никогда раньше ощутить, что значит быть Человеком-пауком.', release_date: '2021-12-15', first_air_date: null, genres: [{id: 28, name: 'Боевик'}, {id: 12, name: 'Приключения'}, {id: 878, name: 'Фантастика'}], number_of_episodes: null, number_of_seasons: null },
         { id: 15, tmdb_id: 82856, media_type: 'tv', title: 'Мандалорец', name: 'Мандалорец', poster_path: '/eU1i6eGhhk3A12oE7Fq289Xo1n8.jpg', vote_average: 8.4, overview: 'Одинокий мандалорец-наёмник живёт на краю обитаемой галактики, куда не дотягивается закон Новой Республики. Представитель некогда могучей расы благородных воинов теперь вынужден влачить жалкое существование среди отбросов общества.', release_date: null, first_air_date: '2019-11-12', genres: [{id: 10765, name: 'Sci-Fi & Fantasy'}, {id: 10759, name: 'Action & Adventure'}], number_of_episodes: 24, number_of_seasons: 3 }
     ];
-    const EXCLUDED_TV_GENRE_IDS = [10767, 10764, 10763]; // ID для "Talk Show" и "Reality"
+    const EXCLUDED_TV_GENRE_IDS = [10767, 10764, 10766, 10763]; // ID для "Talk Show" и "Reality"
 
 
     function handlePopularSectionVisibility() {
@@ -352,13 +350,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Функция для полки "Популярное" (Что популярно на TMDB)
     async function fetchAndRenderPopularMovies(shelfElement, movieCount = 8, tvShowCount = 7) {
         if (!shelfElement) return;
 
         try {
+            // Запросы к /discover/movie и /discover/tv с сортировкой по популярности и фильтром по рейтингу
             const [movieResponse, tvResponse] = await Promise.all([
-                fetch(`/api/tmdb/search?media_type=movie&sort_by=popularity.desc&page=1&rating_from=6.5`), // Добавлен rating_from=6.5
-                fetch(`/api/tmdb/search?media_type=tv&sort_by=popularity.desc&page=1&with_types=4&rating_from=6.5`) // Добавлен rating_from=6.5
+                fetch(`/api/tmdb/search?media_type=movie&sort_by=popularity.desc&page=1&rating_from=6.5`), 
+                fetch(`/api/tmdb/search?media_type=tv&sort_by=popularity.desc&page=1&with_types=4&rating_from=6.5`) 
             ]);
 
             let popularMovies = [];
@@ -367,7 +367,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (movieResponse.ok) {
                 const movieData = await movieResponse.json();
                 if (movieData && movieData.results && movieData.results.length > 0) {
-                    const filteredMovies = movieData.results.filter(movie => movie.popularity >= 75); // Фильтр по популярности
+                    const filteredMovies = movieData.results.filter(movie => movie.popularity >= 75); 
                     popularMovies = filteredMovies.map(movie => ({
                         tmdb_id: movie.id,
                         media_type: 'movie',
@@ -378,10 +378,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         overview: movie.overview,
                         release_date: movie.release_date,
                         genre_ids: movie.genre_ids || [],
-                        popularity: movie.popularity // Сохраняем для возможной отладки/использования
+                        popularity: movie.popularity 
                     })).slice(0, movieCount);
                 } else {
-                    console.warn('Не удалось получить популярные фильмы (с рейтингом >= 6.5) или список пуст.');
+                    console.warn('Не удалось получить популярные фильмы (рейтинг >= 6.5) или список пуст.');
                 }
             } else {
                 console.error(`Ошибка при загрузке популярных фильмов: ${movieResponse.status}`);
@@ -390,7 +390,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (tvResponse.ok) {
                 const tvData = await tvResponse.json();
                 if (tvData && tvData.results && tvData.results.length > 0) {
-                    let filteredTvResults = tvData.results.filter(tvShow => tvShow.popularity >= 75); // Фильтр по популярности
+                    let filteredTvResults = tvData.results.filter(tvShow => tvShow.popularity >= 75); 
 
                     filteredTvResults = filteredTvResults.filter(tvShow => {
                         if (!tvShow.genre_ids || tvShow.genre_ids.length === 0) {
@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         overview: tvShow.overview,
                         first_air_date: tvShow.first_air_date, 
                         genre_ids: tvShow.genre_ids || [],
-                        popularity: tvShow.popularity // Сохраняем для возможной отладки/использования
+                        popularity: tvShow.popularity 
                     })).slice(0, tvShowCount);
                 } else {
                     console.warn('Не удалось получить популярные сериалы (scripted, рейтинг >= 6.5) или список пуст.');
@@ -428,12 +428,101 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (combinedMedia.length > 0) {
                 renderShelf(shelfElement, combinedMedia);
             } else {
-                console.warn('Не удалось получить ни фильмы, ни сериалы по заданным критериям. Отображение заглушек.');
+                console.warn('Не удалось получить ни фильмы, ни сериалы по заданным критериям для "Популярное". Отображение заглушек.');
                 renderShelf(shelfElement, placeholderMovies.slice(0, movieCount + tvShowCount));
             }
 
         } catch (error) {
-            console.error('Ошибка при загрузке и отображении популярного контента:', error);
+            console.error('Ошибка при загрузке и отображении контента "Популярное":', error);
+            renderShelf(shelfElement, placeholderMovies.slice(0, movieCount + tvShowCount));
+        }
+    }
+
+    // Функция для полки "Сейчас смотрят" (В тренде на TMDB)
+    async function fetchAndRenderTrendingContent(shelfElement, movieCount = 7, tvShowCount = 8) {
+        if (!shelfElement) return;
+
+        try {
+            const [trendingMoviesResponse, trendingTvResponse] = await Promise.all([
+                fetch(`/api/tmdb/search?media_type=movie&list_type=trending_movie_week&page=1`), 
+                fetch(`/api/tmdb/search?media_type=tv&list_type=trending_tv_week&page=1`)      
+            ]);
+
+            let trendingMovies = [];
+            let trendingTvShows = [];
+
+            if (trendingMoviesResponse.ok) {
+                const moviesData = await trendingMoviesResponse.json();
+                if (moviesData && moviesData.results && moviesData.results.length > 0) {
+                    trendingMovies = moviesData.results
+                        .filter(movie => movie.vote_average >= 6.5 && movie.popularity >= 50) 
+                        .map(movie => ({
+                            tmdb_id: movie.id,
+                            media_type: 'movie',
+                            title: movie.title,
+                            name: movie.title,
+                            poster_path: movie.poster_path,
+                            vote_average: movie.vote_average,
+                            overview: movie.overview,
+                            release_date: movie.release_date,
+                            genre_ids: movie.genre_ids || [],
+                            popularity: movie.popularity
+                        })).slice(0, movieCount);
+                } else {
+                    console.warn('Не удалось получить фильмы "В тренде за неделю" или список пуст.');
+                }
+            } else {
+                console.error(`Ошибка при загрузке фильмов "В тренде за неделю": ${trendingMoviesResponse.status}`);
+            }
+
+            if (trendingTvResponse.ok) {
+                const tvData = await trendingTvResponse.json();
+                if (tvData && tvData.results && tvData.results.length > 0) {
+                    let filteredTvResults = tvData.results
+                        .filter(tvShow => tvShow.vote_average >= 6.5 && tvShow.popularity >= 75); 
+
+                    filteredTvResults = filteredTvResults.filter(tvShow => {
+                        if (!tvShow.genre_ids || tvShow.genre_ids.length === 0) {
+                            return true;
+                        }
+                        return !tvShow.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id));
+                    });
+
+                    trendingTvShows = filteredTvResults.map(tvShow => ({
+                        tmdb_id: tvShow.id,
+                        media_type: 'tv',
+                        title: tvShow.name,
+                        name: tvShow.name,
+                        poster_path: tvShow.poster_path,
+                        vote_average: tvShow.vote_average,
+                        overview: tvShow.overview,
+                        first_air_date: tvShow.first_air_date,
+                        genre_ids: tvShow.genre_ids || [],
+                        popularity: tvShow.popularity
+                    })).slice(0, tvShowCount);
+                } else {
+                    console.warn('Не удалось получить сериалы "В тренде за неделю" или список пуст.');
+                }
+            } else {
+                console.error(`Ошибка при загрузке сериалов "В тренде за неделю": ${trendingTvResponse.status}`);
+            }
+
+            const combinedMedia = [...trendingMovies, ...trendingTvShows];
+
+            for (let i = combinedMedia.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [combinedMedia[i], combinedMedia[j]] = [combinedMedia[j], combinedMedia[i]];
+            }
+
+            if (combinedMedia.length > 0) {
+                renderShelf(shelfElement, combinedMedia);
+            } else {
+                console.warn('Не удалось получить контент для "В тренде". Отображение заглушек.');
+                renderShelf(shelfElement, placeholderMovies.slice(0, movieCount + tvShowCount));
+            }
+
+        } catch (error) {
+            console.error('Ошибка при загрузке и отображении контента "В тренде":', error);
             renderShelf(shelfElement, placeholderMovies.slice(0, movieCount + tvShowCount));
         }
     }
@@ -907,7 +996,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return data || [];
         } catch (error) {
             console.error(`Ошибка загрузки жанров для ${type}:`, error);
-            const targetMenu = type === 'movie' ? genreDropdownMovieMenuElement : null; // Предполагаем, что для TV жанров отдельный дропдаун не используется в фильтрах поиска
+            const targetMenu = type === 'movie' ? genreDropdownMovieMenuElement : null; 
             if (targetMenu) {
                 const placeholder = targetMenu.querySelector('.genres-loading-placeholder') || document.createElement('p');
                 placeholder.textContent = 'Ошибка загрузки жанров.';
@@ -940,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const label = document.createElement('label');
             const checkbox = document.createElement('input');
             Object.assign(checkbox, { type: 'checkbox', name: 'genre_filter', value: String(genre.id) });
-            checkbox.dataset.genreName = genre.name; // Используем для отображения в toggle
+            checkbox.dataset.genreName = genre.name; 
             checkbox.addEventListener('change', () => { updateToggleTextForGenres(dropdownMenu.closest('.custom-dropdown')); triggerSearch(); });
             label.append(checkbox, ` ${genre.name}`);
             dropdownMenu.appendChild(label);
@@ -950,11 +1039,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadAndPopulateAllGenres() {
         const [movieGenresData, tvGenresData] = await Promise.all([fetchGenresFromServer('movie'), fetchGenresFromServer('tv')]);
         populateGenreDropdown(genreDropdownMovieMenuElement, movieGenresData, 'movie', allMovieGenresMap);
-        // Заполняем allTvGenresMap для использования в displayResults
+        
         allTvGenresMap.clear();
         const tvGenres = Array.isArray(tvGenresData) ? tvGenresData : (tvGenresData.genres || []);
         tvGenres.forEach(genre => { if (typeof genre.id === 'number' && typeof genre.name === 'string') allTvGenresMap.set(genre.id, genre.name); });
-        updateToggleTextForGenres(genreDropdownMovieElement); // Обновляем текст только для дропдауна фильмов
+        updateToggleTextForGenres(genreDropdownMovieElement); 
     }
 
     function getSelectedGenreIds() {
@@ -975,12 +1064,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             clearTimeout(searchTimeout);
             if (loadingIndicator) loadingIndicator.style.display = 'flex';
             if (initialPlaceholder) initialPlaceholder.style.display = 'none';
-            clearSearchResults(false); // Не показываем плейсхолдер, так как идет загрузка
+            clearSearchResults(false); 
             searchTimeout = setTimeout(() => {
                 performSearch(query, activeMediaType, selectedGenres, yearFrom, yearTo, ratingFrom, ratingTo);
             }, 350);
         } else {
-            clearSearchResults(true); // Показываем плейсхолдер, если все поля пустые
+            clearSearchResults(true); 
             if (initialPlaceholder) initialPlaceholder.style.display = 'flex';
             if (loadingIndicator) loadingIndicator.style.display = 'none';
         }
@@ -990,17 +1079,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (loadingIndicator) loadingIndicator.style.display = 'flex';
         if (initialPlaceholder) initialPlaceholder.style.display = 'none';
 
-        const params = new URLSearchParams({ language: 'ru-RU', page: 1 }); // page: 1 для простоты, пагинация не реализована
+        const params = new URLSearchParams({ language: 'ru-RU', page: 1 }); 
 
         if (query) params.append('query', query);
 
-        // Определяем media_type для запроса к бэкенду
-        let requestMediaType = mediaType; // Тип, выбранный пользователем
+        
+        let requestMediaType = mediaType; 
         if (!query && !mediaType && (selectedGenreIds.length > 0 || yearFrom || yearTo || ratingFrom || ratingTo)) {
-            // Если нет запроса и нет явного типа, но есть другие фильтры, по умолчанию ищем фильмы (как было раньше)
+            
             requestMediaType = 'movie';
         } else if (query && !mediaType) {
-            // Если есть запрос, но тип не выбран, используем 'multi'
+            
             requestMediaType = 'multi';
         }
         if (requestMediaType) params.append('media_type', requestMediaType);
@@ -1020,7 +1109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error(errorData.error || `Ошибка HTTP: ${response.status}`);
             }
             const data = await response.json();
-            displayResults(data.results || [], params.get('media_type') || (query ? 'multi' : 'movie')); // Передаем контекст поиска
+            displayResults(data.results || [], params.get('media_type') || (query ? 'multi' : 'movie')); 
         } catch (error) {
             console.error('Ошибка при выполнении поиска:', error);
             displayError(error.message);
@@ -1031,14 +1120,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (searchInput) { searchInput.addEventListener('input', triggerSearch); }
     [yearFromInput, yearToInput, ratingFromInput, ratingToInput].forEach(input => {
-        input?.addEventListener('input', triggerSearch); // input для немедленной реакции
-        input?.addEventListener('change', triggerSearch); // change для фиксации после потери фокуса (например, для number input со стрелками)
+        input?.addEventListener('input', triggerSearch); 
+        input?.addEventListener('change', triggerSearch); 
     });
     typeFilterCheckboxes?.forEach(checkbox => checkbox.addEventListener('change', () => {
-        if (checkbox.checked) { // Если этот чекбокс выбран
-            typeFilterCheckboxes.forEach(cb => { if (cb !== checkbox) cb.checked = false; }); // Снимаем выбор с других
+        if (checkbox.checked) { 
+            typeFilterCheckboxes.forEach(cb => { if (cb !== checkbox) cb.checked = false; }); 
         }
-        updateToggleTextForDropdown(typeDropdownElement, "Выберите тип"); // Обновляем текст дропдауна
+        updateToggleTextForDropdown(typeDropdownElement, "Выберите тип"); 
         triggerSearch();
     }));
     if(resetFiltersButton) {
@@ -1049,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             genreDropdownMovieMenuElement?.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             if(genreDropdownMovieElement) updateToggleTextForGenres(genreDropdownMovieElement);
             [yearFromInput, yearToInput, ratingFromInput, ratingToInput].forEach(input => { if(input) input.value = ''; });
-            clearSearchResults(true); // Показываем начальный плейсхолдер
+            clearSearchResults(true); 
             if (initialPlaceholder) initialPlaceholder.style.display = 'flex';
             if (loadingIndicator) loadingIndicator.style.display = 'none';
         });
@@ -1063,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         resultsGrid.className = 'search-results-grid';
 
         if (!items || items.length === 0) {
-            // Сообщение "Ничего не найдено" от сервера (до клиентской фильтрации)
+            
             const hasActiveServerFilters = searchInput?.value.trim().length > 0 || 
                                        getSelectedGenreIds().length > 0 || 
                                        yearFromInput?.value.trim() || 
@@ -1080,12 +1169,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             items.forEach((item, index) => {
                 let mediaType = item.media_type;
-                // Если тип не пришел от TMDB (например, для /discover/movie), используем контекст запроса
+                
                 if (!mediaType) {
                     mediaType = searchedMediaTypeContext !== 'multi' ? searchedMediaTypeContext : (item.title ? 'movie' : 'tv');
                 }
 
-                if (mediaType === 'person') return; // Пропускаем персон
+                if (mediaType === 'person') return; 
 
                 const title = item.title || item.name;
                 const releaseDate = item.release_date || item.first_air_date;
@@ -1094,11 +1183,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 let overview = item.overview || 'Описание отсутствует.'; if (overview.length > 100) overview = overview.substring(0, 97) + '...';
                 const voteAverage = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
                 
-                // Определяем, какую карту жанров использовать
+                
                 const currentGenreMap = mediaType === 'tv' ? allTvGenresMap : allMovieGenresMap;
                 let genreNames = item.genre_ids?.map(id => currentGenreMap.get(parseInt(id, 10))).filter(Boolean).join(', ') || 'Жанры не указаны';
                 if (genreNames === 'Жанры не указаны' && item.genre_ids?.length > 0 && currentGenreMap.size === 0) {
-                    // Если карты жанров еще не загружены, показываем плейсхолдер
+                    
                     genreNames = 'Загрузка названий жанров...';
                 }
 
@@ -1106,7 +1195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const itemElement = document.createElement('div');
                 itemElement.className = 'search-result-item';
 
-                // Сохраняем данные для клиентской фильтрации
+                
                 if (releaseDate && !isNaN(new Date(releaseDate).getFullYear())) {
                     itemElement.dataset.year = new Date(releaseDate).getFullYear();
                 }
@@ -1139,10 +1228,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 requestAnimationFrame(() => setTimeout(() => itemElement.classList.add('visible'), index * 50));
             });
         }
-        searchResultsContainer.querySelector('.search-results-grid')?.remove(); // Удаляем старую сетку, если есть
+        searchResultsContainer.querySelector('.search-results-grid')?.remove(); 
         searchResultsContainer.appendChild(resultsGrid);
 
-        applyClientSideFilters(); // Применяем клиентскую фильтрацию
+        applyClientSideFilters(); 
     }
 
     function displayError(message) {
@@ -1151,7 +1240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const errorElement = document.createElement('p');
         errorElement.className = 'search-error-message';
         errorElement.textContent = `Ошибка: ${message}`;
-        searchResultsContainer.querySelector('.search-results-grid')?.remove(); // Удаляем сетку, если есть
+        searchResultsContainer.querySelector('.search-results-grid')?.remove(); 
         searchResultsContainer.appendChild(errorElement);
         if (loadingIndicator) loadingIndicator.style.display = 'none';
         if (initialPlaceholder) initialPlaceholder.style.display = 'none';
@@ -1185,12 +1274,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const existingClientNoResultsMsg = searchResultsContainer.querySelector('.no-results-client-message');
         if (existingClientNoResultsMsg) existingClientNoResultsMsg.remove();
         
-        // Если изначально нет элементов (например, сервер вернул пустой массив), не показываем "нет результатов по фильтрам"
+        
         if (items.length === 0) {
-            // Если сервер вернул пустой массив, но были активные фильтры (или поисковый запрос),
-            // то сообщение "По вашему запросу ничего не найдено" уже должно быть отображено функцией displayResults.
-            // Если же и сервер вернул пусто, и фильтров не было, то должен быть initialPlaceholder.
-            // Поэтому здесь дополнительное сообщение не нужно, если items.length === 0.
+            
             return; 
         }
 
@@ -1208,17 +1294,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             const itemGenreIds = itemGenreIdsStr ? itemGenreIdsStr.split(',').filter(id => id).map(id => parseInt(id, 10)) : [];
 
 
-            // 0. Фильтр по нежелательным жанрам для TV (дополнительно к with_types=4)
+            
             if (itemMediaType === 'tv' && itemGenreIds.some(id => EXCLUDED_TV_GENRE_IDS.includes(id))) {
                 matches = false;
             }
 
-            // 1. Фильтр по типу
+            
             if (matches && selectedMediaType && itemMediaType !== selectedMediaType) {
                 matches = false;
             }
 
-            // 2. Фильтр по выбранным жанрам (элемент должен содержать ВСЕ выбранные жанры)
+            
             if (matches && selectedGenreIds.length > 0) {
                 const hasAllSelectedGenres = selectedGenreIds.every(selGenreId => itemGenreIds.includes(parseInt(selGenreId, 10)));
                 if (!hasAllSelectedGenres) {
@@ -1226,7 +1312,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // 3. Фильтр по году
+            
             if (matches && itemYear !== null) {
                 if (yearFrom && itemYear < yearFrom) {
                     matches = false;
@@ -1238,7 +1324,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 matches = false;
             }
 
-            // 4. Фильтр по рейтингу
+            
             if (matches && itemRating !== null) {
                 if (ratingFrom && itemRating < ratingFrom) {
                     matches = false;
@@ -1257,7 +1343,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         if (visibleCount === 0 && items.length > 0) {
-            // Удаляем старое серверное сообщение "нет результатов", если оно есть
+            
             const serverNoResultsMsg = searchResultsContainer.querySelector('.no-results');
             if (serverNoResultsMsg) serverNoResultsMsg.remove();
 
@@ -1268,7 +1354,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             noResultsMessage.style.color = '#A0A0A0';
             noResultsMessage.style.fontSize = '1.1em';
             noResultsMessage.style.padding = '30px 15px';
-            // Добавляем сообщение после сетки результатов (или вместо нее, если сетка пуста)
+            
             const grid = searchResultsContainer.querySelector('.search-results-grid');
             if (grid) {
                 grid.after(noResultsMessage);
@@ -1286,7 +1372,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (mutation.attributeName === 'class') {
                     const isActive = newSearchModal.classList.contains('active');
                     if (isActive) {
-                         if (allMovieGenresMap.size === 0 && allTvGenresMap.size === 0) { // Загружаем жанры, если они еще не загружены
+                         if (allMovieGenresMap.size === 0 && allTvGenresMap.size === 0) { 
                             loadAndPopulateAllGenres();
                         }
                     }
@@ -1301,12 +1387,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         toggleButton?.addEventListener('click', (event) => {
             event.stopPropagation();
             const currentlyOpen = dropdown.classList.contains('open');
-            // Закрываем все другие открытые дропдауны в сайдбаре
+            
             document.querySelectorAll('.search-modal-sidebar .custom-dropdown.open').forEach(od => {
                 if (od !== dropdown) od.classList.remove('open');
             });
-            dropdown.classList.toggle('open', !currentlyOpen); // Открываем/закрываем текущий
-            // Загрузка жанров при первом открытии дропдауна жанров
+            dropdown.classList.toggle('open', !currentlyOpen); 
+            
             if (!currentlyOpen && dropdown.dataset.dropdownId === 'genres-movie' && genreDropdownMovieMenuElement && genreDropdownMovieMenuElement.querySelectorAll('label').length === 0 && !genreDropdownMovieMenuElement.querySelector('.genres-loading-placeholder')) {
                 const placeholder = document.createElement('p');
                 placeholder.className = 'genres-loading-placeholder';
@@ -1326,14 +1412,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const selectedTexts = selectedCheckboxes.map(cb => cb.dataset.genreName || cb.labels[0].textContent.trim() || cb.value);
         
         if (selectedTexts.length > 0) {
-            const maxNames = dropdownElement.dataset.dropdownId === "genres-movie" ? 2 : 1; // Для жанров показываем до 2х, для типа - 1
+            const maxNames = dropdownElement.dataset.dropdownId === "genres-movie" ? 2 : 1; 
             textElement.textContent = selectedTexts.length <= maxNames ? selectedTexts.join(', ') : `${selectedTexts.length} выбрано`;
         } else {
             textElement.textContent = defaultText;
         }
     }
 
-    function updateToggleTextForGenres(dropdownElement) { // Специально для дропдауна жанров
+    function updateToggleTextForGenres(dropdownElement) { 
         if (!dropdownElement) return;
         const menu = dropdownElement.querySelector('.dropdown-menu');
         const toggleSpan = dropdownElement.querySelector('.dropdown-toggle span');
@@ -1367,17 +1453,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     loadAndDisplayHeroContent();
     updateUserProfileDisplay();
-    // loadAndPopulateAllGenres(); // Раскомментируйте, если имена жанров нужны сразу для popular shelf
+    // loadAndPopulateAllGenres(); 
 
     const popularShelfElement = document.getElementById('popular');
-    const nowPlayingShelfElement = document.getElementById('now-playing');
+    const nowPlayingShelfElement = document.getElementById('now-playing'); 
 
     if (popularShelfElement) {
         fetchAndRenderPopularMovies(popularShelfElement); 
     }
 
-    if (nowPlayingShelfElement) {
-        renderShelf(nowPlayingShelfElement, [...placeholderMovies].reverse().slice(0,15));
+    if (nowPlayingShelfElement) { 
+        fetchAndRenderTrendingContent(nowPlayingShelfElement); 
     }
 
     initShelves();

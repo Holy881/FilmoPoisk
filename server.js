@@ -628,7 +628,9 @@ app.get('/api/tmdb/search', async (req, res) => {
         page = 1,
         language = 'ru-RU',
         sort_by = 'popularity.desc',
-        with_types // Добавлен для фильтрации типов сериалов (например, "scripted")
+        with_types, 
+        without_genres,
+        list_type // Новый параметр для специальных списков
     } = req.query;
 
     if (!TMDB_API_KEY) return res.status(500).json({ error: 'API ключ TMDB не найден.' });
@@ -641,7 +643,20 @@ app.get('/api/tmdb/search', async (req, res) => {
         include_adult: false 
     };
 
-    if (query) { 
+    // Обработка специальных типов списков
+    if (list_type) {
+        if (list_type === 'now_playing' && media_type === 'movie') {
+            tmdbUrl = `${TMDB_BASE_URL}/movie/now_playing`;
+        } else if (list_type === 'trending_movie_week' && media_type === 'movie') { // Для трендовых фильмов недели
+            tmdbUrl = `${TMDB_BASE_URL}/trending/movie/week`;
+        } else if (list_type === 'trending_tv_week' && media_type === 'tv') { // Для трендовых сериалов недели
+            tmdbUrl = `${TMDB_BASE_URL}/trending/tv/week`;
+        } else {
+            return res.status(400).json({ error: "Неизвестный тип списка или неверная комбинация с media_type." });
+        }
+        // Для /trending и /now_playing эндпоинтов специфичные фильтры discover (как rating_from, sort_by, with_types) не применяются напрямую в URL.
+        // Они будут применены на клиенте, если это необходимо, или если TMDB API их поддерживает для этих эндпоинтов (что обычно не так).
+    } else if (query) { 
         const searchType = (media_type === 'movie' || media_type === 'tv') ? media_type : 'multi';
         tmdbUrl = `${TMDB_BASE_URL}/search/${searchType}`;
         params.query = query;
@@ -674,9 +689,13 @@ app.get('/api/tmdb/search', async (req, res) => {
         if (rating_from) params['vote_average.gte'] = parseFloat(rating_from);
         if (rating_to) params['vote_average.lte'] = parseFloat(rating_to);
         
-        // Применяем фильтр with_types только для сериалов (media_type === 'tv')
-        if (media_type === 'tv' && with_types) {
-            params.with_types = with_types;
+        if (media_type === 'tv') {
+            if (with_types) {
+                params.with_types = with_types;
+            }
+            if (without_genres) { 
+                params.without_genres = without_genres;
+            }
         }
         
         params.sort_by = sort_by || 'popularity.desc';

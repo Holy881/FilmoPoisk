@@ -36,9 +36,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const detailedInfoAddToListBtn = detailedInfoLeftColumn?.querySelector('.add-to-list-btn');
 
     const detailedInfoTabsContainer = detailedInfoLeftColumn?.querySelector('.detailed-info-tabs');
-    const detailedInfoTabContent = detailedInfoLeftColumn?.querySelector('.detailed-info-tab-content');
-    const detailedInfoTabPanes = detailedInfoLeftColumn?.querySelectorAll('.detailed-info-tab-content .tab-pane');
-
+    // const detailedInfoTabContent = detailedInfoLeftColumn?.querySelector('.detailed-info-tab-content'); // Не используется напрямую
+    // const detailedInfoTabPanes = detailedInfoLeftColumn?.querySelectorAll('.detailed-info-tab-content .tab-pane'); // Не используется напрямую
 
     const detailedInfoBackdropImage = detailedInfoPanel?.querySelector('.detailed-info-right-column .detailed-info-backdrop-image');
 
@@ -80,7 +79,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const VOLUME_ANIMATION_DURATION = 1500;
     const popularScrollThreshold = 50;
 
-
     let searchTimeout;
     let allMovieGenresMap = new Map();
     let allTvGenresMap = new Map();
@@ -92,7 +90,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentActiveMovieTile = null;
     let currentActiveTabPane = null;
 
-
     const DEFAULT_AVATAR_PATH = '/images/default-avatar.png';
     const placeholderMovies = [
         { id: 1, tmdb_id: 550, media_type: 'movie', title: 'Бойцовский клуб', name: 'Бойцовский клуб', poster_path: '/pB8BM7pdSp6B6Ih7QZ4DrQ3pmJK.jpg', vote_average: 8.43, overview: 'Сотрудник страховой компании страдает хронической бессонницей и отчаянно пытается вырваться из мучительно скучной жизни. Однажды он встречает Тайлера Дёрдена, харизматичного торговца мылом с извращённой философией. Тайлер уверен, что самосовершенствование — удел слабых, а саморазрушение — единственное, ради чего стоит жить.', release_date: '1999-10-15', first_air_date: null, genres: [{id: 18, name: 'Драма'}], number_of_episodes: null, number_of_seasons: null },
@@ -103,15 +100,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: 6, tmdb_id: 680, media_type: 'movie', title: 'Криминальное чтиво', name: 'Криминальное чтиво', poster_path: '/9VqZ3Yeling8oAhG7q4CVK83z3s.jpg', vote_average: 8.5, overview: 'Двое бандитов Винсент Вега и Джулс Винфилд ведут философские беседы в перерывах между разборками и решением проблем с должниками криминального босса Марселласа Уоллеса.', release_date: '1994-09-10', first_air_date: null, genres: [{id: 53, name: 'Триллер'}, {id: 80, name: 'Криминал'}], number_of_episodes: null, number_of_seasons: null },
         { id: 7, tmdb_id: 13, media_type: 'movie', title: 'Форрест Гамп', name: 'Форрест Гамп', poster_path: '/saHP97rTPS5eLmrHHqup634AhaK.jpg', vote_average: 8.5, overview: 'Сидя на автобусной остановке, Форрест Гамп — не очень умный, но добрый и открытый парень — рассказывает случайным попутчикам историю своей необыкновенной жизни.', release_date: '1994-06-23', first_air_date: null, genres: [{id: 35, name: 'Комедия'}, {id: 18, name: 'Драма'}, {id: 10749, name: 'Мелодрама'}], number_of_episodes: null, number_of_seasons: null },
         { id: 8, tmdb_id: 278, media_type: 'movie', title: 'Побег из Шоушенка', name: 'Побег из Шоушенка', poster_path: '/sBEBQCn6AU17NBw3fz2qsUj3R23.jpg', vote_average: 8.7, overview: 'Бухгалтер Энди Дюфрейн обвинён в убийстве собственной жены и её любовника. Оказавшись в тюрьме под названием Шоушенк, он сталкивается со всеми ужасами тюремной жизни.', release_date: '1994-09-23', first_air_date: null, genres: [{id: 18, name: 'Драма'}, {id: 80, name: 'Криминал'}], number_of_episodes: null, number_of_seasons: null },
-        { id: 9, tmdb_id: 1429, media_type: 'tv', title: 'Атака титанов', name: 'Атака титанов', poster_path: '/9whSxgqSW7dPIIMJyM4WG3BYVo7.jpg', vote_average: 8.6, overview: 'С тех пор, как человечество было почти уничтожено гигантскими гуманоидами, называемыми титанами, прошло сто лет. Титаны обычно имеют несколько этажей в высоту, кажутся неразумными, пожирают людей и, что хуже всего, делают это ради удовольствия, а не как источник пищи.', release_date: null, first_air_date: '2013-04-07', genres: [{id: 10765, name: 'Sci-Fi & Fantasy'}, {id: 16, name: 'Анимация'}, {id: 10759, name: 'Action & Adventure'}], number_of_episodes: 89, number_of_seasons: 4 },
+        { id: 9, tmdb_id: 1416, media_type: 'tv', title: 'Атака титанов', name: 'Атака титанов', poster_path: '/hTP1M40IOF93zQ4X32h2VdC0H3G.jpg', vote_average: 8.6, overview: 'С тех пор, как человечество было почти уничтожено гигантскими гуманоидами, называемыми титанами, прошло сто лет. Титаны обычно имеют несколько этажей в высоту, кажутся неразумными, пожирают людей и, что хуже всего, делают это ради удовольствия, а не как источник пищи.', release_date: null, first_air_date: '2013-04-07', genres: [{id: 10765, name: 'Sci-Fi & Fantasy'}, {id: 16, name: 'Анимация'}, {id: 10759, name: 'Action & Adventure'}], number_of_episodes: 89, number_of_seasons: 4 },
         { id: 10, tmdb_id: 60625, media_type: 'tv', title: 'Ванпанчмен', name: 'Ванпанчмен', poster_path: '/mzzh978T3DO2USc1g8hS05b2j2.jpg', vote_average: 8.4, overview: 'История о Сайтаме, обычном парне, который стал супергероем от скуки. После трёх лет «специальных» тренировок он стал настолько сильным, что может победить любого противника одним ударом.', release_date: null, first_air_date: '2015-10-05', genres: [{id: 10759, name: 'Action & Adventure'}, {id: 16, name: 'Анимация'}, {id: 35, name: 'Комедия'}, {id: 10765, name: 'Sci-Fi & Fantasy'}], number_of_episodes: 24, number_of_seasons: 2 },
         { id: 11, tmdb_id: 71912, media_type: 'tv', title: 'Ведьмак', name: 'Ведьмак', poster_path: '/rY2c2LhN07CRKlAbRaDZxN2XjvK.jpg', vote_average: 8.1, overview: 'Геральт из Ривии, наёмный охотник на чудовищ, перенёсший мутации, идёт навстречу своей судьбе в неспокойном мире, где люди часто оказываются куда хуже чудовищ.', release_date: null, first_air_date: '2019-12-20', genres: [{id: 18, name: 'Драма'}, {id: 10759, name: 'Action & Adventure'}, {id: 10765, name: 'Sci-Fi & Fantasy'}], number_of_episodes: 24, number_of_seasons: 3 },
         { id: 12, tmdb_id: 456, media_type: 'movie', title: 'Аватар', name: 'Аватар', poster_path: '/jRXYjXNq0Cs2TcYVbL9qPqHqrA1.jpg', vote_average: 7.5, overview: 'Джейк Салли — бывший морской пехотинец, прикованный к инвалидному креслу. Несмотря на немощное тело, Джейк в душе по-прежнему остается воином. Он получает задание совершить путешествие в несколько световых лет к базе землян на планете Пандора, где корпорации добывают редкий минерал, имеющий огромное значение для выхода Земли из энергетического кризиса.', release_date: '2009-12-10', first_air_date: null, genres: [{id: 28, name: 'Боевик'}, {id: 12, name: 'Приключения'}, {id: 14, name: 'Фэнтези'}, {id: 878, name: 'Фантастика'}], number_of_episodes: null, number_of_seasons: null },
-        { id: 13, tmdb_id: 19995, media_type: 'movie', title: 'Аватар: Путь воды', name: 'Аватар: Путь воды', poster_path: '/z5mkvXY3sV0Xo23A0MttYaK2m2j.jpg', vote_average: 7.7, overview: 'После принятия образа аватара солдат Джейк Салли становится предводителем народа на`ви и берет на себя миссию по защите новых друзей от корыстных бизнесменов с Земли. Теперь ему есть за кого бороться — с Джейком его прекрасная возлюбленная Нейтири. Когда на Пандору возвращаются до зубов вооруженные земляне, Джейк готов дать им отпор.', release_date: '2022-12-14', first_air_date: null, genres: [{id: 878, name: 'Фантастика'}, {id: 12, name: 'Приключения'}, {id: 28, name: 'Боевик'}], number_of_episodes: null, number_of_seasons: null },
+        { id: 13, tmdb_id: 76600, media_type: 'movie', title: 'Аватар: Путь воды', name: 'Аватар: Путь воды', poster_path: '/z5mkvXY3sV0Xo23A0MttYaK2m2j.jpg', vote_average: 7.7, overview: 'После принятия образа аватара солдат Джейк Салли становится предводителем народа на`ви и берет на себя миссию по защите новых друзей от корыстных бизнесменов с Земли. Теперь ему есть за кого бороться — с Джейком его прекрасная возлюбленная Нейтири. Когда на Пандору возвращаются до зубов вооруженные земляне, Джейк готов дать им отпор.', release_date: '2022-12-14', first_air_date: null, genres: [{id: 878, name: 'Фантастика'}, {id: 12, name: 'Приключения'}, {id: 28, name: 'Боевик'}], number_of_episodes: null, number_of_seasons: null },
         { id: 14, tmdb_id: 634649, media_type: 'movie', title: 'Человек-паук: Нет пути домой', name: 'Человек-паук: Нет пути домой', poster_path: '/uJYYizSuA9Y3DCs0qS4qWvHfZg4.jpg', vote_average: 8.0, overview: 'Впервые в киноистории Человека-паука наш дружелюбный герой разоблачен. Теперь супергеройские подвиги стали неотделимы от его обычной жизни. Когда он просит помощи у Доктора Стрэнджа, ситуация только усугубляется. И Питер Паркер должен как никогда раньше ощутить, что значит быть Человеком-пауком.', release_date: '2021-12-15', first_air_date: null, genres: [{id: 28, name: 'Боевик'}, {id: 12, name: 'Приключения'}, {id: 878, name: 'Фантастика'}], number_of_episodes: null, number_of_seasons: null },
         { id: 15, tmdb_id: 82856, media_type: 'tv', title: 'Мандалорец', name: 'Мандалорец', poster_path: '/eU1i6eGhhk3A12oE7Fq289Xo1n8.jpg', vote_average: 8.4, overview: 'Одинокий мандалорец-наёмник живёт на краю обитаемой галактики, куда не дотягивается закон Новой Республики. Представитель некогда могучей расы благородных воинов теперь вынужден влачить жалкое существование среди отбросов общества.', release_date: null, first_air_date: '2019-11-12', genres: [{id: 10765, name: 'Sci-Fi & Fantasy'}, {id: 10759, name: 'Action & Adventure'}], number_of_episodes: 24, number_of_seasons: 3 }
     ];
-
 
     function handlePopularSectionVisibility() {
         const popularShelfElement = document.getElementById('popular');
@@ -219,7 +215,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             const backdropUrl = data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${BACKDROP_SIZE_HERO}${data.backdrop_path}` : '/images/no_image.png';
             if(heroFallbackImg) { heroFallbackImg.src = backdropUrl; heroFallbackImg.alt = `Задник для ${data.title || 'фильма'}`; }
-            if(heroSection) heroSection.dataset.videoType = data.video_info.type;
+            if(heroSection && data.video_info) heroSection.dataset.videoType = data.video_info.type;
+
 
             if(heroContentDisplay) heroContentDisplay.classList.add('visible');
 
@@ -348,9 +345,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         moviesToDisplay.forEach(movie => {
             grid.appendChild(createMovieTile(movie));
         });
-        // Вызываем updateShelfControls ПОСЛЕ добавления всех плиток,
-        // чтобы размеры были корректно рассчитаны браузером.
-        // requestAnimationFrame гарантирует, что это произойдет перед следующей отрисовкой.
         requestAnimationFrame(() => {
             updateShelfControls(shelfElement);
         });
@@ -660,7 +654,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     detailedInfoPanel.removeEventListener('transitionend', onTransitionEnd);
                 }
                 resolve();
-            }, 350);
+            }, 350); // Should match transition duration in CSS
         });
     }
 
@@ -716,7 +710,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const clientWidth = grid.clientWidth;
             const childrenCount = grid.children.length;
 
-            // Если нет дочерних элементов (плиток), стрелки не нужны
             if (childrenCount === 0) {
                 prevArrow.classList.remove('visible');
                 nextArrow.classList.remove('visible');
@@ -724,12 +717,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             
-            // Условие для возможности прокрутки влево
-            const canScrollLeft = scrollLeft > 1; // Небольшой допуск
-
-            // Условие для возможности прокрутки вправо
-            // (scrollWidth - clientWidth) - это максимальное значение scrollLeft
-            // Используем допуск, чтобы избежать проблем с округлением
+            const canScrollLeft = scrollLeft > 1; 
             const canScrollRight = (scrollWidth - clientWidth - scrollLeft) > 1;
 
             prevArrow.classList.toggle('visible', canScrollLeft);
@@ -752,7 +740,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Изначально скрываем стрелки и градиенты
             prevArrow.classList.remove('visible');
             nextArrow.classList.remove('visible');
             gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll');
@@ -764,7 +751,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const gap = parseFloat(getComputedStyle(grid).gap) || 15;
                     return tileWidth + gap;
                 }
-                return grid.clientWidth * 0.8; // Фоллбэк
+                return grid.clientWidth * 0.8; 
             };
 
             prevArrow.addEventListener('click', () => {
@@ -778,12 +765,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const observerCallback = (entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        // Даем немного времени для отрисовки и загрузки изображений
                         setTimeout(() => {
                             updateShelfControls(shelfElement);
-                        }, 200); // Можно увеличить задержку, если проблема остается
+                        }, 200); 
                     } else {
-                        // Если полка не видна, стрелки тоже не должны быть видны
                         prevArrow.classList.remove('visible');
                         nextArrow.classList.remove('visible');
                         gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll');
@@ -791,19 +776,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             };
             
-            const shelfObserver = new IntersectionObserver(observerCallback, { threshold: 0.01 }); // Сработает даже если виден 1%
+            const shelfObserver = new IntersectionObserver(observerCallback, { threshold: 0.01 }); 
             shelfObserver.observe(shelfElement);
-
 
             grid.addEventListener('scroll', () => updateShelfControls(shelfElement), { passive: true });
             window.addEventListener('resize', () => updateShelfControls(shelfElement), { passive: true });
-
-            // Первоначальное обновление (может быть избыточным из-за IntersectionObserver, но для подстраховки)
-            // Убираем этот setTimeout, так как IntersectionObserver должен справиться
-            // setTimeout(() => updateShelfControls(shelfElement), 250);
         });
     }
-
 
     if (newSearchButton && newSearchModal) {
         function openSearchModalWindow() {
@@ -839,7 +818,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return data || [];
         } catch (error) {
             console.error(`Ошибка загрузки жанров для ${type}:`, error);
-            const targetMenu = type === 'movie' ? genreDropdownMovieMenuElement : null;
+            const targetMenu = type === 'movie' ? genreDropdownMovieMenuElement : null; // Предполагаем, что для TV жанров отдельный дропдаун не используется в фильтрах поиска
             if (targetMenu) {
                 const placeholder = targetMenu.querySelector('.genres-loading-placeholder') || document.createElement('p');
                 placeholder.textContent = 'Ошибка загрузки жанров.';
@@ -872,7 +851,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const label = document.createElement('label');
             const checkbox = document.createElement('input');
             Object.assign(checkbox, { type: 'checkbox', name: 'genre_filter', value: String(genre.id) });
-            checkbox.dataset.genreName = genre.name;
+            checkbox.dataset.genreName = genre.name; // Используем для отображения в toggle
             checkbox.addEventListener('change', () => { updateToggleTextForGenres(dropdownMenu.closest('.custom-dropdown')); triggerSearch(); });
             label.append(checkbox, ` ${genre.name}`);
             dropdownMenu.appendChild(label);
@@ -882,10 +861,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadAndPopulateAllGenres() {
         const [movieGenresData, tvGenresData] = await Promise.all([fetchGenresFromServer('movie'), fetchGenresFromServer('tv')]);
         populateGenreDropdown(genreDropdownMovieMenuElement, movieGenresData, 'movie', allMovieGenresMap);
+        // Заполняем allTvGenresMap для использования в displayResults
         allTvGenresMap.clear();
         const tvGenres = Array.isArray(tvGenresData) ? tvGenresData : (tvGenresData.genres || []);
         tvGenres.forEach(genre => { if (typeof genre.id === 'number' && typeof genre.name === 'string') allTvGenresMap.set(genre.id, genre.name); });
-        updateToggleTextForGenres(genreDropdownMovieElement);
+        updateToggleTextForGenres(genreDropdownMovieElement); // Обновляем текст только для дропдауна фильмов
     }
 
     function getSelectedGenreIds() {
@@ -906,12 +886,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             clearTimeout(searchTimeout);
             if (loadingIndicator) loadingIndicator.style.display = 'flex';
             if (initialPlaceholder) initialPlaceholder.style.display = 'none';
-            clearSearchResults(false);
+            clearSearchResults(false); // Не показываем плейсхолдер, так как идет загрузка
             searchTimeout = setTimeout(() => {
                 performSearch(query, activeMediaType, selectedGenres, yearFrom, yearTo, ratingFrom, ratingTo);
             }, 350);
         } else {
-            clearSearchResults(true);
+            clearSearchResults(true); // Показываем плейсхолдер, если все поля пустые
             if (initialPlaceholder) initialPlaceholder.style.display = 'flex';
             if (loadingIndicator) loadingIndicator.style.display = 'none';
         }
@@ -921,14 +901,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (loadingIndicator) loadingIndicator.style.display = 'flex';
         if (initialPlaceholder) initialPlaceholder.style.display = 'none';
 
-        const params = new URLSearchParams({ language: 'ru-RU', page: 1 });
+        const params = new URLSearchParams({ language: 'ru-RU', page: 1 }); // page: 1 для простоты, пагинация не реализована
 
         if (query) params.append('query', query);
 
-        let requestMediaType = mediaType;
+        // Определяем media_type для запроса к бэкенду
+        let requestMediaType = mediaType; // Тип, выбранный пользователем
         if (!query && !mediaType && (selectedGenreIds.length > 0 || yearFrom || yearTo || ratingFrom || ratingTo)) {
+            // Если нет запроса и нет явного типа, но есть другие фильтры, по умолчанию ищем фильмы (как было раньше)
             requestMediaType = 'movie';
         } else if (query && !mediaType) {
+            // Если есть запрос, но тип не выбран, используем 'multi'
             requestMediaType = 'multi';
         }
         if (requestMediaType) params.append('media_type', requestMediaType);
@@ -948,7 +931,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error(errorData.error || `Ошибка HTTP: ${response.status}`);
             }
             const data = await response.json();
-            displayResults(data.results || [], params.get('media_type') || (query ? 'multi' : 'movie'));
+            displayResults(data.results || [], params.get('media_type') || (query ? 'multi' : 'movie')); // Передаем контекст поиска
         } catch (error) {
             console.error('Ошибка при выполнении поиска:', error);
             displayError(error.message);
@@ -959,11 +942,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (searchInput) { searchInput.addEventListener('input', triggerSearch); }
     [yearFromInput, yearToInput, ratingFromInput, ratingToInput].forEach(input => {
-        input?.addEventListener('input', triggerSearch); input?.addEventListener('change', triggerSearch);
+        input?.addEventListener('input', triggerSearch); // input для немедленной реакции
+        input?.addEventListener('change', triggerSearch); // change для фиксации после потери фокуса (например, для number input со стрелками)
     });
     typeFilterCheckboxes?.forEach(checkbox => checkbox.addEventListener('change', () => {
-        if (checkbox.checked) typeFilterCheckboxes.forEach(cb => { if (cb !== checkbox) cb.checked = false; });
-        updateToggleTextForDropdown(typeDropdownElement, "Выберите тип"); triggerSearch();
+        if (checkbox.checked) { // Если этот чекбокс выбран
+            typeFilterCheckboxes.forEach(cb => { if (cb !== checkbox) cb.checked = false; }); // Снимаем выбор с других
+        }
+        updateToggleTextForDropdown(typeDropdownElement, "Выберите тип"); // Обновляем текст дропдауна
+        triggerSearch();
     }));
     if(resetFiltersButton) {
         resetFiltersButton.addEventListener('click', () => {
@@ -973,23 +960,43 @@ document.addEventListener('DOMContentLoaded', async () => {
             genreDropdownMovieMenuElement?.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             if(genreDropdownMovieElement) updateToggleTextForGenres(genreDropdownMovieElement);
             [yearFromInput, yearToInput, ratingFromInput, ratingToInput].forEach(input => { if(input) input.value = ''; });
-            clearSearchResults(true); if (initialPlaceholder) initialPlaceholder.style.display = 'flex'; if (loadingIndicator) loadingIndicator.style.display = 'none';
+            clearSearchResults(true); // Показываем начальный плейсхолдер
+            if (initialPlaceholder) initialPlaceholder.style.display = 'flex';
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
         });
     }
 
     function displayResults(items, searchedMediaTypeContext) {
-        clearSearchResults(false); if(!searchResultsContainer) return;
-        const resultsGrid = document.createElement('div'); resultsGrid.className = 'search-results-grid';
+        clearSearchResults(false); 
+        if(!searchResultsContainer) return;
+
+        const resultsGrid = document.createElement('div');
+        resultsGrid.className = 'search-results-grid';
+
         if (!items || items.length === 0) {
-            const hasActiveFilters = searchInput?.value.trim().length > 0 || getSelectedGenreIds().length > 0 || yearFromInput?.value.trim() || yearToInput?.value.trim() || ratingFromInput?.value.trim() || ratingToInput?.value.trim() || document.querySelector('input[name="type_filter"]:checked');
-            resultsGrid.innerHTML = hasActiveFilters ? '<p class="no-results">По вашему запросу ничего не найдено.</p>' : (initialPlaceholder ? (initialPlaceholder.style.display = 'flex', '') : '');
+            // Сообщение "Ничего не найдено" от сервера (до клиентской фильтрации)
+            const hasActiveServerFilters = searchInput?.value.trim().length > 0 || 
+                                       getSelectedGenreIds().length > 0 || 
+                                       yearFromInput?.value.trim() || 
+                                       yearToInput?.value.trim() || 
+                                       ratingFromInput?.value.trim() || 
+                                       ratingToInput?.value.trim() || 
+                                       document.querySelector('input[name="type_filter"]:checked');
+            
+            if (hasActiveServerFilters) {
+                 resultsGrid.innerHTML = '<p class="no-results">По вашему запросу ничего не найдено.</p>';
+            } else {
+                if (initialPlaceholder) initialPlaceholder.style.display = 'flex';
+            }
         } else {
             items.forEach((item, index) => {
                 let mediaType = item.media_type;
+                // Если тип не пришел от TMDB (например, для /discover/movie), используем контекст запроса
                 if (!mediaType) {
                     mediaType = searchedMediaTypeContext !== 'multi' ? searchedMediaTypeContext : (item.title ? 'movie' : 'tv');
                 }
-                if (mediaType === 'person') return;
+
+                if (mediaType === 'person') return; // Пропускаем персон
 
                 const title = item.title || item.name;
                 const releaseDate = item.release_date || item.first_air_date;
@@ -997,11 +1004,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const posterPath = item.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_SEARCH}${item.poster_path}` : '/images/default-poster.jpg';
                 let overview = item.overview || 'Описание отсутствует.'; if (overview.length > 100) overview = overview.substring(0, 97) + '...';
                 const voteAverage = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
+                
+                // Определяем, какую карту жанров использовать
                 const currentGenreMap = mediaType === 'tv' ? allTvGenresMap : allMovieGenresMap;
                 let genreNames = item.genre_ids?.map(id => currentGenreMap.get(parseInt(id, 10))).filter(Boolean).join(', ') || 'Жанры не указаны';
-                if (genreNames === 'Жанры не указаны' && item.genre_ids?.length > 0 && currentGenreMap.size === 0) genreNames = 'Загрузка названий жанров...';
+                if (genreNames === 'Жанры не указаны' && item.genre_ids?.length > 0 && currentGenreMap.size === 0) {
+                    // Если карты жанров еще не загружены, показываем плейсхолдер
+                    genreNames = 'Загрузка названий жанров...';
+                }
 
-                const itemElement = document.createElement('div'); itemElement.className = 'search-result-item';
+
+                const itemElement = document.createElement('div');
+                itemElement.className = 'search-result-item';
+
+                // Сохраняем данные для клиентской фильтрации
+                if (releaseDate && !isNaN(new Date(releaseDate).getFullYear())) {
+                    itemElement.dataset.year = new Date(releaseDate).getFullYear();
+                }
+                if (item.vote_average !== undefined && item.vote_average !== null) {
+                    itemElement.dataset.rating = item.vote_average.toFixed(1);
+                }
+                itemElement.dataset.mediaType = mediaType;
+                if (item.genre_ids && Array.isArray(item.genre_ids)) {
+                    itemElement.dataset.genreIds = item.genre_ids.join(',');
+                } else {
+                    itemElement.dataset.genreIds = '';
+                }
+                
                 itemElement.innerHTML = `
                     <img src="${posterPath}" alt="${title}" class="search-result-poster" onerror="this.onerror=null;this.src='/images/error.png';">
                     <div class="search-result-details">
@@ -1021,23 +1050,140 @@ document.addEventListener('DOMContentLoaded', async () => {
                 requestAnimationFrame(() => setTimeout(() => itemElement.classList.add('visible'), index * 50));
             });
         }
-        searchResultsContainer.querySelector('.search-results-grid')?.remove();
+        searchResultsContainer.querySelector('.search-results-grid')?.remove(); // Удаляем старую сетку, если есть
         searchResultsContainer.appendChild(resultsGrid);
+
+        applyClientSideFilters(); // Применяем клиентскую фильтрацию
     }
 
     function displayError(message) {
-        clearSearchResults(false); if(!searchResultsContainer) return;
-        const errorElement = document.createElement('p'); errorElement.className = 'search-error-message'; errorElement.textContent = `Ошибка: ${message}`;
-        searchResultsContainer.querySelector('.search-results-grid')?.remove(); searchResultsContainer.appendChild(errorElement);
-        if (loadingIndicator) loadingIndicator.style.display = 'none'; if (initialPlaceholder) initialPlaceholder.style.display = 'none';
+        clearSearchResults(false); 
+        if(!searchResultsContainer) return;
+        const errorElement = document.createElement('p');
+        errorElement.className = 'search-error-message';
+        errorElement.textContent = `Ошибка: ${message}`;
+        searchResultsContainer.querySelector('.search-results-grid')?.remove(); // Удаляем сетку, если есть
+        searchResultsContainer.appendChild(errorElement);
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        if (initialPlaceholder) initialPlaceholder.style.display = 'none';
     }
 
     function clearSearchResults(showPlaceholder = true) {
         if (!searchResultsContainer) return;
         searchResultsContainer.querySelector('.search-results-grid')?.remove();
         searchResultsContainer.querySelector('.search-error-message')?.remove();
+        const clientNoResultsMsg = searchResultsContainer.querySelector('.no-results-client-message');
+        if (clientNoResultsMsg) clientNoResultsMsg.remove();
+
         if (initialPlaceholder) initialPlaceholder.style.display = showPlaceholder ? 'flex' : 'none';
     }
+    
+    function applyClientSideFilters() {
+        if (!searchResultsContainer) return;
+
+        const selectedGenreIds = getSelectedGenreIds(); 
+        const yearFrom = yearFromInput && yearFromInput.value ? parseInt(yearFromInput.value, 10) : null;
+        const yearTo = yearToInput && yearToInput.value ? parseInt(yearToInput.value, 10) : null;
+        const ratingFrom = ratingFromInput && ratingFromInput.value ? parseFloat(ratingFromInput.value) : null;
+        const ratingTo = ratingToInput && ratingToInput.value ? parseFloat(ratingToInput.value) : null;
+        
+        const activeMediaTypeCheckbox = document.querySelector('input[name="type_filter"]:checked');
+        const selectedMediaType = activeMediaTypeCheckbox ? activeMediaTypeCheckbox.value : null;
+
+        const items = searchResultsContainer.querySelectorAll('.search-result-item');
+        let visibleCount = 0;
+
+        const existingClientNoResultsMsg = searchResultsContainer.querySelector('.no-results-client-message');
+        if (existingClientNoResultsMsg) existingClientNoResultsMsg.remove();
+        
+        // Если изначально нет элементов (например, сервер вернул пустой массив), не показываем "нет результатов по фильтрам"
+        if (items.length === 0) {
+            // Если сервер вернул пустой массив, но были активные фильтры (или поисковый запрос),
+            // то сообщение "По вашему запросу ничего не найдено" уже должно быть отображено функцией displayResults.
+            // Если же и сервер вернул пусто, и фильтров не было, то должен быть initialPlaceholder.
+            // Поэтому здесь дополнительное сообщение не нужно, если items.length === 0.
+            return; 
+        }
+
+
+        items.forEach(item => {
+            let matches = true;
+
+            const itemYearStr = item.dataset.year;
+            const itemRatingStr = item.dataset.rating;
+            const itemMediaType = item.dataset.mediaType;
+            const itemGenreIdsStr = item.dataset.genreIds;
+
+            const itemYear = itemYearStr && !isNaN(parseInt(itemYearStr, 10)) ? parseInt(itemYearStr, 10) : null;
+            const itemRating = itemRatingStr && !isNaN(parseFloat(itemRatingStr)) ? parseFloat(itemRatingStr) : null;
+            const itemGenreIds = itemGenreIdsStr ? itemGenreIdsStr.split(',').filter(id => id) : [];
+
+            // 1. Фильтр по типу
+            if (selectedMediaType && itemMediaType !== selectedMediaType) {
+                matches = false;
+            }
+
+            // 2. Фильтр по жанрам (элемент должен содержать ВСЕ выбранные жанры)
+            if (matches && selectedGenreIds.length > 0) {
+                const hasAllSelectedGenres = selectedGenreIds.every(selGenreId => itemGenreIds.includes(selGenreId));
+                if (!hasAllSelectedGenres) {
+                    matches = false;
+                }
+            }
+
+            // 3. Фильтр по году
+            if (matches && itemYear !== null) {
+                if (yearFrom && itemYear < yearFrom) {
+                    matches = false;
+                }
+                if (matches && yearTo && itemYear > yearTo) { // Добавляем 'matches &&' чтобы не перезаписать false
+                    matches = false;
+                }
+            } else if (matches && (yearFrom || yearTo)) { 
+                matches = false;
+            }
+
+            // 4. Фильтр по рейтингу
+            if (matches && itemRating !== null) {
+                if (ratingFrom && itemRating < ratingFrom) {
+                    matches = false;
+                }
+                if (matches && ratingTo && itemRating > ratingTo) { // Добавляем 'matches &&'
+                    matches = false;
+                }
+            } else if (matches && (ratingFrom || ratingTo)) {
+                matches = false;
+            }
+            
+            item.style.display = matches ? 'flex' : 'none'; 
+            if (matches) {
+                visibleCount++;
+            }
+        });
+
+        if (visibleCount === 0 && items.length > 0) {
+            // Удаляем старое серверное сообщение "нет результатов", если оно есть
+            const serverNoResultsMsg = searchResultsContainer.querySelector('.no-results');
+            if (serverNoResultsMsg) serverNoResultsMsg.remove();
+
+            const noResultsMessage = document.createElement('p');
+            noResultsMessage.className = 'no-results-client-message'; 
+            noResultsMessage.textContent = 'По вашему запросу и выбранным фильтрам ничего не найдено.';
+            noResultsMessage.style.textAlign = 'center';
+            noResultsMessage.style.color = '#A0A0A0';
+            noResultsMessage.style.fontSize = '1.1em';
+            noResultsMessage.style.padding = '30px 15px';
+            // Добавляем сообщение после сетки результатов (или вместо нее, если сетка пуста)
+            const grid = searchResultsContainer.querySelector('.search-results-grid');
+            if (grid) {
+                grid.after(noResultsMessage);
+            } else {
+                searchResultsContainer.appendChild(noResultsMessage);
+            }
+            if(initialPlaceholder) initialPlaceholder.style.display = 'none';
+        }
+    }
+
 
     if (newSearchModal) {
         const observer = new MutationObserver(mutations => {
@@ -1045,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (mutation.attributeName === 'class') {
                     const isActive = newSearchModal.classList.contains('active');
                     if (isActive) {
-                         if (allMovieGenresMap.size === 0 && allTvGenresMap.size === 0) {
+                         if (allMovieGenresMap.size === 0 && allTvGenresMap.size === 0) { // Загружаем жанры, если они еще не загружены
                             loadAndPopulateAllGenres();
                         }
                     }
@@ -1060,34 +1206,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         toggleButton?.addEventListener('click', (event) => {
             event.stopPropagation();
             const currentlyOpen = dropdown.classList.contains('open');
-            document.querySelectorAll('.search-modal-sidebar .custom-dropdown.open').forEach(od => { if (od !== dropdown) od.classList.remove('open');});
-            dropdown.classList.toggle('open', !currentlyOpen);
+            // Закрываем все другие открытые дропдауны в сайдбаре
+            document.querySelectorAll('.search-modal-sidebar .custom-dropdown.open').forEach(od => {
+                if (od !== dropdown) od.classList.remove('open');
+            });
+            dropdown.classList.toggle('open', !currentlyOpen); // Открываем/закрываем текущий
+            // Загрузка жанров при первом открытии дропдауна жанров
             if (!currentlyOpen && dropdown.dataset.dropdownId === 'genres-movie' && genreDropdownMovieMenuElement && genreDropdownMovieMenuElement.querySelectorAll('label').length === 0 && !genreDropdownMovieMenuElement.querySelector('.genres-loading-placeholder')) {
-                const placeholder = document.createElement('p'); placeholder.className = 'genres-loading-placeholder'; placeholder.textContent = 'Загрузка жанров...';
+                const placeholder = document.createElement('p');
+                placeholder.className = 'genres-loading-placeholder';
+                placeholder.textContent = 'Загрузка жанров...';
                 placeholder.style.cssText = "padding: 8px 10px; color: #A0A0A0; font-size: 0.9em; font-style: italic;";
-                genreDropdownMovieMenuElement.appendChild(placeholder); loadAndPopulateAllGenres();
+                genreDropdownMovieMenuElement.appendChild(placeholder);
+                loadAndPopulateAllGenres();
             }
         });
     });
 
     function updateToggleTextForDropdown(dropdownElement, defaultText) {
-        if (!dropdownElement) return; const textElement = dropdownElement.querySelector('.dropdown-toggle span'); if (!textElement) return;
-        const selectedTexts = Array.from(dropdownElement.querySelectorAll('.dropdown-menu input[type="checkbox"]:checked')).map(cb => cb.dataset.genreName || cb.labels[0].textContent.trim() || cb.value);
+        if (!dropdownElement) return;
+        const textElement = dropdownElement.querySelector('.dropdown-toggle span');
+        if (!textElement) return;
+        const selectedCheckboxes = Array.from(dropdownElement.querySelectorAll('.dropdown-menu input[type="checkbox"]:checked'));
+        const selectedTexts = selectedCheckboxes.map(cb => cb.dataset.genreName || cb.labels[0].textContent.trim() || cb.value);
+        
         if (selectedTexts.length > 0) {
-            const maxNames = dropdownElement.dataset.dropdownId === "genres-movie" ? 2 : 1;
+            const maxNames = dropdownElement.dataset.dropdownId === "genres-movie" ? 2 : 1; // Для жанров показываем до 2х, для типа - 1
             textElement.textContent = selectedTexts.length <= maxNames ? selectedTexts.join(', ') : `${selectedTexts.length} выбрано`;
-        } else textElement.textContent = defaultText;
+        } else {
+            textElement.textContent = defaultText;
+        }
     }
 
-    function updateToggleTextForGenres(dropdownElement) {
-        if (!dropdownElement) return; const menu = dropdownElement.querySelector('.dropdown-menu'); const toggleSpan = dropdownElement.querySelector('.dropdown-toggle span'); if (!toggleSpan) return;
-        if (menu?.querySelector('.genres-loading-placeholder')) toggleSpan.textContent = "Загрузка жанров...";
-        else if (menu?.querySelectorAll('label').length === 0 && !menu?.querySelector('.genres-loading-placeholder')) toggleSpan.textContent = "Жанры не найдены";
-        else updateToggleTextForDropdown(dropdownElement, "Выберите жанр(ы)");
+    function updateToggleTextForGenres(dropdownElement) { // Специально для дропдауна жанров
+        if (!dropdownElement) return;
+        const menu = dropdownElement.querySelector('.dropdown-menu');
+        const toggleSpan = dropdownElement.querySelector('.dropdown-toggle span');
+        if (!toggleSpan) return;
+
+        if (menu?.querySelector('.genres-loading-placeholder')) {
+            toggleSpan.textContent = "Загрузка жанров...";
+        } else if (menu?.querySelectorAll('label').length === 0 && !menu?.querySelector('.genres-loading-placeholder')) {
+            toggleSpan.textContent = "Жанры не найдены";
+        } else {
+            updateToggleTextForDropdown(dropdownElement, "Выберите жанр(ы)");
+        }
     }
 
     document.querySelectorAll('.number-input-container').forEach(container => {
-        const input = container.querySelector('input[type="number"]'); const upArrow = container.querySelector('.up-arrow'); const downArrow = container.querySelector('.down-arrow');
+        const input = container.querySelector('input[type="number"]');
+        const upArrow = container.querySelector('.up-arrow');
+        const downArrow = container.querySelector('.down-arrow');
         if (input && upArrow && downArrow) {
             upArrow.addEventListener('click', () => { input.stepUp(); input.dispatchEvent(new Event('input', { bubbles: true })); });
             downArrow.addEventListener('click', () => { input.stepDown(); input.dispatchEvent(new Event('input', { bubbles: true })); });
@@ -1120,7 +1289,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     navbarButtons.forEach(button => {
         button.addEventListener('click', function(event) {
             event.preventDefault();
-            navbarButtons.forEach(btn => btn.classList.remove('active')); this.classList.add('active');
+            navbarButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
             const sectionId = this.dataset.section;
             const targetSection = document.getElementById(sectionId);
             if (targetSection) {
@@ -1130,10 +1300,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 let offsetTop = targetSection.getBoundingClientRect().top + window.pageYOffset - effectiveNavbarHeight;
-
-                if (sectionId === 'popular' && contentArea) {
+                
+                if (sectionId === 'popular' && contentArea) { // Специальная логика для "Популярное"
                      offsetTop = contentArea.getBoundingClientRect().top + window.pageYOffset - effectiveNavbarHeight;
-                     if (offsetTop < 0 && sectionId === 'popular') offsetTop = 0;
+                     if (offsetTop < 0 && sectionId === 'popular') offsetTop = 0; // Не уходить выше начала contentArea
                 }
                 window.scrollTo({ top: offsetTop, behavior: 'smooth' });
             }

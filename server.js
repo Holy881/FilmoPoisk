@@ -445,9 +445,6 @@ app.get('/api/tmdb/hero-content', async (req, res) => {
         const randomKey = localTmdbKeys[randomIndex];
         const localTrailerPath = LOCAL_HERO_TRAILERS[randomKey];
         
-        console.log(`[SERVER DEBUG] Выбран локальный трейлер: ${localTrailerPath} для ключа ${randomKey}`);
-
-
         let itemTmdbId;
         let itemType;
 
@@ -458,8 +455,6 @@ app.get('/api/tmdb/hero-content', async (req, res) => {
             itemTmdbId = randomKey;
             itemType = 'movie';
         }
-
-        console.log(`Выбран контент для Hero: Ключ ${randomKey}, Тип ${itemType}, TMDB ID ${itemTmdbId}, трейлер: ${localTrailerPath}`);
 
         const detailsUrl = `${TMDB_BASE_URL}/${itemType}/${itemTmdbId}`;
         
@@ -476,8 +471,6 @@ app.get('/api/tmdb/hero-content', async (req, res) => {
             type: 'html5_local', 
             key_or_url: localTrailerPath 
         };
-        
-        console.log(`[SERVER DEBUG] Отправляем клиенту video_info:`, videoInfo);
         
         let backdropPath = itemDetails.backdrop_path;
         if (itemDetails.images && itemDetails.images.backdrops && itemDetails.images.backdrops.length > 0) {
@@ -534,8 +527,8 @@ app.get('/api/tmdb/genres/:type', async (req, res) => {
 });
 
 app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
-    const { tmdbId, type } = req.params; // Corrected: tmdbId and type from params
-    const { language = 'ru-RU' } = req.query; // language from query
+    const { tmdbId, type } = req.params;
+    const { language = 'ru-RU' } = req.query;
     const tmdbUrl = `${TMDB_BASE_URL}/${type}/${tmdbId}`;
 
     if (!TMDB_API_KEY) {
@@ -549,7 +542,6 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
     }
 
     try {
-        // Основной запрос для деталей фильма/сериала
         const response = await axios.get(tmdbUrl, {
             params: { 
                 api_key: TMDB_API_KEY, 
@@ -559,58 +551,50 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
         });
         let itemData = response.data;
 
-        // Если это сериал, получаем детали для каждого сезона
         if (type === 'tv' && itemData.seasons && itemData.seasons.length > 0) {
             try {
                 const seasonDetailPromises = itemData.seasons.map(season => {
-                    // Пропускаем сезоны с номером 0 (обычно это "Specials" и могут не иметь нужных данных или постеров)
                     if (season.season_number === 0) {
                         return Promise.resolve({
                             ...season,
                             episodes: [],
                             episode_count: season.episode_count || 0,
-                            poster_path: season.poster_path || null // Убедимся, что poster_path есть
+                            poster_path: season.poster_path || null
                         });
                     }
                     return axios.get(`${TMDB_BASE_URL}/tv/${tmdbId}/season/${season.season_number}`, {
                         params: { api_key: TMDB_API_KEY, language: language }
                     })
-                    .then(seasonRes => {
-                        // Возвращаем только необходимые данные для каждого сезона
-                        return {
-                            id: seasonRes.data.id,
-                            air_date: seasonRes.data.air_date,
-                            episodes: seasonRes.data.episodes || [], // Массив эпизодов
-                            name: seasonRes.data.name,
-                            overview: seasonRes.data.overview,
-                            poster_path: seasonRes.data.poster_path,
-                            season_number: seasonRes.data.season_number,
-                            vote_average: seasonRes.data.vote_average,
-                            episode_count: seasonRes.data.episodes ? seasonRes.data.episodes.length : (season.episode_count || 0)
-                        };
-                    })
+                    .then(seasonRes => ({
+                        id: seasonRes.data.id,
+                        air_date: seasonRes.data.air_date,
+                        episodes: seasonRes.data.episodes || [],
+                        name: seasonRes.data.name,
+                        overview: seasonRes.data.overview,
+                        poster_path: seasonRes.data.poster_path,
+                        season_number: seasonRes.data.season_number,
+                        vote_average: seasonRes.data.vote_average,
+                        episode_count: seasonRes.data.episodes ? seasonRes.data.episodes.length : (season.episode_count || 0)
+                    }))
                     .catch(err => {
                         console.warn(`Не удалось загрузить детали для сезона ${season.season_number} сериала ${tmdbId}: ${err.message}`);
-                        // В случае ошибки возвращаем базовую информацию о сезоне из основного запроса к сериалу
                         return {
-                            ...season, // name, season_number, poster_path, overview, air_date, id
-                            episodes: [], // Деталей эпизодов нет
-                            episode_count: season.episode_count || 0, // Количество серий из основного запроса
-                            poster_path: season.poster_path || null // Убедимся, что poster_path есть
+                            ...season,
+                            episodes: [],
+                            episode_count: season.episode_count || 0,
+                            poster_path: season.poster_path || null
                         };
                     });
                 });
                 
-                // Фильтруем null результаты, если какие-то сезоны были пропущены (например, season_number === 0 без Promise.resolve)
                 const detailedSeasonsData = (await Promise.all(seasonDetailPromises)).filter(Boolean);
                 itemData.all_season_details = detailedSeasonsData;
 
             } catch (seasonFetchError) {
                 console.error(`Ошибка при загрузке некоторых деталей сезонов для сериала ${tmdbId}: ${seasonFetchError.message}`);
-                // Если произошла ошибка при Promise.all или другая, можем использовать базовые данные сезонов
                 if (itemData.seasons && !itemData.all_season_details) {
                     itemData.all_season_details = itemData.seasons
-                        .filter(s => s.season_number !== 0) // Также отфильтруем "Specials" сезоны здесь для консистентности
+                        .filter(s => s.season_number !== 0)
                         .map(s => ({
                             ...s,
                             episodes: [],
@@ -624,50 +608,124 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
     } catch (error) {
         console.error(`Ошибка при запросе к TMDB для ${type}/${tmdbId}:`, error.response ? error.response.data : error.message);
         const status = error.response ? error.response.status : 500;
-        const message = error.response && error.response.data && error.response.data.status_message 
+        const message = error.response?.data?.status_message 
                         ? error.response.data.status_message 
                         : 'Не удалось получить данные от TMDB.';
         res.status(status).json({ error: message, details: error.response ? error.response.data : null });
     }
 });
 
-
+// --- НАЧАЛО ИЗМЕНЕНИЙ В ЛОГИКЕ ПОИСКА ---
 app.get('/api/tmdb/search', async (req, res) => {
-    const { query, media_type, genres, year_from, year_to, rating_from, rating_to, page = 1, language = 'ru-RU', sort_by = 'popularity.desc' } = req.query;
+    const { 
+        query,            // Текстовый запрос пользователя
+        media_type,       // 'movie', 'tv', или не указан (тогда 'multi' если есть query)
+        genres,           // Строка ID жанров через запятую, например "28,12"
+        year_from,        // Год "от"
+        year_to,          // Год "до"
+        rating_from,      // Рейтинг "от"
+        rating_to,        // Рейтинг "до"
+        page = 1,         // Номер страницы
+        language = 'ru-RU', // Язык результатов
+        sort_by = 'popularity.desc' // Сортировка по умолчанию
+    } = req.query;
+
     if (!TMDB_API_KEY) return res.status(500).json({ error: 'API ключ TMDB не найден.' });
 
     let tmdbUrl;
-    const params = { api_key: TMDB_API_KEY, language: language, page: parseInt(page, 10), include_adult: false };
+    const params = { 
+        api_key: TMDB_API_KEY, 
+        language: language, 
+        page: parseInt(page, 10), 
+        include_adult: false 
+    };
 
-    if (query) {
+    if (query) { 
+        // --- Сценарий 1: Есть текстовый запрос ---
+        // Определяем тип поиска: 'multi', 'movie', или 'tv'
+        // Если media_type указан и валиден, используем его. Иначе, по умолчанию 'multi'.
         const searchType = (media_type === 'movie' || media_type === 'tv') ? media_type : 'multi';
         tmdbUrl = `${TMDB_BASE_URL}/search/${searchType}`;
         params.query = query;
-    } else if (media_type && (media_type === 'movie' || media_type === 'tv')) {
+
+        // Добавляем фильтр по году, если он применим и доступен для эндпоинта /search
+        // TMDB /search/movie принимает 'year'
+        // TMDB /search/tv принимает 'first_air_date_year'
+        // /search/multi официально не документирует эти параметры для одновременной фильтрации,
+        // но мы можем попытаться применить их, если тип явно указан.
+        // Для простоты, если указан year_from, используем его.
+        // TMDB /search не поддерживает диапазоны годов или рейтингов напрямую вместе с текстовым запросом.
+        if (year_from) {
+            const yearFromInt = parseInt(year_from, 10);
+            if (!isNaN(yearFromInt)) {
+                if (searchType === 'movie') {
+                    params.year = yearFromInt;
+                } else if (searchType === 'tv') {
+                    params.first_air_date_year = yearFromInt;
+                }
+                // Если searchType === 'multi', применение общего годового фильтра проблематично,
+                // так как параметры для фильмов и сериалов разные.
+                // Оставляем применение года только для явно указанных 'movie' или 'tv'.
+            }
+        }
+        
+        // ВАЖНО: Фильтры по жанрам (with_genres) и диапазонам рейтинга (vote_average.gte/lte)
+        // НЕ ПОДДЕРЖИВАЮТСЯ напрямую эндпоинтом /search TMDB одновременно с текстовым запросом query.
+        // Поэтому мы не добавляем их в `params` здесь.
+        // Любая дополнительная фильтрация по этим критериям для результатов /search
+        // должна будет происходить на стороне клиента или после получения всех страниц от TMDB на сервере (что неэффективно).
+
+    } else if (media_type && (media_type === 'movie' || media_type === 'tv')) { 
+        // --- Сценарий 2: Нет текстового запроса, но есть фильтры (используем /discover) ---
         tmdbUrl = `${TMDB_BASE_URL}/discover/${media_type}`;
-        if (genres) params.with_genres = genres;
+        
+        if (genres) params.with_genres = genres; // Например, '28,12'
+        
+        // Формируем параметры для диапазона дат релиза/первого показа
         const dateParamPrefix = media_type === 'movie' ? 'primary_release_date' : 'first_air_date';
         if (year_from) {
             params[`${dateParamPrefix}.gte`] = `${year_from}-01-01`;
+            // Если указан только year_from, ищем за весь этот год
             if (!year_to) params[`${dateParamPrefix}.lte`] = `${year_from}-12-31`;
         }
-        if (year_to) params[`${dateParamPrefix}.lte`] = `${year_to}-12-31`;
+        if (year_to) {
+            params[`${dateParamPrefix}.lte`] = `${year_to}-12-31`;
+            // Если указан только year_to, а year_from нет, можно установить gte на начало времен
+            if (!year_from) params[`${dateParamPrefix}.gte`] = `1900-01-01`; 
+        }
+
+        // Формируем параметры для диапазона рейтинга
         if (rating_from) params['vote_average.gte'] = parseFloat(rating_from);
         if (rating_to) params['vote_average.lte'] = parseFloat(rating_to);
-        params.sort_by = sort_by;
+        
+        params.sort_by = sort_by || 'popularity.desc'; // Сортировка по умолчанию для /discover
     } else {
-        return res.status(400).json({ error: "Необходим запрос (query) или тип медиа (movie/tv) и фильтры." });
+        // --- Сценарий 3: Недостаточно параметров для запроса ---
+        // Если нет ни текстового запроса, ни валидного media_type для /discover,
+        // но могут быть другие фильтры (например, только жанры без типа).
+        // В этом случае сложно сформировать корректный запрос.
+        // Возвращаем ошибку, указывая на необходимость query или media_type.
+         return res.status(400).json({ error: "Для поиска необходим текстовый запрос или указание типа медиа (фильм/сериал) вместе с другими фильтрами." });
     }
+
     try {
-        console.log(`Запрос к TMDB: URL=${tmdbUrl}, Params=${JSON.stringify(params)}`);
+        console.log(`[TMDB ЗАПРОС] URL: ${tmdbUrl}, Параметры: ${JSON.stringify(params)}`);
         const response = await axios.get(tmdbUrl, { params });
+        
+        // Сервер просто возвращает ответ от TMDB.
+        // Клиент должен будет учитывать, что при текстовом поиске (query)
+        // фильтрация по жанрам и рейтингам со стороны TMDB не производилась.
         res.status(200).json(response.data);
+
     } catch (error) {
         const status = error.response ? error.response.status : 500;
-        const message = error.response?.data?.status_message || 'Ошибка поиска на TMDB.';
+        const message = error.response?.data?.status_message || 'Ошибка при выполнении поиска на TMDB.';
+        console.error(`[ОШИБКА TMDB] Status: ${status}, Message: ${message}, URL: ${tmdbUrl}, Params: ${JSON.stringify(params)}`, error.response?.data);
         res.status(status).json({ error: message, details: error.response ? error.response.data : null });
     }
 });
+// --- КОНЕЦ ИЗМЕНЕНИЙ В ЛОГИКЕ ПОИСКА ---
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));

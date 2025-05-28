@@ -69,7 +69,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
             item_id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             tmdb_id INTEGER,
-            media_type TEXT, 
+            media_type TEXT,
             category TEXT NOT NULL,
             title TEXT NOT NULL,
             poster_path TEXT,
@@ -554,7 +554,7 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
         if (type === 'tv' && itemData.seasons && itemData.seasons.length > 0) {
             try {
                 const seasonDetailPromises = itemData.seasons.map(season => {
-                    if (season.season_number === 0) {
+                    if (season.season_number === 0) { // Исключаем "Specials" если у них номер 0
                         return Promise.resolve({
                             ...season,
                             episodes: [],
@@ -578,11 +578,11 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
                     }))
                     .catch(err => {
                         console.warn(`Не удалось загрузить детали для сезона ${season.season_number} сериала ${tmdbId}: ${err.message}`);
-                        return {
+                        return { // Возвращаем базовую информацию о сезоне в случае ошибки
                             ...season,
-                            episodes: [],
-                            episode_count: season.episode_count || 0,
-                            poster_path: season.poster_path || null
+                            episodes: [], // Пустой массив эпизодов
+                            episode_count: season.episode_count || 0, // Используем существующее количество или 0
+                            poster_path: season.poster_path || null // Используем существующий постер или null
                         };
                     });
                 });
@@ -592,9 +592,10 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
 
             } catch (seasonFetchError) {
                 console.error(`Ошибка при загрузке некоторых деталей сезонов для сериала ${tmdbId}: ${seasonFetchError.message}`);
+                // В случае общей ошибки при Promise.all, можно попробовать заполнить all_season_details базовыми данными
                 if (itemData.seasons && !itemData.all_season_details) {
                     itemData.all_season_details = itemData.seasons
-                        .filter(s => s.season_number !== 0)
+                        .filter(s => s.season_number !== 0) // Исключаем "Specials" если у них номер 0
                         .map(s => ({
                             ...s,
                             episodes: [],
@@ -615,19 +616,19 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
     }
 });
 
-// --- НАЧАЛО ИЗМЕНЕНИЙ В ЛОГИКЕ ПОИСКА ---
 app.get('/api/tmdb/search', async (req, res) => {
     const { 
-        query,            // Текстовый запрос пользователя
-        media_type,       // 'movie', 'tv', или не указан (тогда 'multi' если есть query)
-        genres,           // Строка ID жанров через запятую, например "28,12"
-        year_from,        // Год "от"
-        year_to,          // Год "до"
-        rating_from,      // Рейтинг "от"
-        rating_to,        // Рейтинг "до"
-        page = 1,         // Номер страницы
-        language = 'ru-RU', // Язык результатов
-        sort_by = 'popularity.desc' // Сортировка по умолчанию
+        query,
+        media_type,
+        genres,
+        year_from,
+        year_to,
+        rating_from,
+        rating_to,
+        page = 1,
+        language = 'ru-RU',
+        sort_by = 'popularity.desc',
+        with_types // Добавлен для фильтрации типов сериалов (например, "scripted")
     } = req.query;
 
     if (!TMDB_API_KEY) return res.status(500).json({ error: 'API ключ TMDB не найден.' });
@@ -641,20 +642,10 @@ app.get('/api/tmdb/search', async (req, res) => {
     };
 
     if (query) { 
-        // --- Сценарий 1: Есть текстовый запрос ---
-        // Определяем тип поиска: 'multi', 'movie', или 'tv'
-        // Если media_type указан и валиден, используем его. Иначе, по умолчанию 'multi'.
         const searchType = (media_type === 'movie' || media_type === 'tv') ? media_type : 'multi';
         tmdbUrl = `${TMDB_BASE_URL}/search/${searchType}`;
         params.query = query;
 
-        // Добавляем фильтр по году, если он применим и доступен для эндпоинта /search
-        // TMDB /search/movie принимает 'year'
-        // TMDB /search/tv принимает 'first_air_date_year'
-        // /search/multi официально не документирует эти параметры для одновременной фильтрации,
-        // но мы можем попытаться применить их, если тип явно указан.
-        // Для простоты, если указан year_from, используем его.
-        // TMDB /search не поддерживает диапазоны годов или рейтингов напрямую вместе с текстовым запросом.
         if (year_from) {
             const yearFromInt = parseInt(year_from, 10);
             if (!isNaN(yearFromInt)) {
@@ -663,60 +654,40 @@ app.get('/api/tmdb/search', async (req, res) => {
                 } else if (searchType === 'tv') {
                     params.first_air_date_year = yearFromInt;
                 }
-                // Если searchType === 'multi', применение общего годового фильтра проблематично,
-                // так как параметры для фильмов и сериалов разные.
-                // Оставляем применение года только для явно указанных 'movie' или 'tv'.
             }
         }
-        
-        // ВАЖНО: Фильтры по жанрам (with_genres) и диапазонам рейтинга (vote_average.gte/lte)
-        // НЕ ПОДДЕРЖИВАЮТСЯ напрямую эндпоинтом /search TMDB одновременно с текстовым запросом query.
-        // Поэтому мы не добавляем их в `params` здесь.
-        // Любая дополнительная фильтрация по этим критериям для результатов /search
-        // должна будет происходить на стороне клиента или после получения всех страниц от TMDB на сервере (что неэффективно).
-
     } else if (media_type && (media_type === 'movie' || media_type === 'tv')) { 
-        // --- Сценарий 2: Нет текстового запроса, но есть фильтры (используем /discover) ---
         tmdbUrl = `${TMDB_BASE_URL}/discover/${media_type}`;
         
-        if (genres) params.with_genres = genres; // Например, '28,12'
+        if (genres) params.with_genres = genres;
         
-        // Формируем параметры для диапазона дат релиза/первого показа
         const dateParamPrefix = media_type === 'movie' ? 'primary_release_date' : 'first_air_date';
         if (year_from) {
             params[`${dateParamPrefix}.gte`] = `${year_from}-01-01`;
-            // Если указан только year_from, ищем за весь этот год
             if (!year_to) params[`${dateParamPrefix}.lte`] = `${year_from}-12-31`;
         }
         if (year_to) {
             params[`${dateParamPrefix}.lte`] = `${year_to}-12-31`;
-            // Если указан только year_to, а year_from нет, можно установить gte на начало времен
             if (!year_from) params[`${dateParamPrefix}.gte`] = `1900-01-01`; 
         }
 
-        // Формируем параметры для диапазона рейтинга
         if (rating_from) params['vote_average.gte'] = parseFloat(rating_from);
         if (rating_to) params['vote_average.lte'] = parseFloat(rating_to);
         
-        params.sort_by = sort_by || 'popularity.desc'; // Сортировка по умолчанию для /discover
+        // Применяем фильтр with_types только для сериалов (media_type === 'tv')
+        if (media_type === 'tv' && with_types) {
+            params.with_types = with_types;
+        }
+        
+        params.sort_by = sort_by || 'popularity.desc';
     } else {
-        // --- Сценарий 3: Недостаточно параметров для запроса ---
-        // Если нет ни текстового запроса, ни валидного media_type для /discover,
-        // но могут быть другие фильтры (например, только жанры без типа).
-        // В этом случае сложно сформировать корректный запрос.
-        // Возвращаем ошибку, указывая на необходимость query или media_type.
          return res.status(400).json({ error: "Для поиска необходим текстовый запрос или указание типа медиа (фильм/сериал) вместе с другими фильтрами." });
     }
 
     try {
         console.log(`[TMDB ЗАПРОС] URL: ${tmdbUrl}, Параметры: ${JSON.stringify(params)}`);
         const response = await axios.get(tmdbUrl, { params });
-        
-        // Сервер просто возвращает ответ от TMDB.
-        // Клиент должен будет учитывать, что при текстовом поиске (query)
-        // фильтрация по жанрам и рейтингам со стороны TMDB не производилась.
         res.status(200).json(response.data);
-
     } catch (error) {
         const status = error.response ? error.response.status : 500;
         const message = error.response?.data?.status_message || 'Ошибка при выполнении поиска на TMDB.';
@@ -724,8 +695,6 @@ app.get('/api/tmdb/search', async (req, res) => {
         res.status(status).json({ error: message, details: error.response ? error.response.data : null });
     }
 });
-// --- КОНЕЦ ИЗМЕНЕНИЙ В ЛОГИКЕ ПОИСКА ---
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));

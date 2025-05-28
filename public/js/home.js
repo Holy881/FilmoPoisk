@@ -108,6 +108,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: 14, tmdb_id: 634649, media_type: 'movie', title: 'Человек-паук: Нет пути домой', name: 'Человек-паук: Нет пути домой', poster_path: '/uJYYizSuA9Y3DCs0qS4qWvHfZg4.jpg', vote_average: 8.0, overview: 'Впервые в киноистории Человека-паука наш дружелюбный герой разоблачен. Теперь супергеройские подвиги стали неотделимы от его обычной жизни. Когда он просит помощи у Доктора Стрэнджа, ситуация только усугубляется. И Питер Паркер должен как никогда раньше ощутить, что значит быть Человеком-пауком.', release_date: '2021-12-15', first_air_date: null, genres: [{id: 28, name: 'Боевик'}, {id: 12, name: 'Приключения'}, {id: 878, name: 'Фантастика'}], number_of_episodes: null, number_of_seasons: null },
         { id: 15, tmdb_id: 82856, media_type: 'tv', title: 'Мандалорец', name: 'Мандалорец', poster_path: '/eU1i6eGhhk3A12oE7Fq289Xo1n8.jpg', vote_average: 8.4, overview: 'Одинокий мандалорец-наёмник живёт на краю обитаемой галактики, куда не дотягивается закон Новой Республики. Представитель некогда могучей расы благородных воинов теперь вынужден влачить жалкое существование среди отбросов общества.', release_date: null, first_air_date: '2019-11-12', genres: [{id: 10765, name: 'Sci-Fi & Fantasy'}, {id: 10759, name: 'Action & Adventure'}], number_of_episodes: 24, number_of_seasons: 3 }
     ];
+    const EXCLUDED_TV_GENRE_IDS = [10767, 10764, 10763]; // ID для "Talk Show" и "Reality"
+
 
     function handlePopularSectionVisibility() {
         const popularShelfElement = document.getElementById('popular');
@@ -314,7 +316,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function createMovieTile(movie) {
         const tile = document.createElement('div');
         tile.className = 'movie-tile';
-        tile.dataset.tmdbId = String(movie.tmdb_id);
+        tile.dataset.tmdbId = String(movie.tmdb_id); 
         tile.dataset.mediaType = movie.media_type;
 
         const posterUrl = movie.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_CARD}${movie.poster_path}` : '/images/default-poster.jpg';
@@ -340,8 +342,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!shelfElement) return;
         const grid = shelfElement.querySelector('.shelf-grid');
         if (!grid) return;
-        grid.innerHTML = '';
-        const moviesToDisplay = moviesData.slice(0, 15);
+        grid.innerHTML = ''; 
+        const moviesToDisplay = moviesData; 
         moviesToDisplay.forEach(movie => {
             grid.appendChild(createMovieTile(movie));
         });
@@ -349,6 +351,93 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateShelfControls(shelfElement);
         });
     }
+
+    async function fetchAndRenderPopularMovies(shelfElement, movieCount = 8, tvShowCount = 7) {
+        if (!shelfElement) return;
+
+        try {
+            const [movieResponse, tvResponse] = await Promise.all([
+                fetch(`/api/tmdb/search?media_type=movie&sort_by=popularity.desc&page=1&rating_from=6.5`), // Добавлен rating_from=6.5
+                fetch(`/api/tmdb/search?media_type=tv&sort_by=popularity.desc&page=1&with_types=4&rating_from=6.5`) // Добавлен rating_from=6.5
+            ]);
+
+            let popularMovies = [];
+            let popularTvShows = [];
+
+            if (movieResponse.ok) {
+                const movieData = await movieResponse.json();
+                if (movieData && movieData.results && movieData.results.length > 0) {
+                    const filteredMovies = movieData.results.filter(movie => movie.popularity >= 75); // Фильтр по популярности
+                    popularMovies = filteredMovies.map(movie => ({
+                        tmdb_id: movie.id,
+                        media_type: 'movie',
+                        title: movie.title,
+                        name: movie.title,
+                        poster_path: movie.poster_path,
+                        vote_average: movie.vote_average,
+                        overview: movie.overview,
+                        release_date: movie.release_date,
+                        genre_ids: movie.genre_ids || [],
+                        popularity: movie.popularity // Сохраняем для возможной отладки/использования
+                    })).slice(0, movieCount);
+                } else {
+                    console.warn('Не удалось получить популярные фильмы (с рейтингом >= 6.5) или список пуст.');
+                }
+            } else {
+                console.error(`Ошибка при загрузке популярных фильмов: ${movieResponse.status}`);
+            }
+
+            if (tvResponse.ok) {
+                const tvData = await tvResponse.json();
+                if (tvData && tvData.results && tvData.results.length > 0) {
+                    let filteredTvResults = tvData.results.filter(tvShow => tvShow.popularity >= 75); // Фильтр по популярности
+
+                    filteredTvResults = filteredTvResults.filter(tvShow => {
+                        if (!tvShow.genre_ids || tvShow.genre_ids.length === 0) {
+                            return true; 
+                        }
+                        return !tvShow.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id));
+                    });
+
+                    popularTvShows = filteredTvResults.map(tvShow => ({
+                        tmdb_id: tvShow.id,
+                        media_type: 'tv',
+                        title: tvShow.name, 
+                        name: tvShow.name,
+                        poster_path: tvShow.poster_path,
+                        vote_average: tvShow.vote_average,
+                        overview: tvShow.overview,
+                        first_air_date: tvShow.first_air_date, 
+                        genre_ids: tvShow.genre_ids || [],
+                        popularity: tvShow.popularity // Сохраняем для возможной отладки/использования
+                    })).slice(0, tvShowCount);
+                } else {
+                    console.warn('Не удалось получить популярные сериалы (scripted, рейтинг >= 6.5) или список пуст.');
+                }
+            } else {
+                console.error(`Ошибка при загрузке популярных сериалов (scripted): ${tvResponse.status}`);
+            }
+
+            const combinedMedia = [...popularMovies, ...popularTvShows];
+
+            for (let i = combinedMedia.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [combinedMedia[i], combinedMedia[j]] = [combinedMedia[j], combinedMedia[i]];
+            }
+
+            if (combinedMedia.length > 0) {
+                renderShelf(shelfElement, combinedMedia);
+            } else {
+                console.warn('Не удалось получить ни фильмы, ни сериалы по заданным критериям. Отображение заглушек.');
+                renderShelf(shelfElement, placeholderMovies.slice(0, movieCount + tvShowCount));
+            }
+
+        } catch (error) {
+            console.error('Ошибка при загрузке и отображении популярного контента:', error);
+            renderShelf(shelfElement, placeholderMovies.slice(0, movieCount + tvShowCount));
+        }
+    }
+
 
     function applyRatingStyles(targetElement, ratingValue) {
         if (!targetElement) return;
@@ -1116,16 +1205,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const itemYear = itemYearStr && !isNaN(parseInt(itemYearStr, 10)) ? parseInt(itemYearStr, 10) : null;
             const itemRating = itemRatingStr && !isNaN(parseFloat(itemRatingStr)) ? parseFloat(itemRatingStr) : null;
-            const itemGenreIds = itemGenreIdsStr ? itemGenreIdsStr.split(',').filter(id => id) : [];
+            const itemGenreIds = itemGenreIdsStr ? itemGenreIdsStr.split(',').filter(id => id).map(id => parseInt(id, 10)) : [];
 
-            // 1. Фильтр по типу
-            if (selectedMediaType && itemMediaType !== selectedMediaType) {
+
+            // 0. Фильтр по нежелательным жанрам для TV (дополнительно к with_types=4)
+            if (itemMediaType === 'tv' && itemGenreIds.some(id => EXCLUDED_TV_GENRE_IDS.includes(id))) {
                 matches = false;
             }
 
-            // 2. Фильтр по жанрам (элемент должен содержать ВСЕ выбранные жанры)
+            // 1. Фильтр по типу
+            if (matches && selectedMediaType && itemMediaType !== selectedMediaType) {
+                matches = false;
+            }
+
+            // 2. Фильтр по выбранным жанрам (элемент должен содержать ВСЕ выбранные жанры)
             if (matches && selectedGenreIds.length > 0) {
-                const hasAllSelectedGenres = selectedGenreIds.every(selGenreId => itemGenreIds.includes(selGenreId));
+                const hasAllSelectedGenres = selectedGenreIds.every(selGenreId => itemGenreIds.includes(parseInt(selGenreId, 10)));
                 if (!hasAllSelectedGenres) {
                     matches = false;
                 }
@@ -1136,7 +1231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (yearFrom && itemYear < yearFrom) {
                     matches = false;
                 }
-                if (matches && yearTo && itemYear > yearTo) { // Добавляем 'matches &&' чтобы не перезаписать false
+                if (matches && yearTo && itemYear > yearTo) { 
                     matches = false;
                 }
             } else if (matches && (yearFrom || yearTo)) { 
@@ -1148,7 +1243,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (ratingFrom && itemRating < ratingFrom) {
                     matches = false;
                 }
-                if (matches && ratingTo && itemRating > ratingTo) { // Добавляем 'matches &&'
+                if (matches && ratingTo && itemRating > ratingTo) { 
                     matches = false;
                 }
             } else if (matches && (ratingFrom || ratingTo)) {
@@ -1272,12 +1367,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     loadAndDisplayHeroContent();
     updateUserProfileDisplay();
+    // loadAndPopulateAllGenres(); // Раскомментируйте, если имена жанров нужны сразу для popular shelf
 
     const popularShelfElement = document.getElementById('popular');
     const nowPlayingShelfElement = document.getElementById('now-playing');
 
-    if (popularShelfElement) renderShelf(popularShelfElement, placeholderMovies);
-    if (nowPlayingShelfElement) renderShelf(nowPlayingShelfElement, [...placeholderMovies].reverse().slice(0,15));
+    if (popularShelfElement) {
+        fetchAndRenderPopularMovies(popularShelfElement); 
+    }
+
+    if (nowPlayingShelfElement) {
+        renderShelf(nowPlayingShelfElement, [...placeholderMovies].reverse().slice(0,15));
+    }
 
     initShelves();
 
@@ -1301,9 +1402,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 let offsetTop = targetSection.getBoundingClientRect().top + window.pageYOffset - effectiveNavbarHeight;
                 
-                if (sectionId === 'popular' && contentArea) { // Специальная логика для "Популярное"
+                if (sectionId === 'popular' && contentArea) { 
                      offsetTop = contentArea.getBoundingClientRect().top + window.pageYOffset - effectiveNavbarHeight;
-                     if (offsetTop < 0 && sectionId === 'popular') offsetTop = 0; // Не уходить выше начала contentArea
+                     if (offsetTop < 0 && sectionId === 'popular') offsetTop = 0; 
                 }
                 window.scrollTo({ top: offsetTop, behavior: 'smooth' });
             }

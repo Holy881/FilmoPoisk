@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр - ФильмоПОИСК</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/home.css"> 
+    <link rel="stylesheet" href="/css/watch.css">
+    <link rel="icon" type="image/vnd.microsoft.icon" href="/images/favicon.ico" />
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-left">
+            <a href="/" class="navbar-brand">ФильмоПОИСК</a>
+            <a href="/#popular" class="navbar-button" data-section="popular">Популярное</a>
+            <a href="/#now-playing" class="navbar-button" data-section="now-playing">Сейчас смотрят</a>
+            <a href="/#movies-shelf" class="navbar-button" data-section="movies-shelf">Фильмы</a>
+            <a href="/#tv-shows-shelf" class="navbar-button" data-section="tv-shows-shelf">Сериалы</a>
+            <a href="/#genre-shelves-main-container" class="navbar-button" data-section="genre-shelves-main-container">Жанры</a>
+        </div>
+        <div class="navbar-right">
+            <button class="navbar-icon" id="search-button"><i class="fas fa-search"></i></button>
+            <div class="navbar-profile-container">
+                 <a href="/profile" class="navbar-icon" id="user-profile-link">
+                    <span id="user-profile-icon-container"><i class="fas fa-user"></i></span>
+                </a>
+                <div class="profile-dropdown" id="profile-dropdown-menu">
+                    <div class="dropdown-username" id="dropdown-username-display">Никнейм</div>
+                    <hr class="dropdown-divider">
+                    <button class="dropdown-button" id="dropdown-profile-button">Профиль</button>
+                    <button class="dropdown-button logout-button" id="dropdown-logout-button">Выход</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="search-modal" id="search-modal">
+        <div class="search-modal-content">
+             <div class="search-modal-layout">
+                <div class="search-modal-main">
+                    <input type="text" placeholder="Поиск фильмов, сериалов, аниме..." class="search-modal-input">
+                    <div class="search-loading-indicator" style="display: none;"></div>
+                    <div class="search-results-placeholder">
+                        <p>Введите ваш запрос для поиска...</p>
+                    </div>
+                </div>
+                <aside class="search-modal-sidebar">
+                    <h3 class="filters-title">Фильтры</h3>
+                    <div class="filter-group">
+                        <h4 class="filter-group-title">Жанры</h4>
+                        <div class="custom-dropdown" data-dropdown-id="genres-movie">
+                            <button type="button" class="dropdown-toggle">
+                                <span>Выберите жанр(ы)</span>
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                <p class="genres-loading-placeholder" style="padding: 8px 10px; color: #A0A0A0; font-size: 0.9em; font-style: italic;">Загрузка жанров...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <h4 class="filter-group-title">Тип</h4>
+                        <div class="custom-dropdown" data-dropdown-id="type">
+                            <button type="button" class="dropdown-toggle">
+                                <span>Выберите тип</span>
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                <label><input type="checkbox" name="type_filter" value="movie" data-genre-name="Фильм"> Фильм</label>
+                                <label><input type="checkbox" name="type_filter" value="tv" data-genre-name="Сериал"> Сериал</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <h4 class="filter-group-title">Год</h4>
+                        <div class="filter-range">
+                            <div class="number-input-container">
+                                <input type="number" min="1900" max="2025" placeholder="от" class="range-input year-input">
+                                <div class="number-input-arrows"><span class="arrow up-arrow"></span><span class="arrow down-arrow"></span></div>
+                            </div>
+                            <span>–</span>
+                            <div class="number-input-container">
+                                <input type="number" min="1900" max="2025" placeholder="до" class="range-input year-input">
+                                <div class="number-input-arrows"><span class="arrow up-arrow"></span><span class="arrow down-arrow"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <h4 class="filter-group-title">Оценка</h4>
+                        <div class="filter-range">
+                            <div class="number-input-container">
+                                <input type="number" min="0" max="10" step="0.1" placeholder="от" class="range-input rating-input">
+                                <div class="number-input-arrows"><span class="arrow up-arrow"></span><span class="arrow down-arrow"></span></div>
+                            </div>
+                            <span>–</span>
+                            <div class="number-input-container">
+                                <input type="number" min="0" max="10" step="0.1" placeholder="до" class="range-input rating-input">
+                                <div class="number-input-arrows"><span class="arrow up-arrow"></span><span class="arrow down-arrow"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="reset-filters-button action-button">Сбросить фильтры</button>
+                </aside>
+            </div>
+        </div>
+    </div>
+    
+    <div class="watch-page-container">
+        <div class="anime_background_image">
+            <div class="anime_background_image_dark"></div>
+            <img src="https://placehold.co/1920x1080/0D0D0D/333333?text=Загрузка..." alt="Фон" class="anime_background_image_image">
+        </div>
+
+        <div class="anime_body">
+            <div class="anime_left_body">
+                <div class="anime_body_poster">
+                    <img src="https://placehold.co/500x750/1A1A1A/555555?text=Постер" alt="Постер" class="poster-image">
+                </div>
+                <button class="action-button watch-now-main-btn" id="watch-now-main-btn">
+                    <i class="fas fa-play"></i> Смотреть
+                </button>
+                <div class="anime_add_to_folders add-to-list-container">
+                    <button class="action-button add-to-catalog-btn" id="add-to-catalog-btn">
+                        <i class="fas fa-plus"></i>
+                        <span class="anime_add_to_folder_text">Добавить в список</span>
+                    </button>
+                    <div class="list-category-dropdown" id="catalog-category-dropdown">
+                        <button data-category="Просмотрено">Просмотрено</button>
+                        <button data-category="Смотрю">Смотрю</button>
+                        <button data-category="Брошено">Брошено</button>
+                        <button data-category="Планирую">Планирую</button>
+                        <button data-category="В избранном">В избранном</button>
+                        <button data-category="Пересматриваю">Пересматриваю</button>
+                        <button data-category="На паузе">На паузе</button>
+                        <button data-category="Не интересно">Не интересно</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="anime_central_body">
+                <h1 class="anime_central_body_title">Загрузка названия...</h1>
+                <div class="anime_central_body_genres">
+                    <span class="meta-status"></span>
+                    <span class="text_devider">|</span>
+                    <span class="meta-type"></span>
+                    <span class="text_devider">|</span>
+                    <span class="meta-episodes"></span>
+                    <span class="text_devider">|</span>
+                    <span class="meta-year"></span>
+                    <span class="text_devider">|</span>
+                    <span class="meta-age-rating"></span>
+                </div>
+                <p class="anime_central_body_description">Загрузка описания...</p>
+
+                <div class="anime_central_body_info">
+                    <h2>О сериале</h2>
+                    <div class="anime_info_list">
+                        </div>
+                </div>
+            </div>
+
+            <div class="anime_right_body">
+                <div class="search_rank anime rating-display-badge rating-none" id="rating-badge">...</div>
+            </div>
+        </div>
+        
+        <div class="anime_additional_information_block">
+            <div class="anime_additional_information_block_header">
+                <div class="tab-button-watch active" data-tab-target="#tab-backdrops">Задники</div>
+                <div class="tab-button-watch" data-tab-target="#tab-posters">Постеры</div>
+                <div class="tab-button-watch" data-tab-target="#tab-videos">Видео</div>
+                <div class="tab-button-watch" data-tab-target="#tab-similar">Похожее</div>
+                <div class="tab-button-watch" data-tab-target="#tab-recommendations">Рекомендации</div>
+            </div>
+            <div class="anime_additional_information_block_header_separator"></div>
+            
+            <div class="tab-content-watch">
+                <div id="tab-backdrops" class="tab-pane-watch active">
+                    <div class="media-grid" id="backdrops-grid">
+                        </div>
+                </div>
+                <div id="tab-posters" class="tab-pane-watch">
+                    <div class="media-grid" id="posters-grid">
+                        </div>
+                </div>
+                <div id="tab-videos" class="tab-pane-watch">
+                     <div class="media-grid" id="videos-grid">
+                        </div>
+                </div>
+                <div id="tab-similar" class="tab-pane-watch">
+                    </div>
+                <div id="tab-recommendations" class="tab-pane-watch">
+                    </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast-notification" class="toast-notification">
+        <span id="toast-notification-message"></span>
+    </div>
+
+    <div id="image-lightbox" class="lightbox-modal">
+        <span class="lightbox-close-button">&times;</span>
+        <img class="lightbox-content" id="lightbox-image">
+        <div id="lightbox-caption"></div>
+    </div>
+
+    <script src="/js/home.js"></script> 
+    <script src="/js/watch.js"></script>
+</body>
+</html>

@@ -251,36 +251,33 @@ app.post('/api/user/:id/update', (req, res) => {
     });
 });
 
-// Эндпоинт для получения списков пользователя (остается без изменений)
 app.get('/api/user/:id/lists', (req, res) => {
     const userId = req.params.id;
     const categoryQueryParam = req.query.category;
     const sortQueryParam = req.query.sort || 'date_desc';
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12; // Количество элементов на странице
+    const limit = parseInt(req.query.limit) || 12; 
     const offset = (page - 1) * limit;
-    const tmdbIdQuery = req.query.tmdb_id; // Для проверки конкретного элемента
-    const mediaTypeQuery = req.query.media_type; // Для проверки конкретного элемента
+    const tmdbIdQuery = req.query.tmdb_id; 
+    const mediaTypeQuery = req.query.media_type; 
 
     let countQuery = 'SELECT COUNT(*) as total FROM user_lists WHERE user_id = ?';
     let itemsQuery = 'SELECT item_id AS id, user_id, tmdb_id, media_type, category, title, poster_path, rating, added_date FROM user_lists WHERE user_id = ?';
     const countQueryParams = [userId];
     const itemsQueryParams = [userId];
 
-    if (tmdbIdQuery && mediaTypeQuery) { // Если запрашивается статус конкретного элемента
+    if (tmdbIdQuery && mediaTypeQuery) { 
         itemsQuery += ' AND tmdb_id = ? AND media_type = ?';
         itemsQueryParams.push(tmdbIdQuery, mediaTypeQuery);
-        // countQuery не нужен в этом случае, так как мы ищем один элемент
         db.get(itemsQuery, itemsQueryParams, (err, row) => {
             if (err) {
                 console.error('Ошибка при получении статуса элемента списка:', err.message);
                 return res.status(500).json({ error: 'Ошибка сервера при получении статуса элемента' });
             }
-            return res.status(200).json(row || null); // Возвращаем элемент или null, если не найден
+            return res.status(200).json(row || null); 
         });
         return;
     }
-
 
     if (categoryQueryParam && categoryQueryParam !== 'Все категории') {
         countQuery += ' AND category = ?';
@@ -291,7 +288,7 @@ app.get('/api/user/:id/lists', (req, res) => {
 
     let orderByClause = '';
     switch (sortQueryParam) {
-        case 'none': orderByClause = ' ORDER BY added_date DESC'; break; // Сортировка по дате добавления по умолчанию
+        case 'none': orderByClause = ' ORDER BY added_date DESC'; break; 
         case 'date_asc': orderByClause = ' ORDER BY added_date ASC'; break;
         case 'title_asc': orderByClause = ' ORDER BY LOWER(title) ASC'; break;
         case 'title_desc': orderByClause = ' ORDER BY LOWER(title) DESC'; break;
@@ -324,8 +321,6 @@ app.get('/api/user/:id/lists', (req, res) => {
     });
 });
 
-
-// ОБНОВЛЕННЫЙ ЭНДПОИНТ для добавления/обновления элемента в списке
 app.post('/api/user/:id/lists', (req, res) => {
     const userId = req.params.id;
     const { category, title, poster_path, rating, tmdb_id, media_type } = req.body;
@@ -344,11 +339,8 @@ app.post('/api/user/:id/lists', (req, res) => {
         return res.status(400).json({ error: 'Недопустимый тип медиа. Должен быть "movie" или "tv".' });
     }
 
-    // Используем транзакцию для атомарности операций
     db.serialize(() => {
         db.run("BEGIN TRANSACTION;");
-
-        // Сначала удаляем существующую запись для этого user_id, tmdb_id и media_type, если она есть
         const deleteSql = 'DELETE FROM user_lists WHERE user_id = ? AND tmdb_id = ? AND media_type = ?';
         db.run(deleteSql, [userId, tmdb_id, media_type], function(deleteErr) {
             if (deleteErr) {
@@ -356,11 +348,8 @@ app.post('/api/user/:id/lists', (req, res) => {
                 console.error('Ошибка при удалении существующего элемента из списка:', deleteErr.message);
                 return res.status(500).json({ error: 'Ошибка сервера при обновлении списка' });
             }
-            
-            // Затем вставляем новую запись
             const insertSql = 'INSERT INTO user_lists (user_id, tmdb_id, media_type, category, title, poster_path, rating, added_date) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)';
             const params = [userId, tmdb_id, media_type, category, title, poster_path, ratingValue];
-
             db.run(insertSql, params, function (insertErr) {
                 if (insertErr) {
                     db.run("ROLLBACK;");
@@ -383,7 +372,6 @@ app.post('/api/user/:id/lists', (req, res) => {
         });
     });
 });
-
 
 app.delete('/api/user/:id/lists/:item_id', (req, res) => {
     const userId = req.params.id;
@@ -424,14 +412,11 @@ app.put('/api/user/:id/lists/:item_id', (req, res) => {
         updates.push('rating = ?');
         params.push(ratingValue);
     }
-    // Добавляем обновление added_date при любом изменении
     updates.push('added_date = CURRENT_TIMESTAMP');
 
-
-    if (updates.length === 1 && updates[0] === 'added_date = CURRENT_TIMESTAMP') { // Если обновляется только дата - это не имеет смысла без других изменений
+    if (updates.length === 1 && updates[0] === 'added_date = CURRENT_TIMESTAMP') { 
          return res.status(400).json({ error: 'Не указаны данные для обновления (кроме даты)' });
     }
-
 
     query += updates.join(', ') + ' WHERE user_id = ? AND item_id = ?';
     params.push(userId, itemId);
@@ -503,7 +488,8 @@ app.get('/api/tmdb/hero-content', async (req, res) => {
             params: {
                 api_key: TMDB_API_KEY,
                 language: language,
-                append_to_response: 'images'
+                append_to_response: 'images',
+                include_image_language: 'ru,en,null' // Для изображений в hero
             }
         });
         const itemDetails = detailsResponse.data;
@@ -514,14 +500,16 @@ app.get('/api/tmdb/hero-content', async (req, res) => {
         };
         
         let backdropPath = itemDetails.backdrop_path;
+        // Логика выбора лучшего задника уже учтена в TMDB API при include_image_language
+        // Если TMDB возвращает основной backdrop_path, он должен быть наиболее релевантным
+        // Дополнительная проверка на русские/английские не всегда нужна, если основной уже хороший
         if (itemDetails.images && itemDetails.images.backdrops && itemDetails.images.backdrops.length > 0) {
-            const russianBackdrop = itemDetails.images.backdrops.find(b => b.iso_639_1 === 'ru');
-            if (russianBackdrop) {
-                backdropPath = russianBackdrop.file_path;
-            } else if (itemDetails.images.backdrops[0]) {
-                backdropPath = itemDetails.images.backdrops[0].file_path;
-            }
+           // Можно оставить текущий backdrop_path, если он есть, или выбрать первый из массива, если основного нет
+           if (!backdropPath && itemDetails.images.backdrops[0]) {
+               backdropPath = itemDetails.images.backdrops[0].file_path;
+           }
         }
+
 
         const title = itemType === 'movie' ? itemDetails.title : itemDetails.name;
         const release_date = itemType === 'movie' ? itemDetails.release_date : itemDetails.first_air_date;
@@ -587,29 +575,34 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
             params: { 
                 api_key: TMDB_API_KEY, 
                 language: language, 
-                append_to_response: 'credits,videos,images,recommendations,similar,release_dates,content_ratings' 
+                append_to_response: 'credits,videos,images,recommendations,similar,release_dates,content_ratings',
+                include_image_language: 'ru,en,null' // Включаем русские, английские и изображения без языка
             }
         });
         let itemData = response.data;
 
+        // Дополнительная обработка для получения деталей сезонов, если это сериал
         if (type === 'tv' && itemData.seasons && itemData.seasons.length > 0) {
             try {
                 const seasonDetailPromises = itemData.seasons.map(season => {
-                    if (season.season_number === 0) { 
+                    // Пропускаем "Specials" сезоны (season_number: 0), если у них нет постера, 
+                    // или если мы хотим только "настоящие" сезоны
+                    if (season.season_number === 0 /* && !season.poster_path */) { 
                         return Promise.resolve({
-                            ...season,
-                            episodes: [],
+                            ...season, // Возвращаем базовую информацию о сезоне 0
+                            episodes: [], // Предполагаем, что детали эпизодов для сезона 0 не нужны
                             episode_count: season.episode_count || 0,
                             poster_path: season.poster_path || null
                         });
                     }
+                    // Запрашиваем детали для каждого "настоящего" сезона
                     return axios.get(`${TMDB_BASE_URL}/tv/${tmdbId}/season/${season.season_number}`, {
                         params: { api_key: TMDB_API_KEY, language: language }
                     })
-                    .then(seasonRes => ({
+                    .then(seasonRes => ({ // Собираем нужную информацию о сезоне
                         id: seasonRes.data.id,
                         air_date: seasonRes.data.air_date,
-                        episodes: seasonRes.data.episodes || [],
+                        episodes: seasonRes.data.episodes || [], // Массив эпизодов
                         name: seasonRes.data.name,
                         overview: seasonRes.data.overview,
                         poster_path: seasonRes.data.poster_path,
@@ -617,8 +610,9 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
                         vote_average: seasonRes.data.vote_average,
                         episode_count: seasonRes.data.episodes ? seasonRes.data.episodes.length : (season.episode_count || 0)
                     }))
-                    .catch(err => {
+                    .catch(err => { // Обработка ошибок для запроса деталей сезона
                         console.warn(`Не удалось загрузить детали для сезона ${season.season_number} сериала ${tmdbId}: ${err.message}`);
+                        // Возвращаем базовую информацию о сезоне, если детали не загрузились
                         return { 
                             ...season,
                             episodes: [], 
@@ -628,15 +622,17 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
                     });
                 });
                 
+                // Дожидаемся выполнения всех запросов деталей сезонов
                 const detailedSeasonsData = (await Promise.all(seasonDetailPromises)).filter(Boolean);
-                itemData.all_season_details = detailedSeasonsData;
+                itemData.all_season_details = detailedSeasonsData; // Добавляем детали сезонов к основным данным
 
-            } catch (seasonFetchError) {
+            } catch (seasonFetchError) { // Обработка общей ошибки при загрузке деталей сезонов
                 console.error(`Ошибка при загрузке некоторых деталей сезонов для сериала ${tmdbId}: ${seasonFetchError.message}`);
+                // Если произошла ошибка, но базовый список сезонов есть, используем его
                 if (itemData.seasons && !itemData.all_season_details) {
                     itemData.all_season_details = itemData.seasons
-                        .filter(s => s.season_number !== 0) 
-                        .map(s => ({
+                        // .filter(s => s.season_number !== 0) // Опционально: исключить сезон 0, если не нужен
+                        .map(s => ({ // Преобразуем в ожидаемый формат
                             ...s,
                             episodes: [],
                             episode_count: s.episode_count || 0,
@@ -680,7 +676,8 @@ app.get('/api/tmdb/search', async (req, res) => {
         api_key: TMDB_API_KEY, 
         language: language, 
         page: parseInt(page, 10), 
-        include_adult: false 
+        include_adult: false,
+        include_image_language: 'ru,en,null' // Добавляем и для поиска, чтобы постеры были релевантнее
     };
 
     if (list_type) {
@@ -705,10 +702,11 @@ app.get('/api/tmdb/search', async (req, res) => {
             const yearFromInt = parseInt(year_from, 10);
             if (!isNaN(yearFromInt)) {
                 if (searchType === 'movie') {
-                    params.year = yearFromInt;
+                    params.year = yearFromInt; // Для фильмов используем 'year'
                 } else if (searchType === 'tv') {
-                    params.first_air_date_year = yearFromInt;
+                    params.first_air_date_year = yearFromInt; // Для сериалов 'first_air_date_year'
                 }
+                 // Для 'multi' этот параметр может не работать или работать не так, как ожидается для одного из типов
             }
         }
     } else if (media_type && (media_type === 'movie' || media_type === 'tv')) { 
@@ -719,21 +717,21 @@ app.get('/api/tmdb/search', async (req, res) => {
         const dateParamPrefix = media_type === 'movie' ? 'primary_release_date' : 'first_air_date';
         if (year_from) {
             params[`${dateParamPrefix}.gte`] = `${year_from}-01-01`;
-            if (!year_to) params[`${dateParamPrefix}.lte`] = `${year_from}-12-31`;
+            if (!year_to) params[`${dateParamPrefix}.lte`] = `${year_from}-12-31`; // Если только "от", то до конца этого года
         }
         if (year_to) {
             params[`${dateParamPrefix}.lte`] = `${year_to}-12-31`;
-            if (!year_from) params[`${dateParamPrefix}.gte`] = `1900-01-01`; 
+            if (!year_from) params[`${dateParamPrefix}.gte`] = `1900-01-01`; // Если только "до", то от начала времен
         }
 
         if (rating_from) params['vote_average.gte'] = parseFloat(rating_from);
         if (rating_to) params['vote_average.lte'] = parseFloat(rating_to);
         
         if (media_type === 'tv') {
-            if (with_types) {
+            if (with_types) { // Например, 4 для Scripted (сериалы), 2 для Documentary
                 params.with_types = with_types;
             }
-            if (without_genres) { 
+            if (without_genres) { // Исключить жанры
                 params.without_genres = without_genres;
             }
         }

@@ -554,7 +554,7 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
         if (type === 'tv' && itemData.seasons && itemData.seasons.length > 0) {
             try {
                 const seasonDetailPromises = itemData.seasons.map(season => {
-                    if (season.season_number === 0) { // Исключаем "Specials" если у них номер 0
+                    if (season.season_number === 0) { 
                         return Promise.resolve({
                             ...season,
                             episodes: [],
@@ -578,11 +578,11 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
                     }))
                     .catch(err => {
                         console.warn(`Не удалось загрузить детали для сезона ${season.season_number} сериала ${tmdbId}: ${err.message}`);
-                        return { // Возвращаем базовую информацию о сезоне в случае ошибки
+                        return { 
                             ...season,
-                            episodes: [], // Пустой массив эпизодов
-                            episode_count: season.episode_count || 0, // Используем существующее количество или 0
-                            poster_path: season.poster_path || null // Используем существующий постер или null
+                            episodes: [], 
+                            episode_count: season.episode_count || 0, 
+                            poster_path: season.poster_path || null 
                         };
                     });
                 });
@@ -592,10 +592,9 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
 
             } catch (seasonFetchError) {
                 console.error(`Ошибка при загрузке некоторых деталей сезонов для сериала ${tmdbId}: ${seasonFetchError.message}`);
-                // В случае общей ошибки при Promise.all, можно попробовать заполнить all_season_details базовыми данными
                 if (itemData.seasons && !itemData.all_season_details) {
                     itemData.all_season_details = itemData.seasons
-                        .filter(s => s.season_number !== 0) // Исключаем "Specials" если у них номер 0
+                        .filter(s => s.season_number !== 0) 
                         .map(s => ({
                             ...s,
                             episodes: [],
@@ -630,7 +629,7 @@ app.get('/api/tmdb/search', async (req, res) => {
         sort_by = 'popularity.desc',
         with_types, 
         without_genres,
-        list_type // Новый параметр для специальных списков
+        list_type 
     } = req.query;
 
     if (!TMDB_API_KEY) return res.status(500).json({ error: 'API ключ TMDB не найден.' });
@@ -643,19 +642,19 @@ app.get('/api/tmdb/search', async (req, res) => {
         include_adult: false 
     };
 
-    // Обработка специальных типов списков
     if (list_type) {
         if (list_type === 'now_playing' && media_type === 'movie') {
             tmdbUrl = `${TMDB_BASE_URL}/movie/now_playing`;
-        } else if (list_type === 'trending_movie_week' && media_type === 'movie') { // Для трендовых фильмов недели
+        } else if (list_type === 'trending_movie_week' && media_type === 'movie') { 
             tmdbUrl = `${TMDB_BASE_URL}/trending/movie/week`;
-        } else if (list_type === 'trending_tv_week' && media_type === 'tv') { // Для трендовых сериалов недели
+        } else if (list_type === 'trending_tv_week' && media_type === 'tv') { 
             tmdbUrl = `${TMDB_BASE_URL}/trending/tv/week`;
-        } else {
+        } else if (list_type === 'on_the_air_tv' && media_type === 'tv') { // <-- Это условие уже есть, отлично!
+            tmdbUrl = `${TMDB_BASE_URL}/tv/on_the_air`;
+        }
+         else {
             return res.status(400).json({ error: "Неизвестный тип списка или неверная комбинация с media_type." });
         }
-        // Для /trending и /now_playing эндпоинтов специфичные фильтры discover (как rating_from, sort_by, with_types) не применяются напрямую в URL.
-        // Они будут применены на клиенте, если это необходимо, или если TMDB API их поддерживает для этих эндпоинтов (что обычно не так).
     } else if (query) { 
         const searchType = (media_type === 'movie' || media_type === 'tv') ? media_type : 'multi';
         tmdbUrl = `${TMDB_BASE_URL}/search/${searchType}`;

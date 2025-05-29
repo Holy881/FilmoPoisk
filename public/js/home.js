@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Элементы для "Полок" и детальной информации ---
     const contentArea = document.querySelector('.content-area');
+    const dynamicShelvesContainer = document.getElementById('dynamic-shelves-container'); 
 
     const detailedInfoPanel = document.getElementById('detailed-info-panel');
     const detailedInfoCloseBtn = detailedInfoPanel?.querySelector('.detailed-info-close-btn');
@@ -106,7 +107,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: 14, tmdb_id: 634649, media_type: 'movie', title: 'Человек-паук: Нет пути домой', name: 'Человек-паук: Нет пути домой', poster_path: '/uJYYizSuA9Y3DCs0qS4qWvHfZg4.jpg', vote_average: 8.0, overview: 'Впервые в киноистории Человека-паука наш дружелюбный герой разоблачен. Теперь супергеройские подвиги стали неотделимы от его обычной жизни. Когда он просит помощи у Доктора Стрэнджа, ситуация только усугубляется. И Питер Паркер должен как никогда раньше ощутить, что значит быть Человеком-пауком.', release_date: '2021-12-15', first_air_date: null, genres: [{id: 28, name: 'Боевик'}, {id: 12, name: 'Приключения'}, {id: 878, name: 'Фантастика'}], number_of_episodes: null, number_of_seasons: null },
         { id: 15, tmdb_id: 82856, media_type: 'tv', title: 'Мандалорец', name: 'Мандалорец', poster_path: '/eU1i6eGhhk3A12oE7Fq289Xo1n8.jpg', vote_average: 8.4, overview: 'Одинокий мандалорец-наёмник живёт на краю обитаемой галактики, куда не дотягивается закон Новой Республики. Представитель некогда могучей расы благородных воинов теперь вынужден влачить жалкое существование среди отбросов общества.', release_date: null, first_air_date: '2019-11-12', genres: [{id: 10765, name: 'Sci-Fi & Fantasy'}, {id: 10759, name: 'Action & Adventure'}], number_of_episodes: 24, number_of_seasons: 3 }
     ];
-    const EXCLUDED_TV_GENRE_IDS = [10767, 10764, 10766, 10763]; // ID для "Talk Show" и "Reality"
+    const EXCLUDED_TV_GENRE_IDS = [10767, 10764, 10763, 10766]; // ID для "Talk Show" и "Reality"
+
+    // Функция для создания HTML-структуры полки
+    function createShelfElement(id, titleText) {
+        const shelfSection = document.createElement('section');
+        shelfSection.className = 'movie-shelf';
+        shelfSection.id = id;
+
+        const title = document.createElement('h2');
+        title.textContent = titleText;
+        shelfSection.appendChild(title);
+
+        const gridWrapper = document.createElement('div');
+        gridWrapper.className = 'shelf-grid-wrapper';
+
+        const controls = document.createElement('div');
+        controls.className = 'shelf-controls';
+        controls.innerHTML = `
+            <button class="shelf-arrow prev-arrow" aria-label="Предыдущие"><i class="fas fa-chevron-left"></i></button>
+            <button class="shelf-arrow next-arrow" aria-label="Следующие"><i class="fas fa-chevron-right"></i></button>
+        `;
+        gridWrapper.appendChild(controls);
+
+        const grid = document.createElement('div');
+        grid.className = 'shelf-grid';
+        gridWrapper.appendChild(grid);
+
+        shelfSection.appendChild(gridWrapper);
+        return shelfSection;
+    }
 
 
     function handlePopularSectionVisibility() {
@@ -337,9 +367,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function renderShelf(shelfElement, moviesData) {
-        if (!shelfElement) return;
+        if (!shelfElement) {
+            console.error("Полка не найдена для рендеринга:", shelfElement);
+            return;
+        }
         const grid = shelfElement.querySelector('.shelf-grid');
-        if (!grid) return;
+        if (!grid) {
+            console.error("Grid не найден внутри полки:", shelfElement);
+            return;
+        }
         grid.innerHTML = ''; 
         const moviesToDisplay = moviesData; 
         moviesToDisplay.forEach(movie => {
@@ -355,7 +391,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!shelfElement) return;
 
         try {
-            // Запросы к /discover/movie и /discover/tv с сортировкой по популярности и фильтром по рейтингу
             const [movieResponse, tvResponse] = await Promise.all([
                 fetch(`/api/tmdb/search?media_type=movie&sort_by=popularity.desc&page=1&rating_from=6.5`), 
                 fetch(`/api/tmdb/search?media_type=tv&sort_by=popularity.desc&page=1&with_types=4&rating_from=6.5`) 
@@ -524,6 +559,175 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error('Ошибка при загрузке и отображении контента "В тренде":', error);
             renderShelf(shelfElement, placeholderMovies.slice(0, movieCount + tvShowCount));
+        }
+    }
+
+    // Функция для полки "Фильмы"
+    async function fetchAndRenderMoviesShelf(shelfElement, count = 15) {
+        if (!shelfElement) return;
+        try {
+            const response = await fetch(`/api/tmdb/search?media_type=movie&sort_by=popularity.desc&page=1&rating_from=6.5`);
+            if (!response.ok) {
+                console.error(`Ошибка HTTP при запросе полки "Фильмы": ${response.status}`);
+                throw new Error(`Ошибка HTTP: ${response.status}`);
+            }
+            const data = await response.json();
+            if (data && data.results && data.results.length > 0) {
+                const filteredMovies = data.results.filter(movie => movie.popularity >= 75);
+                const moviesToDisplay = filteredMovies.map(movie => ({
+                    tmdb_id: movie.id,
+                    media_type: 'movie',
+                    title: movie.title,
+                    name: movie.title,
+                    poster_path: movie.poster_path,
+                    vote_average: movie.vote_average,
+                    overview: movie.overview,
+                    release_date: movie.release_date,
+                    genre_ids: movie.genre_ids || [],
+                    popularity: movie.popularity
+                })).slice(0, count);
+                renderShelf(shelfElement, moviesToDisplay);
+            } else {
+                console.warn('Не удалось получить фильмы для полки "Фильмы" или список пуст.');
+                renderShelf(shelfElement, placeholderMovies.filter(m => m.media_type === 'movie').slice(0, count));
+            }
+        } catch (error) {
+            console.error('Ошибка при загрузке полки "Фильмы":', error);
+            renderShelf(shelfElement, placeholderMovies.filter(m => m.media_type === 'movie').slice(0, count));
+        }
+    }
+
+    // Функция для полки "Сериалы"
+    async function fetchAndRenderTvShowsShelf(shelfElement, count = 15) {
+        if (!shelfElement) return;
+        try {
+            const response = await fetch(`/api/tmdb/search?media_type=tv&sort_by=popularity.desc&page=1&with_types=4&rating_from=6.5`);
+            if (!response.ok) {
+                console.error(`Ошибка HTTP при запросе полки "Сериалы": ${response.status}`);
+                throw new Error(`Ошибка HTTP: ${response.status}`);
+            }
+            const data = await response.json();
+            if (data && data.results && data.results.length > 0) {
+                let filteredTvResults = data.results.filter(tvShow => tvShow.popularity >= 75);
+                filteredTvResults = filteredTvResults.filter(tvShow => 
+                    !tvShow.genre_ids || !tvShow.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id))
+                );
+                const tvShowsToDisplay = filteredTvResults.map(tvShow => ({
+                    tmdb_id: tvShow.id,
+                    media_type: 'tv',
+                    title: tvShow.name,
+                    name: tvShow.name,
+                    poster_path: tvShow.poster_path,
+                    vote_average: tvShow.vote_average,
+                    overview: tvShow.overview,
+                    first_air_date: tvShow.first_air_date,
+                    genre_ids: tvShow.genre_ids || [],
+                    popularity: tvShow.popularity
+                })).slice(0, count);
+                renderShelf(shelfElement, tvShowsToDisplay);
+            } else {
+                console.warn('Не удалось получить сериалы для полки "Сериалы" или список пуст.');
+                renderShelf(shelfElement, placeholderMovies.filter(m => m.media_type === 'tv').slice(0, count));
+            }
+        } catch (error) {
+            console.error('Ошибка при загрузке полки "Сериалы":', error);
+            renderShelf(shelfElement, placeholderMovies.filter(m => m.media_type === 'tv').slice(0, count));
+        }
+    }
+
+    // Функция для полки "Онгоинги" (сериалы со статусом "Returning Series")
+    async function fetchAndRenderOngoingSeriesShelf(shelfElement, count = 15) {
+        if (!shelfElement) return;
+        console.log('Запрос онгоингов (Returning Series)...');
+        let candidates = [];
+        let returningSeries = [];
+
+        try {
+            // 1. Получаем 2 страницы популярных сценарийных сериалов как кандидатов
+            const popularTvResponses = await Promise.all([
+                fetch(`/api/tmdb/search?media_type=tv&sort_by=popularity.desc&page=1&with_types=4&rating_from=6.0`), // Смягчим немного рейтинг для начального пула
+                fetch(`/api/tmdb/search?media_type=tv&sort_by=popularity.desc&page=2&with_types=4&rating_from=6.0`)
+            ]);
+
+            for (const response of popularTvResponses) {
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.results) {
+                        candidates.push(...data.results);
+                    }
+                } else {
+                    console.warn(`Не удалось загрузить страницу популярных сериалов: ${response.status}`);
+                }
+            }
+            
+            // Убираем дубликаты, если они есть (маловероятно при запросе разных страниц)
+            const uniqueCandidates = Array.from(new Map(candidates.map(item => [item.id, item])).values());
+            console.log(`Кандидатов для проверки на "Returning Series": ${uniqueCandidates.length}`);
+
+            if (uniqueCandidates.length === 0) {
+                console.warn('Нет кандидатов для проверки на "Returning Series".');
+                renderShelf(shelfElement, placeholderMovies.filter(m => m.media_type === 'tv' && m.id === 9).slice(0, 1));
+                return;
+            }
+            
+            const detailPromises = uniqueCandidates.map(tvShow => 
+                fetch(`/api/tmdb/details/tv/${tvShow.id}?language=ru-RU`)
+                    .then(res => {
+                        if (!res.ok) {
+                            console.warn(`Ошибка при запросе деталей для TV ID ${tvShow.id}: ${res.status}`);
+                            return null; // Пропустить этот сериал в случае ошибки
+                        }
+                        return res.json();
+                    })
+                    .catch(err => {
+                        console.error(`Ошибка сети при запросе деталей для TV ID ${tvShow.id}:`, err);
+                        return null; // Пропустить этот сериал
+                    })
+            );
+
+            const detailedResults = await Promise.allSettled(detailPromises);
+
+            detailedResults.forEach(result => {
+                if (result.status === 'fulfilled' && result.value) {
+                    const tvDetails = result.value;
+                    if (tvDetails.status === 'Returning Series' && 
+                        tvDetails.vote_average >= 6.5 && 
+                        tvDetails.popularity >= 20 && // Порог популярности для онгоингов
+                        (!tvDetails.genre_ids || !tvDetails.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id)))
+                    ) {
+                        returningSeries.push({
+                            tmdb_id: tvDetails.id,
+                            media_type: 'tv',
+                            title: tvDetails.name,
+                            name: tvDetails.name,
+                            poster_path: tvDetails.poster_path,
+                            vote_average: tvDetails.vote_average,
+                            overview: tvDetails.overview,
+                            first_air_date: tvDetails.first_air_date,
+                            genre_ids: tvDetails.genre_ids || [],
+                            popularity: tvDetails.popularity
+                        });
+                    }
+                }
+            });
+            
+            console.log(`Найдено "Returning Series" после всех фильтров: ${returningSeries.length}`);
+
+            // Сортируем по популярности на всякий случай, т.к. детали могли прийти не по порядку
+            returningSeries.sort((a, b) => b.popularity - a.popularity);
+            
+            const seriesToDisplay = returningSeries.slice(0, count);
+
+            if (seriesToDisplay.length > 0) {
+                renderShelf(shelfElement, seriesToDisplay);
+            } else {
+                console.warn('Не найдено "Returning Series", соответствующих критериям. Отображение заглушек.');
+                renderShelf(shelfElement, placeholderMovies.filter(m => m.media_type === 'tv' && m.id === 2).slice(0, 1)); 
+            }
+
+        } catch (error) {
+            console.error('Общая ошибка при загрузке полки "Онгоинги":', error);
+            renderShelf(shelfElement, placeholderMovies.filter(m => m.media_type === 'tv' && m.id === 11).slice(0, 1)); 
         }
     }
 
@@ -832,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     detailedInfoPanel.removeEventListener('transitionend', onTransitionEnd);
                 }
                 resolve();
-            }, 350); // Should match transition duration in CSS
+            }, 350); 
         });
     }
 
@@ -1453,20 +1657,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     loadAndDisplayHeroContent();
     updateUserProfileDisplay();
-    // loadAndPopulateAllGenres(); 
-
+    
     const popularShelfElement = document.getElementById('popular');
     const nowPlayingShelfElement = document.getElementById('now-playing'); 
 
     if (popularShelfElement) {
         fetchAndRenderPopularMovies(popularShelfElement); 
     }
-
     if (nowPlayingShelfElement) { 
         fetchAndRenderTrendingContent(nowPlayingShelfElement); 
     }
 
-    initShelves();
+    // Создание и загрузка новых полок
+    if (dynamicShelvesContainer) {
+        const moviesShelf = createShelfElement('movies-shelf', 'Фильмы');
+        dynamicShelvesContainer.appendChild(moviesShelf);
+        fetchAndRenderMoviesShelf(moviesShelf);
+
+        const tvShowsShelf = createShelfElement('tv-shows-shelf', 'Сериалы');
+        dynamicShelvesContainer.appendChild(tvShowsShelf);
+        fetchAndRenderTvShowsShelf(tvShowsShelf);
+
+        const ongoingSeriesShelf = createShelfElement('ongoing-series-shelf', 'Онгоинги');
+        dynamicShelvesContainer.appendChild(ongoingSeriesShelf);
+        fetchAndRenderOngoingSeriesShelf(ongoingSeriesShelf);
+    } else {
+        console.error("Контейнер 'dynamic-shelves-container' не найден в DOM.");
+    }
+
+    initShelves(); 
 
     handlePopularSectionVisibility();
     window.addEventListener('scroll', handlePopularSectionVisibility, { passive: true });

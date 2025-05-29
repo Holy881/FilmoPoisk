@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="/css/home.css">
     <link rel="icon" type="image/vnd.microsoft.icon" href="/images/favicon.ico" />
     <style>
-        /* Стили для hero-video-container остаются здесь для простоты, но в идеале их тоже лучше перенести в SCSS */
         .hero-video-container {
             position: absolute;
             top: 0;
@@ -42,6 +41,7 @@
             <button class="navbar-button" data-section="movies-shelf">Фильмы</button>
             <button class="navbar-button" data-section="tv-shows-shelf">Сериалы</button>
             <button class="navbar-button" data-section="ongoing-series-shelf">Онгоинги</button>
+            <button class="navbar-button" data-section="genre-shelves-main-container">Жанры</button>
         </div>
         <div class="navbar-right">
             <button class="navbar-icon" id="search-button"><i class="fas fa-search"></i></button>
@@ -160,29 +160,36 @@
                     <button class="shelf-arrow next-arrow" aria-label="Следующие"><i class="fas fa-chevron-right"></i></button>
                 </div>
                 <div class="shelf-grid">
-                    {/* Карточки фильмов */}
                 </div>
             </div>
         </section>
-        <section class="movie-shelf" id="now-playing"> 
-            <h2>Сейчас смотрят</h2> 
+        <section class="movie-shelf" id="now-playing">
+            <h2>Сейчас смотрят</h2>
             <div class="shelf-grid-wrapper">
                 <div class="shelf-controls">
                     <button class="shelf-arrow prev-arrow" aria-label="Предыдущие"><i class="fas fa-chevron-left"></i></button>
                     <button class="shelf-arrow next-arrow" aria-label="Следующие"><i class="fas fa-chevron-right"></i></button>
                 </div>
                 <div class="shelf-grid">
-                    {/* Карточки фильмов */}
                 </div>
             </div>
         </section>
 
-        {/* Контейнер для динамически создаваемых полок */}
         <div id="dynamic-shelves-container">
-            {/* Сюда JS будет добавлять полки "Фильмы", "Сериалы", "Онгоинги" */}
         </div>
-        
-        {/* Панель детальной информации будет вставляться сюда через JS */}
+
+        <div class="genre-shelves-main-container" id="genre-shelves-main-container">
+            <div class="genre-area-header"> {/* Обертка для заголовка и кнопки */}
+                <h2 class="genre-area-title">Коллекции по жанрам</h2>
+                <button id="genre-area-toggle-button" class="toggle-genres-button action-button">
+                    <span>Показать все жанры</span> <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="content-area-genres" id="genre-shelves-area">
+                {/* Сюда JS будет добавлять полки по жанрам */}
+            </div>
+        </div>
+
     </div>
 
     <div class="detailed-info-panel" id="detailed-info-panel">
@@ -197,10 +204,10 @@
                         <span class="meta-rating-display">N/A</span> <span class="meta-year">Год</span>
                         <span class="meta-episodes">Эпизоды</span>
                         <span class="meta-seasons">Сезоны</span>
-                        <span class="meta-age-rating">16+</span> 
+                        <span class="meta-age-rating">16+</span>
                     </div>
                     <p class="detailed-info-genres">Жанр 1, Жанр 2, Жанр 3</p>
-                    
+
                     <div class="detailed-info-tabs">
                         <button class="tab-button active" data-tab-target="#tab-about-details">О сериале</button>
                         <button class="tab-button" data-tab-target="#tab-episodes-details">Сезоны и серии</button>
@@ -210,7 +217,6 @@
                             <p class="detailed-info-overview">Полное описание фильма или сериала будет здесь...</p>
                         </div>
                         <div class="tab-pane" id="tab-episodes-details">
-                            {/* Контент для сезонов будет здесь */}
                         </div>
                     </div>
                      <div class="detailed-info-actions">

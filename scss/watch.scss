@@ -15,13 +15,17 @@ $accent-color: #4CAF50;
 $button-bg-color: #252525; 
 $button-hover-bg-color: lighten($button-bg-color, 7%);
 
-$rating-red: #E53935;
+// Цвета, используемые в home.scss для profile-dropdown
+$profile-dropdown-bg-color: #282828; // Из home.scss
+$interactive-hover-bg-color: #2a2a2a; // Из home.scss
+$rating-red: #E53935; // Уже есть, но используется в home.scss для logout hover
+
 $rating-gray: #757575; 
 $rating-green: #4CAF50; 
 $rating-none-bg: rgba($surface-color, 0.7); 
 
 $transition-duration-fast: 0.2s;
-$transition-duration-smooth: 0.3s; // Для плавных анимаций лайтбокса
+$transition-duration-smooth: 0.3s; 
 $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
 
 // Миксин для кнопок
@@ -479,22 +483,21 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
     }
 }
 
-/* Стили для модального окна (Lightbox) */
 .lightbox-modal {
     display: none; 
     position: fixed; 
     z-index: 1500; 
-    padding-top: 0; // Убираем отступ, так как центрируем через flex
+    padding-top: 0; 
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: hidden; // Предотвращаем прокрутку фона, когда модальное окно активно
+    overflow: hidden; 
     background-color: rgba(0,0,0,0.9); 
     transition: opacity $transition-duration-smooth ease-in-out;
     opacity: 0;
-    align-items: center; // Для flex
-    justify-content: center; // Для flex
+    align-items: center; 
+    justify-content: center; 
 
     &.active {
         display: flex; 
@@ -508,20 +511,14 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
     max-width: 90vw; 
     max-height: 90vh; 
     border-radius: 5px;
-    // Убираем animation-name, будем управлять через JS и transition
-    // animation-name: lightboxZoom;
-    // animation-duration: 0.4s;
-    // animation-timing-function: $ease-out-cubic;
     transition: transform $transition-duration-smooth $ease-out-cubic, opacity $transition-duration-smooth ease-in-out;
-    transform: scale(0.8); // Начальное состояние для анимации появления
-    opacity: 0; // Начальное состояние для анимации появления
+    transform: scale(0.8); 
+    opacity: 0; 
 }
 
-#lightbox-caption { // Скрываем подпись
+#lightbox-caption { 
     display: none;
 }
-
-// Убираем @keyframes lightboxZoom, так как используем transition для transform и opacity
 
 .lightbox-close-button {
     position: absolute;
@@ -538,6 +535,117 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
     &:focus {
         color: #bbb;
         text-decoration: none;
+    }
+}
+
+// Стили для profile-dropdown, перенесенные из home.scss
+.navbar-profile-container { // Этот класс должен быть у родительского div для иконки и дропдауна в HTML
+    position: relative;
+}
+
+.navbar-icon { // Предполагается, что стили для .navbar-icon уже есть в watch.css или home.css (если он подключен)
+                // Если нет, нужно будет добавить базовые стили для .navbar-icon из home.scss
+    // Пример базовых стилей, если их нет:
+    // background-color: transparent;
+    // border-color: transparent;
+    // padding: 8px;
+    // font-size: 1.3em;
+    // margin-left: 5px;
+    // color: $text-secondary-color;
+    // width: 40px;
+    // height: 40px;
+    // display: inline-flex;
+    // align-items: center;
+    // justify-content: center;
+    // cursor: pointer;
+    // &:hover {
+    //     background-color: $interactive-hover-bg-color;
+    //     color: $text-light-emphasis;
+    // }
+
+    #user-profile-icon-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    img.navbar-avatar { // Этот стиль уже есть в home.scss, убедимся, что он применяется
+        width: 28px;    // Размер аватара в навбаре
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        display: block;
+    }
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 10px); // Отступ от навбара
+    right: 0;
+    background-color: $profile-dropdown-bg-color;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    z-index: 1001; // Должен быть выше других элементов навбара
+    width: 200px;
+    padding: 10px;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s 0.2s;
+
+    &.active {
+        visibility: visible;
+        opacity: 1;
+        transform: translateY(0);
+        transition-delay: 0s;
+    }
+
+    .dropdown-username {
+        padding: 8px 12px;
+        font-size: 0.95em;
+        color: $text-color;
+        font-weight: 500;
+        text-align: center;
+        margin-bottom: 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .dropdown-divider {
+        border: none;
+        border-top: 1px solid $border-color;
+        margin: 8px 0;
+    }
+    .dropdown-button {
+        // Используем @extend, если есть общий стиль для кнопок, или определяем здесь
+        // @extend .action-button; // Если есть общий стиль .action-button
+        // Если нет, то:
+        display: block; // Чтобы занимали всю ширину
+        width: 100%;
+        text-align: left;
+        padding: 10px 12px;
+        font-size: 0.9em;
+        margin-bottom: 5px;
+        background-color: transparent;
+        border: none; // Убираем рамку по умолчанию, если она есть от других стилей
+        border-radius: 4px; // Небольшое скругление для кнопок внутри дропдауна
+        color: $text-secondary-color;
+        cursor: pointer;
+        transition: background-color 0.2s ease, color 0.2s ease;
+
+
+        &:last-child { margin-bottom: 0; }
+        &:hover {
+            background-color: lighten($profile-dropdown-bg-color, 8%);
+            color: $text-color;
+        }
+         &.logout-button:hover { // Специальный стиль для кнопки выхода
+            background-color: darken($rating-red, 10%);
+            color: $text-light-emphasis; // Яркий текст для акцента
+        }
     }
 }
 
@@ -614,6 +722,11 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
         font-size: 30px;
         top: 15px;
         right: 25px;
+    }
+    // Адаптивность для profile-dropdown, если нужно
+    .profile-dropdown {
+        // Может понадобиться调整位置 или ширину на мобильных
+        // Например, сделать его шире или центрировать
     }
 }
 

@@ -1,4 +1,3 @@
-@charset "UTF-8";
 .watch-page-container {
   padding: 25px 40px;
   position: relative;
@@ -408,7 +407,6 @@
   font-size: 0.95em;
 }
 
-/* Стили для модального окна (Lightbox) */
 .lightbox-modal {
   display: none;
   position: fixed;
@@ -461,6 +459,90 @@
 .lightbox-close-button:hover, .lightbox-close-button:focus {
   color: #bbb;
   text-decoration: none;
+}
+
+.navbar-profile-container {
+  position: relative;
+}
+
+.navbar-icon #user-profile-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.navbar-icon img.navbar-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  display: block;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background-color: #282828;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+  width: 200px;
+  padding: 10px;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s 0.2s;
+}
+.profile-dropdown.active {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+.profile-dropdown .dropdown-username {
+  padding: 8px 12px;
+  font-size: 0.95em;
+  color: #E0E0E0;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile-dropdown .dropdown-divider {
+  border: none;
+  border-top: 1px solid #383838;
+  margin: 8px 0;
+}
+.profile-dropdown .dropdown-button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 0.9em;
+  margin-bottom: 5px;
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #A0A0A0;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.profile-dropdown .dropdown-button:last-child {
+  margin-bottom: 0;
+}
+.profile-dropdown .dropdown-button:hover {
+  background-color: #3c3c3c;
+  color: #E0E0E0;
+}
+.profile-dropdown .dropdown-button.logout-button:hover {
+  background-color: #cd1e1a;
+  color: #FFFFFF;
 }
 
 @media (max-width: 1024px) {

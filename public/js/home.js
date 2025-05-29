@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';
     const BACKDROP_SIZE_HERO = 'original';
-    const POSTER_SIZE_CARD = 'w342'; 
+    const POSTER_SIZE_CARD = 'w342';
     const POSTER_SIZE_SEASON_CARD = 'w185';
     const BACKDROP_SIZE_DETAILS_LARGE = 'w1280';
     const POSTER_SIZE_SEARCH = 'w154';
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentlyOpenShelfForDetails = null;
     let currentActiveMovieTile = null;
     let currentActiveTabPane = null;
-    let currentDetailedItemData = null; 
+    let currentDetailedItemData = null;
 
     const DEFAULT_AVATAR_PATH = '/images/default-avatar.png';
     const placeholderMovies = [
@@ -114,6 +114,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: 10749, name: "Мелодрама" }, { id: 878, name: "Фантастика" }, { id: 53, name: "Триллер" },
         { id: 10752, name: "Военный" }
     ];
+
+    // --- НАЧАЛО: Логика для автоскрытия скроллбара ---
+    let scrollActivityTimeout = null;
+    const bodyElement = document.body;
+
+    function showBodyScrollbar() {
+        if (bodyElement) { // Проверяем, существует ли bodyElement
+            bodyElement.classList.add('scrollbar-visible');
+        }
+    }
+
+    function hideBodyScrollbar() {
+        if (bodyElement) { // Проверяем, существует ли bodyElement
+            bodyElement.classList.remove('scrollbar-visible');
+        }
+    }
+
+    window.addEventListener('scroll', () => {
+        showBodyScrollbar();
+        clearTimeout(scrollActivityTimeout);
+        scrollActivityTimeout = setTimeout(hideBodyScrollbar, 1500); // Скрыть через 1.5с бездействия
+    }, { passive: true });
+    // --- КОНЕЦ: Логика для автоскрытия скроллбара ---
+
 
     function showToastNotification(message, isError = false, duration = 3000) {
         if (!toastNotification || !toastNotificationMessage) return;
@@ -137,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             toastNotification.classList.remove('active');
         }, duration);
     }
-    
+
     window.onclick = function(event) {
         // Закрытие дропдауна категорий при клике вне его
         if (listCategoryDropdown && listCategoryDropdown.classList.contains('active')) {
@@ -340,7 +364,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentHeroVideoElement = null;
         if (heroFallbackImg && heroFallback) {
             if (backdropSrc && backdropSrc !== heroFallbackImg.src) heroFallbackImg.src = backdropSrc;
-            else if (!backdropSrc) heroFallbackImg.src = 'https://placehold.co/1920x1080/0D0D0D/333333?text=Контент+недоступен';
+            else if (!backdropSrc) heroFallbackImg.src = '/images/no_image.png';
             heroFallback.classList.add('active');
         }
         if(heroSection) { heroSection.classList.remove('video-playing'); heroSection.classList.add('poster-active'); }
@@ -520,11 +544,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         let currentPage = page;
         let attempts = 0;
 
-        while (results.length < 20 && attempts < pagesToTry) { 
+        while (results.length < 20 && attempts < pagesToTry) {
             const response = await fetch(`/api/tmdb/search?media_type=${mediaType}&sort_by=popularity.desc&genres=${genreId}&page=${currentPage}&rating_from=${ratingFrom}`);
             if (!response.ok) {
                 console.error(`Ошибка загрузки ${mediaType} для жанра ${genreId}, стр. ${currentPage}: ${response.status}`);
-                break; 
+                break;
             }
             const data = await response.json();
             if (data.results && data.results.length > 0) {
@@ -546,16 +570,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             let collectedMovies = [];
             let collectedTvShows = [];
-            const pagesToFetchPerTypeInitially = 1; 
-            
+            const pagesToFetchPerTypeInitially = 1;
+
             const [moviesInitial, tvShowsInitial] = await Promise.all([
-                fetchMediaForGenrePage('movie', genreId, pagesToFetchPerTypeInitially, "5.0", 5), 
-                fetchMediaForGenrePage('tv', genreId, pagesToFetchPerTypeInitially, "5.0", 5)    
+                fetchMediaForGenrePage('movie', genreId, pagesToFetchPerTypeInitially, "5.0", 5),
+                fetchMediaForGenrePage('tv', genreId, pagesToFetchPerTypeInitially, "5.0", 5)
             ]);
 
             collectedMovies.push(...moviesInitial);
             collectedTvShows.push(...tvShowsInitial);
-            
+
             const uniqueMovies = Array.from(new Map(collectedMovies.map(item => [item.id, item])).values())
                 .filter(movie => movie.overview && movie.overview.trim() !== '');
             const uniqueTvShows = Array.from(new Map(collectedTvShows.map(item => [item.id, item])).values())
@@ -567,7 +591,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const mappedTvShows = uniqueTvShows.map(tv => ({ ...tv, tmdb_id: tv.id, title: tv.name, media_type: 'tv' }));
 
             let combinedMedia = [...mappedMovies, ...mappedTvShows];
-            
+
             combinedMedia.sort((a, b) => b.popularity - a.popularity);
 
             if (combinedMedia.length > itemsPerShelf * 1.5) {
@@ -587,7 +611,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 renderShelf(shelfElement, finalMedia);
             } else {
                 console.warn(`[GENRE SHELF] Нет контента для полки жанра "${genreName}" после всех фильтров.`);
-                renderShelf(shelfElement, []); 
+                renderShelf(shelfElement, []);
             }
         } catch (error) {
             console.error(`[GENRE SHELF] Ошибка загрузки полки для жанра "${genreName}":`, error);
@@ -626,7 +650,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         GENRES_FOR_SHELVES.forEach((genre, index) => {
             const shelfId = `genre-shelf-${genre.id}`;
             const shelfElement = createShelfElement(shelfId, genre.name);
-            
+
             shelfElement.classList.add('collapsible-genre-shelf');
 
             if (index === 0) {
@@ -663,7 +687,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const allGenreShelves = genreShelvesArea.querySelectorAll('.collapsible-genre-shelf');
 
         allGenreShelves.forEach((shelf, index) => {
-            if (index === 0) return; 
+            if (index === 0) return;
 
             if (isNowExpandedState) {
                 shelf.classList.remove('is-collapsed');
@@ -729,7 +753,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const populatePanelData = (itemData, itemMediaType) => {
         if (!detailedInfoPanel) return;
         currentDetailedItemData = { ...itemData, media_type: itemMediaType, userListCategory: null }; // Сбрасываем userListCategory при загрузке новых данных
-        
+
         if (detailedInfoTitle) detailedInfoTitle.textContent = itemData.title || itemData.name;
         if (detailedInfoRatingDisplay) applyRatingStyles(detailedInfoRatingDisplay, itemData.vote_average);
         const itemReleaseDate = itemData.release_date || itemData.first_air_date;
@@ -807,10 +831,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             return null;
         }
     }
-    
+
     function updateListCategoryDropdownCheckmarks() {
         if (!listCategoryDropdown || !currentDetailedItemData) return;
-    
+
         listCategoryDropdown.querySelectorAll('button').forEach(button => {
             const checkmark = button.querySelector('.list-category-checkmark');
             if (checkmark) {
@@ -836,17 +860,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!newParentShelf) { console.error('Родительская полка не найдена.'); return; }
         const isAlreadyOpen = detailedInfoPanel.classList.contains('expanded');
         const isSameTile = currentActiveMovieTile === clickedTileElement;
-        
+
         // Сначала закрываем дропдаун, если он был открыт
         if (listCategoryDropdown) listCategoryDropdown.classList.remove('active');
 
         if (isAlreadyOpen && isSameTile) { await closeDetailedInfo(); return; }
-        
+
         try {
             const response = await fetch(`/api/tmdb/details/${mediaType}/${tmdbId}?language=ru-RU`);
             if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(err.status_message || `Ошибка HTTP: ${response.status}`); }
             const data = await response.json(); if (!data) throw new Error('Данные не получены.');
-            
+
             populatePanelData(data, mediaType); // Заполняем основными данными
 
             // Получаем статус элемента в списке пользователя
@@ -867,11 +891,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 clickedTileElement.classList.add('active-tile-details'); currentActiveMovieTile = clickedTileElement;
                 const needsMove = currentlyOpenShelfForDetails !== newParentShelf;
                 if (needsMove) {
-                    detailedInfoPanel.style.transition = 'opacity 0.15s ease-out, transform 0.15s ease-out'; 
+                    detailedInfoPanel.style.transition = 'opacity 0.15s ease-out, transform 0.15s ease-out';
                     detailedInfoPanel.style.opacity = '0';
-                    detailedInfoPanel.style.transform = 'translateY(20px)'; 
+                    detailedInfoPanel.style.transform = 'translateY(20px)';
                     await new Promise(r => setTimeout(r, 150));
-                    newParentShelf.after(detailedInfoPanel); 
+                    newParentShelf.after(detailedInfoPanel);
                     currentlyOpenShelfForDetails = newParentShelf;
                     requestAnimationFrame(() => {
                         detailedInfoPanel.style.opacity = '1';
@@ -879,7 +903,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 } else { // Просто обновляем контент без перемещения
                     if (detailedInfoContentWrapper) {
-                        detailedInfoContentWrapper.style.transition = 'opacity 0.2s ease-out'; 
+                        detailedInfoContentWrapper.style.transition = 'opacity 0.2s ease-out';
                         detailedInfoContentWrapper.style.opacity = '0';
                         await new Promise(r => setTimeout(r, 200));
                         // populatePanelData уже вызван выше
@@ -890,11 +914,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 newParentShelf.after(detailedInfoPanel);
                 if (currentActiveMovieTile) currentActiveMovieTile.classList.remove('active-tile-details');
                 clickedTileElement.classList.add('active-tile-details'); currentActiveMovieTile = clickedTileElement;
-                
-                detailedInfoPanel.style.display = 'block'; 
-                requestAnimationFrame(() => { 
-                    requestAnimationFrame(() => { 
-                        detailedInfoPanel.classList.add('expanded'); 
+
+                detailedInfoPanel.style.display = 'block';
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        detailedInfoPanel.classList.add('expanded');
                         currentlyOpenShelfForDetails = newParentShelf;
                     });
                 });
@@ -909,25 +933,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         return new Promise((resolve) => {
             if (!detailedInfoPanel || !detailedInfoPanel.classList.contains('expanded')) { resolve(); return; }
             if (currentActiveMovieTile) { currentActiveMovieTile.classList.remove('active-tile-details'); currentActiveMovieTile = null; }
-            
+
             detailedInfoPanel.classList.remove('expanded'); // Запускаем анимацию скрытия
-            if(listCategoryDropdown) listCategoryDropdown.classList.remove('active'); 
+            if(listCategoryDropdown) listCategoryDropdown.classList.remove('active');
 
             const onEnd = (e) => {
                 if (e.target === detailedInfoPanel && e.propertyName === 'opacity') { // Ждем завершения анимации opacity
                     if (!detailedInfoPanel.classList.contains('expanded')) { // Убедимся, что панель все еще должна быть скрыта
                         detailedInfoPanel.style.display = 'none';
-                        currentlyOpenShelfForDetails = null; 
+                        currentlyOpenShelfForDetails = null;
                         delete detailedInfoPanel.dataset.currentTmdbId;
                         delete detailedInfoPanel.dataset.currentMediaType;
-                        currentDetailedItemData = null; 
-                        detailedInfoPanel.removeEventListener('transitionend', onEnd); 
+                        currentDetailedItemData = null;
+                        detailedInfoPanel.removeEventListener('transitionend', onEnd);
                         resolve();
                     }
                 }
             };
             detailedInfoPanel.addEventListener('transitionend', onEnd);
-            
+
             setTimeout(() => {
                 if (!detailedInfoPanel.classList.contains('expanded') && detailedInfoPanel.style.display !== 'none') {
                      detailedInfoPanel.style.display = 'none';
@@ -959,7 +983,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (addToListBtn && listCategoryDropdown) {
         addToListBtn.addEventListener('click', async (event) => { // Делаем async для await внутри
-            event.stopPropagation(); 
+            event.stopPropagation();
             const userId = localStorage.getItem('userId');
             if (!userId) {
                 showToastNotification('Для добавления в список необходимо авторизоваться.', true);
@@ -990,7 +1014,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 const { id: tmdb_id, media_type, title, name, poster_path } = currentDetailedItemData;
-                const itemTitle = title || name; 
+                const itemTitle = title || name;
 
                 const dataToSend = {
                     tmdb_id: parseInt(tmdb_id, 10),
@@ -1014,8 +1038,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // Используем сообщение от сервера, если оно есть, или формируем свое без кавычек
                         const message = result.message || `${itemTitle} успешно добавлен(а) в категорию ${selectedCategory}!`;
                         showToastNotification(message, false); // 'false' означает, что это не ошибка (для стилей success)
-                        currentDetailedItemData.userListCategory = selectedCategory; 
-                        updateListCategoryDropdownCheckmarks(); 
+                        currentDetailedItemData.userListCategory = selectedCategory;
+                        updateListCategoryDropdownCheckmarks();
                     } else {
                         showToastNotification(`Ошибка: ${result.error || 'Не удалось обновить список.'} (Статус: ${response.status})`, true);
                     }
@@ -1277,14 +1301,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (nowPlayingShelf) fetchAndRenderTrendingContent(nowPlayingShelf);
 
     if (dynamicShelvesContainer) {
-        const moviesShelf = createShelfElement('movies-shelf', 'Фильмы'); 
-        dynamicShelvesContainer.appendChild(moviesShelf); 
+        const moviesShelf = createShelfElement('movies-shelf', 'Фильмы');
+        dynamicShelvesContainer.appendChild(moviesShelf);
         fetchAndRenderMoviesShelf(moviesShelf);
-        
-        const tvShowsShelf = createShelfElement('tv-shows-shelf', 'Сериалы'); 
-        dynamicShelvesContainer.appendChild(tvShowsShelf); 
+
+        const tvShowsShelf = createShelfElement('tv-shows-shelf', 'Сериалы');
+        dynamicShelvesContainer.appendChild(tvShowsShelf);
         fetchAndRenderTvShowsShelf(tvShowsShelf);
-        
+
     } else console.error("Контейнер 'dynamic-shelves-container' не найден.");
 
     initializeGenreArea();
@@ -1307,7 +1331,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let offsetTop = targetSection.getBoundingClientRect().top + window.pageYOffset - effectiveNavbarHeight;
                     window.scrollTo({ top: offsetTop, behavior: 'smooth' });
                 }
-            } else if (sectionId) { 
+            } else if (sectionId) {
                 console.warn(`Секция с ID "${sectionId}" не найдена. Прокрутка невозможна.`);
             }
         });

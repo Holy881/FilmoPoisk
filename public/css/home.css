@@ -90,7 +90,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   content: "▼";
 }
 
-.action-button, .hero .hero-action-buttons-container .hero-action-icon, .search-modal .search-modal-sidebar .reset-filters-button, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle, .navbar .profile-dropdown .dropdown-button, .navbar .navbar-icon, .navbar .navbar-button, .genre-shelves-main-container .toggle-genres-button {
+.action-button, .genre-shelves-main-container .toggle-genres-button, .hero .hero-action-buttons-container .hero-action-icon, .search-modal .search-modal-sidebar .reset-filters-button, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle, .navbar .profile-dropdown .dropdown-button, .navbar .navbar-icon, .navbar .navbar-button {
   color: #A0A0A0;
   background-color: transparent;
   border: 1px solid #383838;
@@ -108,74 +108,18 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
      -moz-user-select: none;
           user-select: none;
 }
-.action-button:hover, .hero .hero-action-buttons-container .hero-action-icon:hover, .search-modal .search-modal-sidebar .reset-filters-button:hover, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle:hover, .navbar .profile-dropdown .dropdown-button:hover, .navbar .navbar-icon:hover, .navbar .navbar-button:hover, .genre-shelves-main-container .toggle-genres-button:hover {
+.action-button:hover, .genre-shelves-main-container .toggle-genres-button:hover, .hero .hero-action-buttons-container .hero-action-icon:hover, .search-modal .search-modal-sidebar .reset-filters-button:hover, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle:hover, .navbar .profile-dropdown .dropdown-button:hover, .navbar .navbar-icon:hover, .navbar .navbar-button:hover {
   color: #FFFFFF;
   background-color: #2a2a2a;
   border-color: #5A5A5A;
 }
-.action-button:active, .hero .hero-action-buttons-container .hero-action-icon:active, .search-modal .search-modal-sidebar .reset-filters-button:active, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle:active, .navbar .profile-dropdown .dropdown-button:active, .navbar .navbar-icon:active, .navbar .navbar-button:active, .genre-shelves-main-container .toggle-genres-button:active {
+.action-button:active, .genre-shelves-main-container .toggle-genres-button:active, .hero .hero-action-buttons-container .hero-action-icon:active, .search-modal .search-modal-sidebar .reset-filters-button:active, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle:active, .navbar .profile-dropdown .dropdown-button:active, .navbar .navbar-icon:active, .navbar .navbar-button:active {
   transform: translateY(1px);
 }
-.action-button.active, .hero .hero-action-buttons-container .active.hero-action-icon, .search-modal .search-modal-sidebar .active.reset-filters-button, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .active.dropdown-toggle, .navbar .profile-dropdown .active.dropdown-button, .navbar .active.navbar-icon, .navbar .active.navbar-button, .genre-shelves-main-container .active.toggle-genres-button {
+.action-button.active, .genre-shelves-main-container .active.toggle-genres-button, .hero .hero-action-buttons-container .active.hero-action-icon, .search-modal .search-modal-sidebar .active.reset-filters-button, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .active.dropdown-toggle, .navbar .profile-dropdown .active.dropdown-button, .navbar .active.navbar-icon, .navbar .active.navbar-button {
   color: #FFFFFF;
   background-color: #3a3a3a;
   border-color: #5A5A5A;
-}
-
-.genre-shelves-main-container {
-  padding: 20px 0 0;
-  margin-top: 10px;
-  position: relative;
-}
-.genre-shelves-main-container .genre-area-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-left: 20px;
-  padding-right: 20px;
-  margin-bottom: 20px;
-}
-.genre-shelves-main-container .genre-area-title {
-  font-size: 2em;
-  color: #FFFFFF;
-  font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-  margin: 0;
-}
-.genre-shelves-main-container .toggle-genres-button {
-  background-color: #222222;
-  color: #FFFFFF;
-  font-weight: 500;
-  font-size: 0.9em;
-  padding: 8px 15px;
-  margin-left: 15px;
-}
-.genre-shelves-main-container .toggle-genres-button i {
-  margin-left: 8px;
-  transition: transform 0.3s ease;
-}
-.genre-shelves-main-container .toggle-genres-button:hover {
-  background-color: #2e2e2e;
-}
-.genre-shelves-main-container .content-area-genres .dynamic-genre-shelf {
-  overflow: hidden;
-  transition: max-height 0.45s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.3s ease-out 0.15s, padding-top 0.45s cubic-bezier(0.23, 1, 0.32, 1), padding-bottom 0.45s cubic-bezier(0.23, 1, 0.32, 1);
-}
-.genre-shelves-main-container .content-area-genres .dynamic-genre-shelf h2 {
-  font-size: 1.6em;
-}
-.genre-shelves-main-container .content-area-genres .dynamic-genre-shelf.dynamic-genre-shelf--collapsed {
-  max-height: 0;
-  opacity: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  margin-bottom: 0;
-}
-.genre-shelves-main-container.expanded .content-area-genres .dynamic-genre-shelf.dynamic-genre-shelf--collapsed {
-  max-height: 1000px;
-  opacity: 1;
-  padding-top: 20px;
-  padding-bottom: 30px;
 }
 
 .navbar {
@@ -692,7 +636,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   -webkit-line-clamp: 3;
   line-clamp: 3;
 }
-.hero .hero-content-display .hero-button.action-button, .hero .hero-content-display .hero-action-buttons-container .hero-button.hero-action-icon, .hero .hero-action-buttons-container .hero-content-display .hero-button.hero-action-icon, .hero .hero-content-display .genre-shelves-main-container .hero-button.toggle-genres-button, .genre-shelves-main-container .hero .hero-content-display .hero-button.toggle-genres-button, .hero .hero-content-display .navbar .hero-button.navbar-button, .navbar .hero .hero-content-display .hero-button.navbar-button, .hero .hero-content-display .navbar .hero-button.navbar-icon, .navbar .hero .hero-content-display .hero-button.navbar-icon, .hero .hero-content-display .navbar .profile-dropdown .hero-button.dropdown-button, .navbar .profile-dropdown .hero .hero-content-display .hero-button.dropdown-button, .hero .hero-content-display .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-content-display .hero-button.dropdown-toggle, .hero .hero-content-display .search-modal .search-modal-sidebar .hero-button.reset-filters-button, .search-modal .search-modal-sidebar .hero .hero-content-display .hero-button.reset-filters-button {
+.hero .hero-content-display .hero-button.action-button, .hero .hero-content-display .genre-shelves-main-container .hero-button.toggle-genres-button, .genre-shelves-main-container .hero .hero-content-display .hero-button.toggle-genres-button, .hero .hero-content-display .hero-action-buttons-container .hero-button.hero-action-icon, .hero .hero-action-buttons-container .hero-content-display .hero-button.hero-action-icon, .hero .hero-content-display .navbar .hero-button.navbar-button, .navbar .hero .hero-content-display .hero-button.navbar-button, .hero .hero-content-display .navbar .hero-button.navbar-icon, .navbar .hero .hero-content-display .hero-button.navbar-icon, .hero .hero-content-display .navbar .profile-dropdown .hero-button.dropdown-button, .navbar .profile-dropdown .hero .hero-content-display .hero-button.dropdown-button, .hero .hero-content-display .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-content-display .hero-button.dropdown-toggle, .hero .hero-content-display .search-modal .search-modal-sidebar .hero-button.reset-filters-button, .search-modal .search-modal-sidebar .hero .hero-content-display .hero-button.reset-filters-button {
   padding: 12px 25px;
   font-size: 1.1em;
   margin-right: 0;
@@ -703,7 +647,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   -webkit-backdrop-filter: blur(3px);
           backdrop-filter: blur(3px);
 }
-.hero .hero-content-display .hero-button.action-button:hover, .hero .hero-content-display .hero-action-buttons-container .hero-button.hero-action-icon:hover, .hero .hero-action-buttons-container .hero-content-display .hero-button.hero-action-icon:hover, .hero .hero-content-display .genre-shelves-main-container .hero-button.toggle-genres-button:hover, .genre-shelves-main-container .hero .hero-content-display .hero-button.toggle-genres-button:hover, .hero .hero-content-display .navbar .hero-button.navbar-button:hover, .navbar .hero .hero-content-display .hero-button.navbar-button:hover, .hero .hero-content-display .navbar .hero-button.navbar-icon:hover, .navbar .hero .hero-content-display .hero-button.navbar-icon:hover, .hero .hero-content-display .navbar .profile-dropdown .hero-button.dropdown-button:hover, .navbar .profile-dropdown .hero .hero-content-display .hero-button.dropdown-button:hover, .hero .hero-content-display .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle:hover, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-content-display .hero-button.dropdown-toggle:hover, .hero .hero-content-display .search-modal .search-modal-sidebar .hero-button.reset-filters-button:hover, .search-modal .search-modal-sidebar .hero .hero-content-display .hero-button.reset-filters-button:hover {
+.hero .hero-content-display .hero-button.action-button:hover, .hero .hero-content-display .genre-shelves-main-container .hero-button.toggle-genres-button:hover, .genre-shelves-main-container .hero .hero-content-display .hero-button.toggle-genres-button:hover, .hero .hero-content-display .hero-action-buttons-container .hero-button.hero-action-icon:hover, .hero .hero-action-buttons-container .hero-content-display .hero-button.hero-action-icon:hover, .hero .hero-content-display .navbar .hero-button.navbar-button:hover, .navbar .hero .hero-content-display .hero-button.navbar-button:hover, .hero .hero-content-display .navbar .hero-button.navbar-icon:hover, .navbar .hero .hero-content-display .hero-button.navbar-icon:hover, .hero .hero-content-display .navbar .profile-dropdown .hero-button.dropdown-button:hover, .navbar .profile-dropdown .hero .hero-content-display .hero-button.dropdown-button:hover, .hero .hero-content-display .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle:hover, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-content-display .hero-button.dropdown-toggle:hover, .hero .hero-content-display .search-modal .search-modal-sidebar .hero-button.reset-filters-button:hover, .search-modal .search-modal-sidebar .hero .hero-content-display .hero-button.reset-filters-button:hover {
   background-color: rgba(255, 255, 255, 0.3);
   border-color: rgba(255, 255, 255, 0.9);
   transform: translateY(-2px);
@@ -1022,13 +966,20 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   color: #E0E0E0;
   margin-top: 8px;
   margin-bottom: 20px;
-  display: none;
   opacity: 0;
-  transition: opacity 0.3s ease-in-out, margin-top 0.3s ease-in-out;
+  transform: translateY(30px);
+  max-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  transition: opacity 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), transform 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), max-height 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), margin-top 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), visibility 0s 0.4s;
 }
 .detailed-info-panel.expanded {
-  display: block;
   opacity: 1;
+  transform: translateY(0);
+  max-height: 2000px;
+  visibility: visible;
+  margin-top: 25px;
+  transition: opacity 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), transform 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), max-height 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), margin-top 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), visibility 0s 0s;
 }
 .detailed-info-panel .detailed-info-close-btn {
   position: absolute;
@@ -1062,7 +1013,6 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
   min-height: 770px;
   overflow: hidden;
-  transition: opacity 0.25s ease-in-out;
 }
 .detailed-info-panel .detailed-info-left-column {
   flex: 0 0 58%;
@@ -1137,6 +1087,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   gap: 12px;
   margin-top: 10px;
   padding-top: 25px;
+  position: relative;
 }
 .detailed-info-panel .detailed-info-actions .action-button, .detailed-info-panel .detailed-info-actions .genre-shelves-main-container .toggle-genres-button, .genre-shelves-main-container .detailed-info-panel .detailed-info-actions .toggle-genres-button, .detailed-info-panel .detailed-info-actions .navbar .navbar-button, .navbar .detailed-info-panel .detailed-info-actions .navbar-button, .detailed-info-panel .detailed-info-actions .navbar .navbar-icon, .navbar .detailed-info-panel .detailed-info-actions .navbar-icon, .detailed-info-panel .detailed-info-actions .navbar .profile-dropdown .dropdown-button, .navbar .profile-dropdown .detailed-info-panel .detailed-info-actions .dropdown-button, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .detailed-info-panel .detailed-info-actions .dropdown-toggle, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .reset-filters-button, .search-modal .search-modal-sidebar .detailed-info-panel .detailed-info-actions .reset-filters-button, .detailed-info-panel .detailed-info-actions .hero .hero-action-buttons-container .hero-action-icon, .hero .hero-action-buttons-container .detailed-info-panel .detailed-info-actions .hero-action-icon {
   padding: 12px 22px;
@@ -1145,6 +1096,57 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
 }
 .detailed-info-panel .detailed-info-actions .action-button i, .detailed-info-panel .detailed-info-actions .genre-shelves-main-container .toggle-genres-button i, .genre-shelves-main-container .detailed-info-panel .detailed-info-actions .toggle-genres-button i, .detailed-info-panel .detailed-info-actions .navbar .navbar-button i, .navbar .detailed-info-panel .detailed-info-actions .navbar-button i, .detailed-info-panel .detailed-info-actions .navbar .navbar-icon i, .navbar .detailed-info-panel .detailed-info-actions .navbar-icon i, .detailed-info-panel .detailed-info-actions .navbar .profile-dropdown .dropdown-button i, .navbar .profile-dropdown .detailed-info-panel .detailed-info-actions .dropdown-button i, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle i, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .detailed-info-panel .detailed-info-actions .dropdown-toggle i, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .reset-filters-button i, .search-modal .search-modal-sidebar .detailed-info-panel .detailed-info-actions .reset-filters-button i, .detailed-info-panel .detailed-info-actions .hero .hero-action-buttons-container .hero-action-icon i, .hero .hero-action-buttons-container .detailed-info-panel .detailed-info-actions .hero-action-icon i {
   margin-right: 8px;
+}
+.detailed-info-panel .detailed-info-actions .add-to-list-container {
+  position: relative;
+  display: inline-block;
+}
+.detailed-info-panel .detailed-info-actions .list-category-dropdown {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(10px);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background-color: #222222;
+  border: 1px solid #383838;
+  border-radius: 6px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 110;
+  width: 220px;
+  padding: 8px 0;
+  transition: opacity 0.25s cubic-bezier(0.215, 0.61, 0.355, 1), transform 0.25s cubic-bezier(0.215, 0.61, 0.355, 1), visibility 0s 0.25s;
+}
+.detailed-info-panel .detailed-info-actions .list-category-dropdown button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 15px;
+  background: none;
+  border: none;
+  color: #A0A0A0;
+  text-align: left;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.detailed-info-panel .detailed-info-actions .list-category-dropdown button .list-category-checkmark {
+  color: #E0E0E0;
+  margin-right: 10px;
+  font-size: 0.9em;
+  width: 1em;
+  display: inline-block;
+  text-align: center;
+}
+.detailed-info-panel .detailed-info-actions .list-category-dropdown button:hover {
+  background-color: #3c3c3c;
+  color: #E0E0E0;
+}
+.detailed-info-panel .detailed-info-actions .list-category-dropdown.active {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0s, 0s, 0s;
 }
 .detailed-info-panel .detailed-info-right-column {
   flex: 1 1 42%;
@@ -1369,31 +1371,48 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
 .genre-shelves-main-container .toggle-genres-button:hover {
   background-color: #2e2e2e;
 }
-.genre-shelves-main-container .content-area-genres .movie-shelf {
+.genre-shelves-main-container .content-area-genres .collapsible-genre-shelf {
   overflow: hidden;
+  transition: max-height 0.45s cubic-bezier(0.645, 0.045, 0.355, 1), opacity 0.3s ease-out 0.15s, padding-top 0.45s cubic-bezier(0.645, 0.045, 0.355, 1), padding-bottom 0.45s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
-.genre-shelves-main-container .content-area-genres .movie-shelf.genre-shelf--hidden-by-default {
+.genre-shelves-main-container .content-area-genres .collapsible-genre-shelf h2 {
+  font-size: 1.6em;
+}
+.genre-shelves-main-container .content-area-genres .collapsible-genre-shelf.is-collapsed {
   max-height: 0;
   opacity: 0;
   padding-top: 0;
   padding-bottom: 0;
+  margin-top: 0;
   margin-bottom: 0;
-  transition: max-height 0.45s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.3s ease-out 0.1s, padding-top 0.45s cubic-bezier(0.23, 1, 0.32, 1), padding-bottom 0.45s cubic-bezier(0.23, 1, 0.32, 1), margin-bottom 0.45s cubic-bezier(0.23, 1, 0.32, 1);
 }
-.genre-shelves-main-container .content-area-genres .movie-shelf.genre-shelf--visible-by-default {
-  max-height: 1000px;
+
+#toast-notification {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background-color: #1A1A1A;
+  color: #E0E0E0;
+  padding: 15px 25px;
+  border-radius: 6px;
+  border: 1px solid #383838;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 2000;
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+  visibility: hidden;
+  transition: opacity 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), transform 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), visibility 0s 0.4s;
+  pointer-events: none;
+}
+#toast-notification.active {
   opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s, 0s, 0s;
 }
-.genre-shelves-main-container .content-area-genres .movie-shelf h2 {
-  font-size: 1.6em;
-  padding-left: 0;
-  margin-left: 20px;
-}
-.genre-shelves-main-container.expanded .content-area-genres .movie-shelf.genre-shelf--hidden-by-default {
-  max-height: 1000px;
-  opacity: 1;
-  padding-top: 10px;
-  padding-bottom: 20px;
+#toast-notification #toast-notification-message {
+  font-size: 0.95em;
 }
 
 @media (max-width: 1024px) {
@@ -1433,7 +1452,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   .genre-shelves-main-container .genre-area-title {
     font-size: 1.8em;
   }
-  .genre-shelves-main-container .content-area-genres .movie-shelf h2 {
+  .genre-shelves-main-container .content-area-genres .collapsible-genre-shelf h2 {
     font-size: 1.5em;
   }
 }
@@ -1590,7 +1609,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
     margin-bottom: 15px;
     max-width: 100%;
   }
-  .hero .hero-content-display .hero-button.action-button, .hero .hero-content-display .genre-shelves-main-container .hero-button.toggle-genres-button, .genre-shelves-main-container .hero .hero-content-display .hero-button.toggle-genres-button, .hero .hero-content-display .navbar .hero-button.navbar-button, .navbar .hero .hero-content-display .hero-button.navbar-button, .hero .hero-content-display .navbar .hero-button.navbar-icon, .navbar .hero .hero-content-display .hero-button.navbar-icon, .hero .hero-content-display .navbar .profile-dropdown .hero-button.dropdown-button, .navbar .profile-dropdown .hero .hero-content-display .hero-button.dropdown-button, .hero .hero-content-display .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-content-display .hero-button.dropdown-toggle, .hero .hero-content-display .search-modal .search-modal-sidebar .hero-button.reset-filters-button, .search-modal .search-modal-sidebar .hero .hero-content-display .hero-button.reset-filters-button, .hero .hero-content-display .hero-action-buttons-container .hero-button.hero-action-icon, .hero .hero-action-buttons-container .hero-content-display .hero-button.hero-action-icon {
+  .hero .hero-content-display .hero-button.action-button, .hero .hero-content-display .navbar .hero-button.navbar-button, .navbar .hero .hero-content-display .hero-button.navbar-button, .hero .hero-content-display .navbar .hero-button.navbar-icon, .navbar .hero .hero-content-display .hero-button.navbar-icon, .hero .hero-content-display .navbar .profile-dropdown .hero-button.dropdown-button, .navbar .profile-dropdown .hero .hero-content-display .hero-button.dropdown-button, .hero .hero-content-display .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-content-display .hero-button.dropdown-toggle, .hero .hero-content-display .search-modal .search-modal-sidebar .hero-button.reset-filters-button, .search-modal .search-modal-sidebar .hero .hero-content-display .hero-button.reset-filters-button, .hero .hero-content-display .hero-action-buttons-container .hero-button.hero-action-icon, .hero .hero-action-buttons-container .hero-content-display .hero-button.hero-action-icon, .hero .hero-content-display .genre-shelves-main-container .hero-button.toggle-genres-button, .genre-shelves-main-container .hero .hero-content-display .hero-button.toggle-genres-button {
     padding: 10px 18px;
     font-size: 0.95em;
   }
@@ -1621,7 +1640,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
     margin-left: 0;
     margin-top: 0;
   }
-  .genre-shelves-main-container .content-area-genres .movie-shelf h2 {
+  .genre-shelves-main-container .content-area-genres .collapsible-genre-shelf h2 {
     font-size: 1.4em;
     margin-left: 15px;
   }
@@ -1668,7 +1687,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
     font-size: 0.9em;
     margin-bottom: 20px;
   }
-  .detailed-info-panel .detailed-info-actions .action-button, .detailed-info-panel .detailed-info-actions .genre-shelves-main-container .toggle-genres-button, .genre-shelves-main-container .detailed-info-panel .detailed-info-actions .toggle-genres-button, .detailed-info-panel .detailed-info-actions .navbar .navbar-button, .navbar .detailed-info-panel .detailed-info-actions .navbar-button, .detailed-info-panel .detailed-info-actions .navbar .navbar-icon, .navbar .detailed-info-panel .detailed-info-actions .navbar-icon, .detailed-info-panel .detailed-info-actions .navbar .profile-dropdown .dropdown-button, .navbar .profile-dropdown .detailed-info-panel .detailed-info-actions .dropdown-button, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .detailed-info-panel .detailed-info-actions .dropdown-toggle, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .reset-filters-button, .search-modal .search-modal-sidebar .detailed-info-panel .detailed-info-actions .reset-filters-button, .detailed-info-panel .detailed-info-actions .hero .hero-action-buttons-container .hero-action-icon, .hero .hero-action-buttons-container .detailed-info-panel .detailed-info-actions .hero-action-icon {
+  .detailed-info-panel .detailed-info-actions .action-button, .detailed-info-panel .detailed-info-actions .navbar .navbar-button, .navbar .detailed-info-panel .detailed-info-actions .navbar-button, .detailed-info-panel .detailed-info-actions .navbar .navbar-icon, .navbar .detailed-info-panel .detailed-info-actions .navbar-icon, .detailed-info-panel .detailed-info-actions .navbar .profile-dropdown .dropdown-button, .navbar .profile-dropdown .detailed-info-panel .detailed-info-actions .dropdown-button, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .filter-group .custom-dropdown .dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .detailed-info-panel .detailed-info-actions .dropdown-toggle, .detailed-info-panel .detailed-info-actions .search-modal .search-modal-sidebar .reset-filters-button, .search-modal .search-modal-sidebar .detailed-info-panel .detailed-info-actions .reset-filters-button, .detailed-info-panel .detailed-info-actions .hero .hero-action-buttons-container .hero-action-icon, .hero .hero-action-buttons-container .detailed-info-panel .detailed-info-actions .hero-action-icon, .detailed-info-panel .detailed-info-actions .genre-shelves-main-container .toggle-genres-button, .genre-shelves-main-container .detailed-info-panel .detailed-info-actions .toggle-genres-button {
     font-size: 0.9em;
     padding: 8px 15px;
   }
@@ -1691,7 +1710,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   .hero .hero-content-display .hero-description {
     font-size: 0.8em;
   }
-  .hero .hero-content-display .hero-button.action-button, .hero .hero-content-display .genre-shelves-main-container .hero-button.toggle-genres-button, .genre-shelves-main-container .hero .hero-content-display .hero-button.toggle-genres-button, .hero .hero-content-display .navbar .hero-button.navbar-button, .navbar .hero .hero-content-display .hero-button.navbar-button, .hero .hero-content-display .navbar .hero-button.navbar-icon, .navbar .hero .hero-content-display .hero-button.navbar-icon, .hero .hero-content-display .navbar .profile-dropdown .hero-button.dropdown-button, .navbar .profile-dropdown .hero .hero-content-display .hero-button.dropdown-button, .hero .hero-content-display .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-content-display .hero-button.dropdown-toggle, .hero .hero-content-display .search-modal .search-modal-sidebar .hero-button.reset-filters-button, .search-modal .search-modal-sidebar .hero .hero-content-display .hero-button.reset-filters-button, .hero .hero-content-display .hero-action-buttons-container .hero-button.hero-action-icon, .hero .hero-action-buttons-container .hero-content-display .hero-button.hero-action-icon {
+  .hero .hero-content-display .hero-button.action-button, .hero .hero-content-display .navbar .hero-button.navbar-button, .navbar .hero .hero-content-display .hero-button.navbar-button, .hero .hero-content-display .navbar .hero-button.navbar-icon, .navbar .hero .hero-content-display .hero-button.navbar-icon, .hero .hero-content-display .navbar .profile-dropdown .hero-button.dropdown-button, .navbar .profile-dropdown .hero .hero-content-display .hero-button.dropdown-button, .hero .hero-content-display .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero-button.dropdown-toggle, .search-modal .search-modal-sidebar .filter-group .custom-dropdown .hero .hero-content-display .hero-button.dropdown-toggle, .hero .hero-content-display .search-modal .search-modal-sidebar .hero-button.reset-filters-button, .search-modal .search-modal-sidebar .hero .hero-content-display .hero-button.reset-filters-button, .hero .hero-content-display .hero-action-buttons-container .hero-button.hero-action-icon, .hero .hero-action-buttons-container .hero-content-display .hero-button.hero-action-icon, .hero .hero-content-display .genre-shelves-main-container .hero-button.toggle-genres-button, .genre-shelves-main-container .hero .hero-content-display .hero-button.toggle-genres-button {
     font-size: 0.9em;
     padding: 8px 15px;
   }
@@ -1725,6 +1744,7 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   .movie-tile .movie-hover-details p {
     font-size: 0.75em;
     line-clamp: 2;
+    -webkit-line-clamp: 2;
   }
   .detailed-info-panel .detailed-info-title {
     font-size: 1.4em;
@@ -1732,8 +1752,18 @@ input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner
   .genre-shelves-main-container .genre-area-title {
     font-size: 1.5em;
   }
-  .genre-shelves-main-container .content-area-genres .movie-shelf h2 {
+  .genre-shelves-main-container .content-area-genres .collapsible-genre-shelf h2 {
     font-size: 1.3em;
+  }
+  #toast-notification {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    width: auto;
+    transform: translateY(100%);
+  }
+  #toast-notification.active {
+    transform: translateY(0);
   }
 }
 #tab-episodes-details .seasons-grid {

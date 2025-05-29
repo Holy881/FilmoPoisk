@@ -17,9 +17,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Элементы для "Полок" и детальной информации ---
     const contentArea = document.querySelector('.content-area');
     const dynamicShelvesContainer = document.getElementById('dynamic-shelves-container');
-    const genreShelvesMainContainer = document.getElementById('genre-shelves-main-container'); // Главный контейнер для всех полок жанров
-    const genreShelvesArea = document.getElementById('genre-shelves-area'); // Контейнер, куда добавляются полки жанров
-    const genreAreaToggleButton = document.getElementById('genre-area-toggle-button'); // Кнопка для раскрытия/сворачивания
+    const genreShelvesMainContainer = document.getElementById('genre-shelves-main-container');
+    const genreShelvesArea = document.getElementById('genre-shelves-area');
+    const genreAreaToggleButton = document.getElementById('genre-area-toggle-button');
 
     const detailedInfoPanel = document.getElementById('detailed-info-panel');
     const detailedInfoCloseBtn = detailedInfoPanel?.querySelector('.detailed-info-close-btn');
@@ -37,10 +37,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const detailedInfoOverview = detailedInfoLeftColumn?.querySelector('#tab-about-details .detailed-info-overview');
 
     const detailedInfoWatchBtn = detailedInfoLeftColumn?.querySelector('.watch-now-btn');
-    const detailedInfoAddToListBtn = detailedInfoLeftColumn?.querySelector('.add-to-list-btn');
+    const addToListBtn = detailedInfoLeftColumn?.querySelector('.add-to-list-btn');
+    const listCategoryDropdown = detailedInfoLeftColumn?.querySelector('.list-category-dropdown');
 
     const detailedInfoTabsContainer = detailedInfoLeftColumn?.querySelector('.detailed-info-tabs');
-
     const detailedInfoBackdropImage = detailedInfoPanel?.querySelector('.detailed-info-right-column .detailed-info-backdrop-image');
 
     // --- Элементы DOM для Navbar и User Profile ---
@@ -70,12 +70,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ratingToInput = newSearchModal?.querySelector('.rating-input[placeholder="до"]');
     const resetFiltersButton = newSearchModal?.querySelector('.reset-filters-button');
 
+    // --- Элементы для toast-уведомлений ---
+    const toastNotification = document.getElementById('toast-notification');
+    const toastNotificationMessage = document.getElementById('toast-notification-message');
+    let toastTimeout = null;
+
+
     const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';
     const BACKDROP_SIZE_HERO = 'original';
-    const POSTER_SIZE_CARD = 'w342';
+    const POSTER_SIZE_CARD = 'w342'; 
     const POSTER_SIZE_SEASON_CARD = 'w185';
     const BACKDROP_SIZE_DETAILS_LARGE = 'w1280';
     const POSTER_SIZE_SEARCH = 'w154';
+
 
     const DEFAULT_VOLUME_LEVEL = 0.1;
     const VOLUME_ANIMATION_DURATION = 1500;
@@ -91,13 +98,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentlyOpenShelfForDetails = null;
     let currentActiveMovieTile = null;
     let currentActiveTabPane = null;
+    let currentDetailedItemData = null; 
 
     const DEFAULT_AVATAR_PATH = '/images/default-avatar.png';
     const placeholderMovies = [
         { id: 1, tmdb_id: 550, media_type: 'movie', title: 'Бойцовский клуб', name: 'Бойцовский клуб', poster_path: '/pB8BM7pdSp6B6Ih7QZ4DrQ3pmJK.jpg', vote_average: 8.43, overview: 'Сотрудник страховой компании страдает хронической бессонницей и отчаянно пытается вырваться из мучительно скучной жизни. Однажды он встречает Тайлера Дёрдена, харизматичного торговца мылом с извращённой философией. Тайлер уверен, что самосовершенствование — удел слабых, а саморазрушение — единственное, ради чего стоит жить.', release_date: '1999-10-15', first_air_date: null, genres: [{id: 18, name: 'Драма'}], number_of_episodes: null, number_of_seasons: null },
         { id: 2, tmdb_id: 1399, media_type: 'tv', title: 'Игра престолов', name: 'Игра престолов', poster_path: '/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg', vote_average: 8.4, overview: 'К концу подходит время благоденствия, и лето, длившееся почти десятилетие, угасает. Вокруг средоточия власти Семи королевств, Железного трона, зреет заговор, и в это непростое время король решает искать поддержки у друга юности Эддарда Старка. В мире, где все — от короля до наемника — рвутся к власти, плетут интриги и готовы вонзить нож в спину, есть место и благородству, состраданию и любви. Между тем, никто не замечает пробуждения тьмы из легенд далеко на Севере — и лишь Стена защищает живых к югу от нее.', release_date: null, first_air_date: '2011-04-17', genres: [{id: 10765, name: 'Sci-Fi & Fantasy'}, {id: 18, name: 'Драма'}, {id: 10759, name: 'Action & Adventure'}], number_of_episodes: 73, number_of_seasons: 8 },
     ];
-    const EXCLUDED_TV_GENRE_IDS = [10767, 10764]; // Talk, Reality
+    const EXCLUDED_TV_GENRE_IDS = [10767, 10764, 10763, 10766];
 
     const GENRES_FOR_SHELVES = [
         { id: 28, name: "Боевик" }, { id: 12, name: "Приключения" }, { id: 16, name: "Мультфильм" },
@@ -107,9 +115,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: 10752, name: "Военный" }
     ];
 
+    function showToastNotification(message, isError = false, duration = 3000) {
+        if (!toastNotification || !toastNotificationMessage) return;
+
+        toastNotificationMessage.textContent = message;
+        toastNotification.classList.remove('error', 'success'); // Сначала убираем оба класса
+        if (isError) {
+            toastNotification.classList.add('error');
+        } else {
+            toastNotification.classList.add('success');
+        }
+
+        toastNotification.classList.add('active');
+
+        // Очищаем предыдущий таймаут, если он был
+        if (toastTimeout) {
+            clearTimeout(toastTimeout);
+        }
+
+        toastTimeout = setTimeout(() => {
+            toastNotification.classList.remove('active');
+        }, duration);
+    }
+    
+    window.onclick = function(event) {
+        // Закрытие дропдауна категорий при клике вне его
+        if (listCategoryDropdown && listCategoryDropdown.classList.contains('active')) {
+            if (!addToListBtn?.contains(event.target) && !listCategoryDropdown.contains(event.target)) {
+                listCategoryDropdown.classList.remove('active');
+            }
+        }
+    }
+
+
     function createShelfElement(id, titleText) {
         const shelfSection = document.createElement('section');
-        shelfSection.className = 'movie-shelf'; // Оставляем для общих структурных стилей
+        shelfSection.className = 'movie-shelf';
         shelfSection.id = id;
         const title = document.createElement('h2');
         title.textContent = titleText;
@@ -373,14 +414,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (movieResponse.ok) {
                 const movieData = await movieResponse.json();
                 if (movieData?.results?.length > 0) {
-                    popularMovies = movieData.results.filter(m => m.popularity >= 75)
+                    popularMovies = movieData.results
+                        .filter(m => m.overview && m.overview.trim() !== '')
+                        .filter(m => m.popularity >= 75)
                         .map(m => ({ ...m, tmdb_id: m.id, name: m.title, media_type: 'movie' })).slice(0, movieCount);
                 } else console.warn('Не удалось получить популярные фильмы.');
             } else console.error(`Ошибка популярных фильмов: ${movieResponse.status}`);
             if (tvResponse.ok) {
                 const tvData = await tvResponse.json();
                 if (tvData?.results?.length > 0) {
-                    popularTvShows = tvData.results.filter(tv => tv.popularity >= 75 && (!tv.genre_ids || !tv.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id))))
+                    popularTvShows = tvData.results
+                        .filter(tv => tv.overview && tv.overview.trim() !== '')
+                        .filter(tv => tv.popularity >= 75 && (!tv.genre_ids || !tv.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id))))
                         .map(tv => ({ ...tv, tmdb_id: tv.id, title: tv.name, media_type: 'tv' })).slice(0, tvShowCount);
                 } else console.warn('Не удалось получить популярные сериалы.');
             } else console.error(`Ошибка популярных сериалов: ${tvResponse.status}`);
@@ -403,14 +448,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (movieResponse.ok) {
                 const movieData = await movieResponse.json();
                 if (movieData?.results?.length > 0) {
-                    trendingMovies = movieData.results.filter(m => m.vote_average >= 6.5 && m.popularity >= 50)
+                    trendingMovies = movieData.results
+                        .filter(m => m.overview && m.overview.trim() !== '')
+                        .filter(m => m.vote_average >= 6.5 && m.popularity >= 50)
                         .map(m => ({ ...m, tmdb_id: m.id, name: m.title, media_type: 'movie' })).slice(0, movieCount);
                 } else console.warn('Не удалось получить трендовые фильмы.');
             } else console.error(`Ошибка трендовых фильмов: ${movieResponse.status}`);
             if (tvResponse.ok) {
                 const tvData = await tvResponse.json();
                 if (tvData?.results?.length > 0) {
-                    trendingTvShows = tvData.results.filter(tv => tv.vote_average >= 6.5 && tv.popularity >= 75 && (!tv.genre_ids || !tv.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id))))
+                    trendingTvShows = tvData.results
+                        .filter(tv => tv.overview && tv.overview.trim() !== '')
+                        .filter(tv => tv.vote_average >= 6.5 && tv.popularity >= 75 && (!tv.genre_ids || !tv.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id))))
                         .map(tv => ({ ...tv, tmdb_id: tv.id, title: tv.name, media_type: 'tv' })).slice(0, tvShowCount);
                 } else console.warn('Не удалось получить трендовые сериалы.');
             } else console.error(`Ошибка трендовых сериалов: ${tvResponse.status}`);
@@ -429,7 +478,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!response.ok) throw new Error(`Ошибка HTTP: ${response.status}`);
             const data = await response.json();
             if (data?.results?.length > 0) {
-                const moviesToDisplay = data.results.filter(m => m.popularity >= 75)
+                const moviesToDisplay = data.results
+                    .filter(m => m.overview && m.overview.trim() !== '')
+                    .filter(m => m.popularity >= 75)
                     .map(m => ({ ...m, tmdb_id: m.id, name: m.title, media_type: 'movie' })).slice(0, count);
                 renderShelf(shelfElement, moviesToDisplay);
             } else {
@@ -449,7 +500,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!response.ok) throw new Error(`Ошибка HTTP: ${response.status}`);
             const data = await response.json();
             if (data?.results?.length > 0) {
-                const tvShowsToDisplay = data.results.filter(tv => tv.popularity >= 75 && (!tv.genre_ids || !tv.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id))))
+                const tvShowsToDisplay = data.results
+                    .filter(tv => tv.overview && tv.overview.trim() !== '')
+                    .filter(tv => tv.popularity >= 75 && (!tv.genre_ids || !tv.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id))))
                     .map(tv => ({ ...tv, tmdb_id: tv.id, title: tv.name, media_type: 'tv' })).slice(0, count);
                 renderShelf(shelfElement, tvShowsToDisplay);
             } else {
@@ -462,91 +515,82 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    async function fetchAndRenderOngoingSeriesShelf(shelfElement, count = 15, pagesToFetch = 3) {
-        if (!shelfElement) return;
-        let candidates = [];
-        const ONGOING_POPULARITY_THRESHOLD = 15;
-        try {
-            for (let i = 1; i <= pagesToFetch; i++) {
-                const response = await fetch(`/api/tmdb/search?media_type=tv&sort_by=popularity.desc&page=${i}&with_types=4&rating_from=6.0`);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.results) candidates.push(...data.results);
-                } else console.warn(`Ошибка загрузки онгоингов (стр. ${i}): ${response.status}`);
-            }
-            const uniqueCandidates = Array.from(new Map(candidates.map(item => [item.id, item])).values());
-            if (uniqueCandidates.length === 0) {
-                renderShelf(shelfElement, placeholderMovies.filter(m => m.media_type === 'tv' && m.tmdb_id === 1399).slice(0, 1)); return;
-            }
-            const detailPromises = uniqueCandidates.map(tv => fetch(`/api/tmdb/details/tv/${tv.id}?language=ru-RU`).then(res => res.ok ? res.json() : null));
-            const detailedResults = (await Promise.allSettled(detailPromises)).map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
-            const returningSeries = detailedResults
-                .filter(d => d.status === 'Returning Series' && d.vote_average >= 6.0 && d.popularity >= ONGOING_POPULARITY_THRESHOLD && (!d.genres || !d.genres.some(g => EXCLUDED_TV_GENRE_IDS.includes(g.id))) && (!d.genre_ids || !d.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id))))
-                .map(d => ({ ...d, tmdb_id: d.id, title: d.name, media_type: 'tv', genre_ids: d.genres ? d.genres.map(g => g.id) : (d.genre_ids || []) }))
-                .sort((a, b) => b.popularity - a.popularity)
-                .slice(0, count);
-            renderShelf(shelfElement, returningSeries.length > 0 ? returningSeries : placeholderMovies.filter(m => m.media_type === 'tv' && m.tmdb_id === 1399).slice(0, 1));
-        } catch (error) {
-            console.error('Ошибка загрузки "Онгоинги":', error);
-            renderShelf(shelfElement, placeholderMovies.filter(m => m.media_type === 'tv' && m.tmdb_id === 1399).slice(0, 1));
-        }
-    }
+    async function fetchMediaForGenrePage(mediaType, genreId, page, ratingFrom = "5.0", pagesToTry = 5) {
+        let results = [];
+        let currentPage = page;
+        let attempts = 0;
 
-    async function fetchMediaForGenrePage(mediaType, genreId, page) {
-        const response = await fetch(`/api/tmdb/search?media_type=${mediaType}&sort_by=popularity.desc&genres=${genreId}&page=${page}&rating_from=5.5`);
-        if (!response.ok) {
-            console.error(`Ошибка загрузки ${mediaType} для жанра ${genreId}, стр. ${page}: ${response.status}`);
-            return [];
+        while (results.length < 20 && attempts < pagesToTry) { 
+            const response = await fetch(`/api/tmdb/search?media_type=${mediaType}&sort_by=popularity.desc&genres=${genreId}&page=${currentPage}&rating_from=${ratingFrom}`);
+            if (!response.ok) {
+                console.error(`Ошибка загрузки ${mediaType} для жанра ${genreId}, стр. ${currentPage}: ${response.status}`);
+                break; 
+            }
+            const data = await response.json();
+            if (data.results && data.results.length > 0) {
+                results.push(...data.results);
+            }
+            if (!data.results || data.results.length < 20 || !data.total_pages || currentPage >= data.total_pages) {
+                break;
+            }
+            currentPage++;
+            attempts++;
         }
-        const data = await response.json();
-        return data.results || [];
+        return results;
     }
 
     async function fetchAndRenderGenreShelf(shelfElement, genreId, itemsPerShelf = 15) {
         if (!shelfElement) return;
         const genreName = GENRES_FOR_SHELVES.find(g => g.id === genreId)?.name || `Жанр ${genreId}`;
+        console.log(`[GENRE SHELF] Загрузка для "${genreName}" (ID: ${genreId}), цель ${itemsPerShelf} элементов.`);
         try {
-            let allMoviesForGenre = [];
-            let allTvShowsForGenre = [];
-            const pagesToFetchPerType = 3;
+            let collectedMovies = [];
+            let collectedTvShows = [];
+            const pagesToFetchPerTypeInitially = 1; 
+            
+            const [moviesInitial, tvShowsInitial] = await Promise.all([
+                fetchMediaForGenrePage('movie', genreId, pagesToFetchPerTypeInitially, "5.0", 5), 
+                fetchMediaForGenrePage('tv', genreId, pagesToFetchPerTypeInitially, "5.0", 5)    
+            ]);
 
-            for (let page = 1; page <= pagesToFetchPerType; page++) {
-                const [moviesPage, tvShowsPage] = await Promise.all([
-                    fetchMediaForGenrePage('movie', genreId, page),
-                    fetchMediaForGenrePage('tv', genreId, page)
-                ]);
-                allMoviesForGenre.push(...moviesPage);
-                allTvShowsForGenre.push(...tvShowsPage);
-            }
+            collectedMovies.push(...moviesInitial);
+            collectedTvShows.push(...tvShowsInitial);
+            
+            const uniqueMovies = Array.from(new Map(collectedMovies.map(item => [item.id, item])).values())
+                .filter(movie => movie.overview && movie.overview.trim() !== '');
+            const uniqueTvShows = Array.from(new Map(collectedTvShows.map(item => [item.id, item])).values())
+                .filter(tv => tv.overview && tv.overview.trim() !== '' && (!tv.genre_ids || !tv.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id))));
 
-            allMoviesForGenre = Array.from(new Map(allMoviesForGenre.map(item => [item.id, item])).values());
-            allTvShowsForGenre = Array.from(new Map(allTvShowsForGenre.map(item => [item.id, item])).values());
+            console.log(`[GENRE SHELF] "${genreName}": Найдено ${uniqueMovies.length} фильмов и ${uniqueTvShows.length} сериалов с описанием после сбора с нескольких страниц.`);
 
-            const filteredMovies = allMoviesForGenre
-                .filter(movie => movie.popularity >= 20)
-                .map(movie => ({ ...movie, tmdb_id: movie.id, name: movie.title, media_type: 'movie' }));
+            const mappedMovies = uniqueMovies.map(movie => ({ ...movie, tmdb_id: movie.id, name: movie.title, media_type: 'movie' }));
+            const mappedTvShows = uniqueTvShows.map(tv => ({ ...tv, tmdb_id: tv.id, title: tv.name, media_type: 'tv' }));
 
-            const filteredTvShows = allTvShowsForGenre
-                .filter(tv => tv.popularity >= 15 && (!tv.genre_ids || !tv.genre_ids.some(id => EXCLUDED_TV_GENRE_IDS.includes(id))))
-                .map(tv => ({ ...tv, tmdb_id: tv.id, title: tv.name, media_type: 'tv' }));
-
-            let combinedMedia = [...filteredMovies, ...filteredTvShows];
+            let combinedMedia = [...mappedMovies, ...mappedTvShows];
+            
             combinedMedia.sort((a, b) => b.popularity - a.popularity);
 
             if (combinedMedia.length > itemsPerShelf * 1.5) {
-                 for (let i = combinedMedia.length - 1; i > 0; i--) {
+                const topItems = combinedMedia.slice(0, itemsPerShelf);
+                let remainingItems = combinedMedia.slice(itemsPerShelf);
+                for (let i = remainingItems.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
-                    [combinedMedia[i], combinedMedia[j]] = [combinedMedia[j], combinedMedia[i]];
+                    [remainingItems[i], remainingItems[j]] = [remainingItems[j], remainingItems[i]];
                 }
+                combinedMedia = [...topItems, ...remainingItems];
             }
+
             const finalMedia = combinedMedia.slice(0, itemsPerShelf);
+            console.log(`[GENRE SHELF] "${genreName}": Отображаем ${finalMedia.length} элементов.`);
+
             if (finalMedia.length > 0) {
                 renderShelf(shelfElement, finalMedia);
             } else {
-                renderShelf(shelfElement, []);
+                console.warn(`[GENRE SHELF] Нет контента для полки жанра "${genreName}" после всех фильтров.`);
+                renderShelf(shelfElement, []); 
             }
         } catch (error) {
-            console.error(`Ошибка загрузки полки для жанра "${genreName}":`, error);
+            console.error(`[GENRE SHELF] Ошибка загрузки полки для жанра "${genreName}":`, error);
             renderShelf(shelfElement, []);
         }
     }
@@ -564,8 +608,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         console.log("[DEBUG] All key genre elements FOUND.");
 
-        genreShelvesMainContainer.classList.remove('expanded');
-        console.log(`[DEBUG] genreShelvesMainContainer classes after removing 'expanded': "${genreShelvesMainContainer.className}"`);
+        genreShelvesMainContainer.classList.remove('genres-expanded');
+        console.log(`[DEBUG] genreShelvesMainContainer initial classes: "${genreShelvesMainContainer.className}"`);
 
         const buttonText = genreAreaToggleButton.querySelector('span');
         const arrowIcon = genreAreaToggleButton.querySelector('i');
@@ -575,7 +619,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             arrowIcon.classList.remove('fa-chevron-up');
             arrowIcon.classList.add('fa-chevron-down');
         }
-        console.log("[DEBUG] Toggle button text and icon reset.");
+        console.log("[DEBUG] Toggle button text and icon reset to 'Показать'.");
 
         genreShelvesArea.innerHTML = '';
 
@@ -583,18 +627,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const shelfId = `genre-shelf-${genre.id}`;
             const shelfElement = createShelfElement(shelfId, genre.name);
             
-            shelfElement.classList.add('dynamic-genre-shelf'); // Новый уникальный класс
-
-            // Удаляем старые классы управления видимостью, если они были
-            shelfElement.classList.remove('genre-shelf--hidden-by-default', 'genre-shelf--visible-by-default');
+            shelfElement.classList.add('collapsible-genre-shelf');
 
             if (index === 0) {
-                // Первая полка видима по умолчанию, ей не нужен класс collapsed
-                shelfElement.classList.remove('dynamic-genre-shelf--collapsed');
-                console.log(`[DEBUG] Shelf "${genre.name}" (index ${index}): MARKED as initially visible (no collapse class). Classes: "${shelfElement.className}"`);
+                shelfElement.classList.remove('is-collapsed');
+                console.log(`[DEBUG] Shelf "${genre.name}" (index ${index}): Is initially visible. Classes: "${shelfElement.className}"`);
             } else {
-                shelfElement.classList.add('dynamic-genre-shelf--collapsed');
-                console.log(`[DEBUG] Shelf "${genre.name}" (index ${index}): ADDED 'dynamic-genre-shelf--collapsed'. Classes: "${shelfElement.className}"`);
+                shelfElement.classList.add('is-collapsed');
+                console.log(`[DEBUG] Shelf "${genre.name}" (index ${index}): ADDED 'is-collapsed'. Classes: "${shelfElement.className}"`);
             }
             genreShelvesArea.appendChild(shelfElement);
             fetchAndRenderGenreShelf(shelfElement, genre.id, 15);
@@ -607,33 +647,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function toggleGenreAreaExpansion() {
         console.log("[DEBUG] toggleGenreAreaExpansion CALLED");
-        if (!genreShelvesMainContainer || !genreAreaToggleButton) {
-            console.error("[DEBUG] ERROR in toggle: genreShelvesMainContainer or genreAreaToggleButton is NULL.");
+        if (!genreShelvesMainContainer || !genreAreaToggleButton || !genreShelvesArea) {
+            console.error("[DEBUG] ERROR in toggle: One of the key elements is NULL.", {
+                genreShelvesMainContainer, genreAreaToggleButton, genreShelvesArea
+            });
             return;
         }
 
-        const isCurrentlyExpanded = genreShelvesMainContainer.classList.contains('expanded');
-        console.log(`[DEBUG] Before toggle: genreShelvesMainContainer.classList.contains('expanded') = ${isCurrentlyExpanded}`);
+        genreShelvesMainContainer.classList.toggle('genres-expanded');
+        const isNowExpandedState = genreShelvesMainContainer.classList.contains('genres-expanded');
 
-        genreShelvesMainContainer.classList.toggle('expanded');
-        const isNowExpanded = genreShelvesMainContainer.classList.contains('expanded');
+        console.log(`[DEBUG] Main container 'genres-expanded' class is now: ${isNowExpandedState}`);
+        console.log(`[DEBUG] genreShelvesMainContainer classes: "${genreShelvesMainContainer.className}"`);
 
-        console.log(`[DEBUG] After toggle: genreShelvesMainContainer.classList.contains('expanded') = ${isNowExpanded}`);
-        console.log(`[DEBUG] genreShelvesMainContainer classes after toggle: "${genreShelvesMainContainer.className}"`);
+        const allGenreShelves = genreShelvesArea.querySelectorAll('.collapsible-genre-shelf');
+
+        allGenreShelves.forEach((shelf, index) => {
+            if (index === 0) return; 
+
+            if (isNowExpandedState) {
+                shelf.classList.remove('is-collapsed');
+            } else {
+                shelf.classList.add('is-collapsed');
+            }
+        });
 
         const buttonText = genreAreaToggleButton.querySelector('span');
         const arrowIcon = genreAreaToggleButton.querySelector('i');
-
         if (buttonText) {
-            buttonText.textContent = isNowExpanded ? "Скрыть все жанры" : "Показать все жанры";
+            buttonText.textContent = isNowExpandedState ? "Скрыть все жанры" : "Показать все жанры";
         }
         if (arrowIcon) {
-            arrowIcon.classList.toggle('fa-chevron-down', !isNowExpanded);
-            arrowIcon.classList.toggle('fa-chevron-up', isNowExpanded);
+            arrowIcon.classList.toggle('fa-chevron-down', !isNowExpandedState);
+            arrowIcon.classList.toggle('fa-chevron-up', isNowExpandedState);
         }
-        console.log(`[DEBUG] Toggle button text and icon updated. Is now expanded: ${isNowExpanded}`);
+        console.log(`[DEBUG] Toggle button text and icon updated. Now ${isNowExpandedState ? 'EXPANDED' : 'COLLAPSED'}.`);
     }
-
 
     function applyRatingStyles(targetElement, ratingValue) {
         if (!targetElement) return;
@@ -679,6 +728,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const populatePanelData = (itemData, itemMediaType) => {
         if (!detailedInfoPanel) return;
+        currentDetailedItemData = { ...itemData, media_type: itemMediaType, userListCategory: null }; // Сбрасываем userListCategory при загрузке новых данных
+        
         if (detailedInfoTitle) detailedInfoTitle.textContent = itemData.title || itemData.name;
         if (detailedInfoRatingDisplay) applyRatingStyles(detailedInfoRatingDisplay, itemData.vote_average);
         const itemReleaseDate = itemData.release_date || itemData.first_air_date;
@@ -719,6 +770,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             detailedInfoBackdropImage.alt = `Задник для ${itemData.title || itemData.name}`;
         }
         detailedInfoPanel.dataset.currentTmdbId = String(itemData.id);
+        detailedInfoPanel.dataset.currentMediaType = itemMediaType;
+
         const aboutTabPane = detailedInfoPanel.querySelector('#tab-about-details');
         const episodesTabPane = detailedInfoPanel.querySelector('#tab-episodes-details');
         const episodesTabButton = detailedInfoTabsContainer?.querySelector('.tab-button[data-tab-target="#tab-episodes-details"]');
@@ -739,71 +792,149 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (episodesTabButton) episodesTabButton.style.display = 'none';
     };
 
+    async function getItemListStatus(userId, tmdbId, mediaType) {
+        if (!userId || !tmdbId || !mediaType) return null;
+        try {
+            const response = await fetch(`/api/user/${userId}/lists?tmdb_id=${tmdbId}&media_type=${mediaType}`);
+            if (response.ok) {
+                const data = await response.json();
+                return data; // Ожидаем объект элемента списка или null
+            }
+            console.warn(`Не удалось получить статус элемента списка: ${response.status}`);
+            return null;
+        } catch (error) {
+            console.error('Ошибка при запросе статуса элемента списка:', error);
+            return null;
+        }
+    }
+    
+    function updateListCategoryDropdownCheckmarks() {
+        if (!listCategoryDropdown || !currentDetailedItemData) return;
+    
+        listCategoryDropdown.querySelectorAll('button').forEach(button => {
+            const checkmark = button.querySelector('.list-category-checkmark');
+            if (checkmark) {
+                checkmark.remove();
+            }
+            if (currentDetailedItemData.userListCategory && button.dataset.category === currentDetailedItemData.userListCategory) {
+                const newCheckmark = document.createElement('i');
+                newCheckmark.className = 'fas fa-check list-category-checkmark';
+                button.prepend(newCheckmark);
+            } else {
+                 // Добавляем "пустышку" для выравнивания, если галочки нет
+                const placeholder = document.createElement('span');
+                placeholder.className = 'list-category-checkmark'; // Используем тот же класс для одинаковых отступов
+                placeholder.innerHTML = '&nbsp;'; // Неразрывный пробел, чтобы занимал место
+                button.prepend(placeholder);
+            }
+        });
+    }
+
     async function openDetailedInfo(tmdbId, mediaType, clickedTileElement) {
         if (!detailedInfoPanel || !clickedTileElement) { console.error('Панель деталей или элемент не найдены'); return; }
         const newParentShelf = clickedTileElement.closest('.movie-shelf');
         if (!newParentShelf) { console.error('Родительская полка не найдена.'); return; }
         const isAlreadyOpen = detailedInfoPanel.classList.contains('expanded');
         const isSameTile = currentActiveMovieTile === clickedTileElement;
+        
+        // Сначала закрываем дропдаун, если он был открыт
+        if (listCategoryDropdown) listCategoryDropdown.classList.remove('active');
+
         if (isAlreadyOpen && isSameTile) { await closeDetailedInfo(); return; }
-        if (isAlreadyOpen) {
-            if (currentActiveMovieTile) currentActiveMovieTile.classList.remove('active-tile-details');
-            clickedTileElement.classList.add('active-tile-details'); currentActiveMovieTile = clickedTileElement;
-            try {
-                const response = await fetch(`/api/tmdb/details/${mediaType}/${tmdbId}?language=ru-RU`);
-                if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(err.status_message || `Ошибка HTTP: ${response.status}`); }
-                const data = await response.json(); if (!data) throw new Error('Данные не получены.');
-                const needsMove = currentlyOpenShelfForDetails !== newParentShelf;
-                if (needsMove) {
-                    detailedInfoPanel.style.transition = 'opacity 0.15s ease-out'; detailedInfoPanel.style.opacity = '0';
-                    await new Promise(r => setTimeout(r, 150));
-                    newParentShelf.after(detailedInfoPanel); populatePanelData(data, mediaType); currentlyOpenShelfForDetails = newParentShelf;
-                    detailedInfoPanel.style.opacity = '1';
+        
+        try {
+            const response = await fetch(`/api/tmdb/details/${mediaType}/${tmdbId}?language=ru-RU`);
+            if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(err.status_message || `Ошибка HTTP: ${response.status}`); }
+            const data = await response.json(); if (!data) throw new Error('Данные не получены.');
+            
+            populatePanelData(data, mediaType); // Заполняем основными данными
+
+            // Получаем статус элемента в списке пользователя
+            const userId = localStorage.getItem('userId');
+            if (userId && currentDetailedItemData) {
+                const listItemData = await getItemListStatus(userId, currentDetailedItemData.id, currentDetailedItemData.media_type);
+                if (listItemData && listItemData.category) {
+                    currentDetailedItemData.userListCategory = listItemData.category;
                 } else {
-                    if (detailedInfoContentWrapper) {
-                        detailedInfoContentWrapper.style.transition = 'opacity 0.2s ease-out'; detailedInfoContentWrapper.style.opacity = '0';
-                        await new Promise(r => setTimeout(r, 200));
-                        populatePanelData(data, mediaType); detailedInfoContentWrapper.style.opacity = '1';
-                    } else populatePanelData(data, mediaType);
+                    currentDetailedItemData.userListCategory = null; // Явно указываем, что нет в списках
                 }
-                const scrollOffset = (navbar?.offsetHeight || 0) + 10;
-                window.scrollTo({ top: detailedInfoPanel.getBoundingClientRect().top + window.pageYOffset - scrollOffset, behavior: 'smooth' });
-            } catch (error) { console.error('Ошибка обновления деталей:', error); }
-        } else {
-            try {
-                const response = await fetch(`/api/tmdb/details/${mediaType}/${tmdbId}?language=ru-RU`);
-                if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(err.status_message || `Ошибка HTTP: ${response.status}`); }
-                const data = await response.json(); if (!data) throw new Error('Данные не получены.');
-                populatePanelData(data, mediaType); newParentShelf.after(detailedInfoPanel);
+            }
+            updateListCategoryDropdownCheckmarks(); // Обновляем галочки ДО показа панели
+
+
+            if (isAlreadyOpen) { // Если панель уже была открыта для другого элемента
                 if (currentActiveMovieTile) currentActiveMovieTile.classList.remove('active-tile-details');
                 clickedTileElement.classList.add('active-tile-details'); currentActiveMovieTile = clickedTileElement;
-                detailedInfoPanel.style.display = 'block';
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    detailedInfoPanel.classList.add('expanded'); currentlyOpenShelfForDetails = newParentShelf;
-                    const scrollOffset = (navbar?.offsetHeight || 0) + 10;
-                    window.scrollTo({ top: detailedInfoPanel.getBoundingClientRect().top + window.pageYOffset - scrollOffset, behavior: 'smooth' });
-                }));
-            } catch (error) { console.error('Ошибка открытия деталей:', error); }
-        }
+                const needsMove = currentlyOpenShelfForDetails !== newParentShelf;
+                if (needsMove) {
+                    detailedInfoPanel.style.transition = 'opacity 0.15s ease-out, transform 0.15s ease-out'; 
+                    detailedInfoPanel.style.opacity = '0';
+                    detailedInfoPanel.style.transform = 'translateY(20px)'; 
+                    await new Promise(r => setTimeout(r, 150));
+                    newParentShelf.after(detailedInfoPanel); 
+                    currentlyOpenShelfForDetails = newParentShelf;
+                    requestAnimationFrame(() => {
+                        detailedInfoPanel.style.opacity = '1';
+                        detailedInfoPanel.style.transform = 'translateY(0)';
+                    });
+                } else { // Просто обновляем контент без перемещения
+                    if (detailedInfoContentWrapper) {
+                        detailedInfoContentWrapper.style.transition = 'opacity 0.2s ease-out'; 
+                        detailedInfoContentWrapper.style.opacity = '0';
+                        await new Promise(r => setTimeout(r, 200));
+                        // populatePanelData уже вызван выше
+                        detailedInfoContentWrapper.style.opacity = '1';
+                    }
+                }
+            } else { // Панель была закрыта, открываем впервые
+                newParentShelf.after(detailedInfoPanel);
+                if (currentActiveMovieTile) currentActiveMovieTile.classList.remove('active-tile-details');
+                clickedTileElement.classList.add('active-tile-details'); currentActiveMovieTile = clickedTileElement;
+                
+                detailedInfoPanel.style.display = 'block'; 
+                requestAnimationFrame(() => { 
+                    requestAnimationFrame(() => { 
+                        detailedInfoPanel.classList.add('expanded'); 
+                        currentlyOpenShelfForDetails = newParentShelf;
+                    });
+                });
+            }
+            const scrollOffset = (navbar?.offsetHeight || 0) + 10;
+            window.scrollTo({ top: detailedInfoPanel.getBoundingClientRect().top + window.pageYOffset - scrollOffset, behavior: 'smooth' });
+
+        } catch (error) { console.error('Ошибка при открытии/обновлении деталей:', error); }
     }
 
     function closeDetailedInfo() {
         return new Promise((resolve) => {
             if (!detailedInfoPanel || !detailedInfoPanel.classList.contains('expanded')) { resolve(); return; }
             if (currentActiveMovieTile) { currentActiveMovieTile.classList.remove('active-tile-details'); currentActiveMovieTile = null; }
-            detailedInfoPanel.classList.remove('expanded'); currentlyOpenShelfForDetails = null; delete detailedInfoPanel.dataset.currentTmdbId;
+            
+            detailedInfoPanel.classList.remove('expanded'); // Запускаем анимацию скрытия
+            if(listCategoryDropdown) listCategoryDropdown.classList.remove('active'); 
+
             const onEnd = (e) => {
-                if (e.target === detailedInfoPanel && e.propertyName === 'opacity' && !detailedInfoPanel.classList.contains('expanded')) {
-                   detailedInfoPanel.style.display = 'none';
-                   detailedInfoPanel.removeEventListener('transitionend', onEnd); resolve();
+                if (e.target === detailedInfoPanel && e.propertyName === 'opacity') { // Ждем завершения анимации opacity
+                    if (!detailedInfoPanel.classList.contains('expanded')) { // Убедимся, что панель все еще должна быть скрыта
+                        detailedInfoPanel.style.display = 'none';
+                        currentlyOpenShelfForDetails = null; 
+                        delete detailedInfoPanel.dataset.currentTmdbId;
+                        delete detailedInfoPanel.dataset.currentMediaType;
+                        currentDetailedItemData = null; 
+                        detailedInfoPanel.removeEventListener('transitionend', onEnd); 
+                        resolve();
+                    }
                 }
             };
             detailedInfoPanel.addEventListener('transitionend', onEnd);
-            setTimeout(() => { // Fallback
-                if (detailedInfoPanel.style.display !== 'none' && !detailedInfoPanel.classList.contains('expanded')) {
-                    detailedInfoPanel.style.display = 'none'; detailedInfoPanel.removeEventListener('transitionend', onEnd);
-                } resolve();
-            }, 350);
+            
+            setTimeout(() => {
+                if (!detailedInfoPanel.classList.contains('expanded') && detailedInfoPanel.style.display !== 'none') {
+                     detailedInfoPanel.style.display = 'none';
+                     detailedInfoPanel.removeEventListener('transitionend', onEnd);
+                }
+                resolve();
+            }, parseFloat(getComputedStyle(detailedInfoPanel).transitionDuration.split(',')[0] || '0.4') * 1000 + 50); // Длительность + небольшой запас
         });
     }
 
@@ -825,6 +956,78 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     });
+
+    if (addToListBtn && listCategoryDropdown) {
+        addToListBtn.addEventListener('click', async (event) => { // Делаем async для await внутри
+            event.stopPropagation(); 
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                showToastNotification('Для добавления в список необходимо авторизоваться.', true);
+                return;
+            }
+            if (!currentDetailedItemData) {
+                showToastNotification('Данные о фильме/сериале не загружены.', true);
+                return;
+            }
+
+            // Перед открытием дропдауна, обновляем информацию о текущей категории
+            const listItemData = await getItemListStatus(userId, currentDetailedItemData.id, currentDetailedItemData.media_type);
+            currentDetailedItemData.userListCategory = listItemData ? listItemData.category : null;
+            updateListCategoryDropdownCheckmarks();
+
+            listCategoryDropdown.classList.toggle('active');
+        });
+
+        listCategoryDropdown.querySelectorAll('button').forEach(categoryButton => {
+            categoryButton.addEventListener('click', async () => {
+                const selectedCategory = categoryButton.dataset.category;
+                const userId = localStorage.getItem('userId');
+
+                if (!userId || !currentDetailedItemData) {
+                    showToastNotification('Ошибка: Пользователь не авторизован или данные фильма не найдены.', true);
+                    listCategoryDropdown.classList.remove('active');
+                    return;
+                }
+
+                const { id: tmdb_id, media_type, title, name, poster_path } = currentDetailedItemData;
+                const itemTitle = title || name; 
+
+                const dataToSend = {
+                    tmdb_id: parseInt(tmdb_id, 10),
+                    media_type: media_type,
+                    category: selectedCategory,
+                    title: itemTitle,
+                    poster_path: poster_path,
+                    rating: null // Пользовательский рейтинг по умолчанию null при добавлении/изменении категории
+                };
+
+                console.log('Отправка данных на сервер:', dataToSend);
+
+                try {
+                    const response = await fetch(`/api/user/${userId}/lists`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(dataToSend)
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        // Используем сообщение от сервера, если оно есть, или формируем свое без кавычек
+                        const message = result.message || `${itemTitle} успешно добавлен(а) в категорию ${selectedCategory}!`;
+                        showToastNotification(message, false); // 'false' означает, что это не ошибка (для стилей success)
+                        currentDetailedItemData.userListCategory = selectedCategory; 
+                        updateListCategoryDropdownCheckmarks(); 
+                    } else {
+                        showToastNotification(`Ошибка: ${result.error || 'Не удалось обновить список.'} (Статус: ${response.status})`, true);
+                    }
+                } catch (error) {
+                    console.error('Сетевая ошибка или ошибка сервера:', error);
+                    showToastNotification('Сетевая ошибка при обновлении списка.', true);
+                } finally {
+                    listCategoryDropdown.classList.remove('active');
+                }
+            });
+        });
+    }
 
     function updateShelfControls(shelfElement) {
         const gridWrapper = shelfElement.querySelector('.shelf-grid-wrapper');
@@ -1067,7 +1270,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (i && uA && dA) { uA.addEventListener('click', () => { i.stepUp(); i.dispatchEvent(new Event('input', { bubbles: true })); }); dA.addEventListener('click', () => { i.stepDown(); i.dispatchEvent(new Event('input', { bubbles: true })); }); }
     });
 
-    // --- Инициализация ---
     if (detailedInfoPanel) { detailedInfoPanel.classList.remove('expanded'); detailedInfoPanel.style.display = 'none'; currentActiveTabPane = detailedInfoPanel.querySelector('.tab-pane.active'); }
     loadAndDisplayHeroContent(); updateUserProfileDisplay();
     const popularShelf = document.getElementById('popular'), nowPlayingShelf = document.getElementById('now-playing');
@@ -1075,9 +1277,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (nowPlayingShelf) fetchAndRenderTrendingContent(nowPlayingShelf);
 
     if (dynamicShelvesContainer) {
-        const moviesShelf = createShelfElement('movies-shelf', 'Фильмы'); dynamicShelvesContainer.appendChild(moviesShelf); fetchAndRenderMoviesShelf(moviesShelf);
-        const tvShowsShelf = createShelfElement('tv-shows-shelf', 'Сериалы'); dynamicShelvesContainer.appendChild(tvShowsShelf); fetchAndRenderTvShowsShelf(tvShowsShelf);
-        const ongoingSeriesShelf = createShelfElement('ongoing-series-shelf', 'Онгоинги'); dynamicShelvesContainer.appendChild(ongoingSeriesShelf); fetchAndRenderOngoingSeriesShelf(ongoingSeriesShelf);
+        const moviesShelf = createShelfElement('movies-shelf', 'Фильмы'); 
+        dynamicShelvesContainer.appendChild(moviesShelf); 
+        fetchAndRenderMoviesShelf(moviesShelf);
+        
+        const tvShowsShelf = createShelfElement('tv-shows-shelf', 'Сериалы'); 
+        dynamicShelvesContainer.appendChild(tvShowsShelf); 
+        fetchAndRenderTvShowsShelf(tvShowsShelf);
+        
     } else console.error("Контейнер 'dynamic-shelves-container' не найден.");
 
     initializeGenreArea();
@@ -1093,11 +1300,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             navbarButtons.forEach(btn => btn.classList.remove('active'));
             this.classList.add('active');
             const sectionId = this.dataset.section;
-            const targetSection = document.getElementById(sectionId);
-            if (targetSection) {
-                let effectiveNavbarHeight = (navbar && getComputedStyle(navbar).position === 'fixed') ? navbar.offsetHeight : 0;
-                let offsetTop = targetSection.getBoundingClientRect().top + window.pageYOffset - effectiveNavbarHeight;
-                window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+            if (sectionId && document.getElementById(sectionId)) {
+                 const targetSection = document.getElementById(sectionId);
+                 if (targetSection) {
+                    let effectiveNavbarHeight = (navbar && getComputedStyle(navbar).position === 'fixed') ? navbar.offsetHeight : 0;
+                    let offsetTop = targetSection.getBoundingClientRect().top + window.pageYOffset - effectiveNavbarHeight;
+                    window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+                }
+            } else if (sectionId) { 
+                console.warn(`Секция с ID "${sectionId}" не найдена. Прокрутка невозможна.`);
             }
         });
     });

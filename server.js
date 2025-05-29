@@ -74,6 +74,8 @@ const db = new sqlite3.Database(dbPath, (err) => {
             title TEXT NOT NULL,
             poster_path TEXT,
             rating INTEGER DEFAULT NULL CHECK (rating IS NULL OR (rating >= 0 AND rating <= 10)),
+            added_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, tmdb_id, media_type), -- Гарантирует уникальность элемента для пользователя
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
     }
@@ -249,18 +251,36 @@ app.post('/api/user/:id/update', (req, res) => {
     });
 });
 
+// Эндпоинт для получения списков пользователя (остается без изменений)
 app.get('/api/user/:id/lists', (req, res) => {
     const userId = req.params.id;
     const categoryQueryParam = req.query.category;
     const sortQueryParam = req.query.sort || 'date_desc';
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12;
+    const limit = parseInt(req.query.limit) || 12; // Количество элементов на странице
     const offset = (page - 1) * limit;
+    const tmdbIdQuery = req.query.tmdb_id; // Для проверки конкретного элемента
+    const mediaTypeQuery = req.query.media_type; // Для проверки конкретного элемента
 
     let countQuery = 'SELECT COUNT(*) as total FROM user_lists WHERE user_id = ?';
-    let itemsQuery = 'SELECT item_id AS id, user_id, tmdb_id, media_type, category, title, poster_path, rating FROM user_lists WHERE user_id = ?';
+    let itemsQuery = 'SELECT item_id AS id, user_id, tmdb_id, media_type, category, title, poster_path, rating, added_date FROM user_lists WHERE user_id = ?';
     const countQueryParams = [userId];
     const itemsQueryParams = [userId];
+
+    if (tmdbIdQuery && mediaTypeQuery) { // Если запрашивается статус конкретного элемента
+        itemsQuery += ' AND tmdb_id = ? AND media_type = ?';
+        itemsQueryParams.push(tmdbIdQuery, mediaTypeQuery);
+        // countQuery не нужен в этом случае, так как мы ищем один элемент
+        db.get(itemsQuery, itemsQueryParams, (err, row) => {
+            if (err) {
+                console.error('Ошибка при получении статуса элемента списка:', err.message);
+                return res.status(500).json({ error: 'Ошибка сервера при получении статуса элемента' });
+            }
+            return res.status(200).json(row || null); // Возвращаем элемент или null, если не найден
+        });
+        return;
+    }
+
 
     if (categoryQueryParam && categoryQueryParam !== 'Все категории') {
         countQuery += ' AND category = ?';
@@ -271,13 +291,13 @@ app.get('/api/user/:id/lists', (req, res) => {
 
     let orderByClause = '';
     switch (sortQueryParam) {
-        case 'none': orderByClause = ' ORDER BY item_id DESC'; break;
-        case 'date_asc': orderByClause = ' ORDER BY item_id ASC'; break;
+        case 'none': orderByClause = ' ORDER BY added_date DESC'; break; // Сортировка по дате добавления по умолчанию
+        case 'date_asc': orderByClause = ' ORDER BY added_date ASC'; break;
         case 'title_asc': orderByClause = ' ORDER BY LOWER(title) ASC'; break;
         case 'title_desc': orderByClause = ' ORDER BY LOWER(title) DESC'; break;
         case 'rating_asc': orderByClause = ' ORDER BY rating ASC NULLS LAST, LOWER(title) ASC'; break;
         case 'rating_desc': orderByClause = ' ORDER BY rating DESC NULLS LAST, LOWER(title) ASC'; break;
-        case 'date_desc': default: orderByClause = ' ORDER BY item_id DESC'; break;
+        case 'date_desc': default: orderByClause = ' ORDER BY added_date DESC'; break;
     }
     itemsQuery += orderByClause;
     itemsQuery += ' LIMIT ? OFFSET ?';
@@ -304,6 +324,8 @@ app.get('/api/user/:id/lists', (req, res) => {
     });
 });
 
+
+// ОБНОВЛЕННЫЙ ЭНДПОИНТ для добавления/обновления элемента в списке
 app.post('/api/user/:id/lists', (req, res) => {
     const userId = req.params.id;
     const { category, title, poster_path, rating, tmdb_id, media_type } = req.body;
@@ -316,37 +338,52 @@ app.post('/api/user/:id/lists', (req, res) => {
     }
     const ratingValue = (rating !== undefined && rating !== null && !isNaN(parseInt(rating))) ? parseInt(rating) : null;
     if (ratingValue !== null && (ratingValue < 0 || ratingValue > 10)) {
-        return res.status(400).json({ error: 'Рейтинг должен быть от 0 до 10' });
+        return res.status(400).json({ error: 'Рейтинг должен быть от 0 до 10 или null' });
     }
     if (!['movie', 'tv'].includes(media_type)) {
         return res.status(400).json({ error: 'Недопустимый тип медиа. Должен быть "movie" или "tv".' });
     }
 
-    db.get('SELECT item_id FROM user_lists WHERE user_id = ? AND tmdb_id = ? AND media_type = ?', [userId, tmdb_id, media_type], (err, existingItem) => {
-        if (err) {
-            console.error('Ошибка проверки дубликата в списке:', err.message);
-            return res.status(500).json({ error: 'Ошибка сервера при добавлении в список' });
-        }
-        if (existingItem) {
-            return res.status(409).json({ error: 'Этот элемент уже есть в одном из ваших списков.' });
-        }
+    // Используем транзакцию для атомарности операций
+    db.serialize(() => {
+        db.run("BEGIN TRANSACTION;");
 
-        const sql = 'INSERT INTO user_lists (user_id, tmdb_id, media_type, category, title, poster_path, rating) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        const params = [userId, tmdb_id, media_type, category, title, poster_path, ratingValue];
-
-        db.run(sql, params, function (err) {
-            if (err) {
-                console.error('Ошибка при добавлении в список:', err.message);
-                return res.status(500).json({ error: 'Ошибка добавления в список' });
+        // Сначала удаляем существующую запись для этого user_id, tmdb_id и media_type, если она есть
+        const deleteSql = 'DELETE FROM user_lists WHERE user_id = ? AND tmdb_id = ? AND media_type = ?';
+        db.run(deleteSql, [userId, tmdb_id, media_type], function(deleteErr) {
+            if (deleteErr) {
+                db.run("ROLLBACK;");
+                console.error('Ошибка при удалении существующего элемента из списка:', deleteErr.message);
+                return res.status(500).json({ error: 'Ошибка сервера при обновлении списка' });
             }
-            res.status(201).json({
-                item_id: this.lastID, user_id: Number(userId), tmdb_id: tmdb_id,
-                media_type: media_type, category: category, title: title,
-                poster_path: poster_path, rating: ratingValue
+            
+            // Затем вставляем новую запись
+            const insertSql = 'INSERT INTO user_lists (user_id, tmdb_id, media_type, category, title, poster_path, rating, added_date) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)';
+            const params = [userId, tmdb_id, media_type, category, title, poster_path, ratingValue];
+
+            db.run(insertSql, params, function (insertErr) {
+                if (insertErr) {
+                    db.run("ROLLBACK;");
+                    console.error('Ошибка при добавлении в список:', insertErr.message);
+                    return res.status(500).json({ error: 'Ошибка добавления в список' });
+                }
+                db.run("COMMIT;");
+                res.status(201).json({
+                    item_id: this.lastID, 
+                    user_id: Number(userId), 
+                    tmdb_id: tmdb_id,
+                    media_type: media_type, 
+                    category: category, 
+                    title: title,
+                    poster_path: poster_path, 
+                    rating: ratingValue,
+                    message: `Элемент ${title} успешно добавлен/обновлен в категории ${category}.`
+                });
             });
         });
     });
 });
+
 
 app.delete('/api/user/:id/lists/:item_id', (req, res) => {
     const userId = req.params.id;
@@ -387,10 +424,14 @@ app.put('/api/user/:id/lists/:item_id', (req, res) => {
         updates.push('rating = ?');
         params.push(ratingValue);
     }
+    // Добавляем обновление added_date при любом изменении
+    updates.push('added_date = CURRENT_TIMESTAMP');
 
-    if (updates.length === 0) {
-        return res.status(400).json({ error: 'Не указаны данные для обновления' });
+
+    if (updates.length === 1 && updates[0] === 'added_date = CURRENT_TIMESTAMP') { // Если обновляется только дата - это не имеет смысла без других изменений
+         return res.status(400).json({ error: 'Не указаны данные для обновления (кроме даты)' });
     }
+
 
     query += updates.join(', ') + ' WHERE user_id = ? AND item_id = ?';
     params.push(userId, itemId);
@@ -403,7 +444,7 @@ app.put('/api/user/:id/lists/:item_id', (req, res) => {
         if (this.changes === 0) {
             return res.status(404).json({ error: 'Элемент не найден или данные не изменены' });
         }
-        db.get('SELECT item_id AS id, user_id, tmdb_id, media_type, category, title, poster_path, rating FROM user_lists WHERE item_id = ? AND user_id = ?', [itemId, userId], (fetchErr, updatedItem) => {
+        db.get('SELECT item_id AS id, user_id, tmdb_id, media_type, category, title, poster_path, rating, added_date FROM user_lists WHERE item_id = ? AND user_id = ?', [itemId, userId], (fetchErr, updatedItem) => {
             if (fetchErr) {
                 console.error('Ошибка при получении обновленного элемента:', fetchErr.message);
                 return res.status(200).json({ message: 'Элемент списка успешно обновлён (ошибка получения данных)'});
@@ -649,7 +690,7 @@ app.get('/api/tmdb/search', async (req, res) => {
             tmdbUrl = `${TMDB_BASE_URL}/trending/movie/week`;
         } else if (list_type === 'trending_tv_week' && media_type === 'tv') { 
             tmdbUrl = `${TMDB_BASE_URL}/trending/tv/week`;
-        } else if (list_type === 'on_the_air_tv' && media_type === 'tv') { // <-- Это условие уже есть, отлично!
+        } else if (list_type === 'on_the_air_tv' && media_type === 'tv') {
             tmdbUrl = `${TMDB_BASE_URL}/tv/on_the_air`;
         }
          else {

@@ -40,7 +40,6 @@
             <button class="navbar-button" data-section="now-playing">Сейчас смотрят</button>
             <button class="navbar-button" data-section="movies-shelf">Фильмы</button>
             <button class="navbar-button" data-section="tv-shows-shelf">Сериалы</button>
-            <button class="navbar-button" data-section="ongoing-series-shelf">Онгоинги</button>
             <button class="navbar-button" data-section="genre-shelves-main-container">Жанры</button>
         </div>
         <div class="navbar-right">
@@ -179,17 +178,15 @@
         </div>
 
         <div class="genre-shelves-main-container" id="genre-shelves-main-container">
-            <div class="genre-area-header"> {/* Обертка для заголовка и кнопки */}
+            <div class="genre-area-header">
                 <h2 class="genre-area-title">Коллекции по жанрам</h2>
                 <button id="genre-area-toggle-button" class="toggle-genres-button action-button">
                     <span>Показать все жанры</span> <i class="fas fa-chevron-down"></i>
                 </button>
             </div>
             <div class="content-area-genres" id="genre-shelves-area">
-                {/* Сюда JS будет добавлять полки по жанрам */}
             </div>
         </div>
-
     </div>
 
     <div class="detailed-info-panel" id="detailed-info-panel">
@@ -221,17 +218,36 @@
                     </div>
                      <div class="detailed-info-actions">
                         <button class="action-button watch-now-btn"><i class="fas fa-play"></i> Смотреть</button>
-                        <button class="action-button add-to-list-btn"><i class="fas fa-plus"></i> В список</button>
+                        <div class="add-to-list-container">
+                            <button class="action-button add-to-list-btn"><i class="fas fa-plus"></i> В список</button>
+                            <div class="list-category-dropdown">
+                                <button data-category="Просмотрено">Просмотрено</button>
+                                <button data-category="Смотрю">Смотрю</button>
+                                <button data-category="Брошено">Брошено</button>
+                                <button data-category="Планирую">Планирую</button>
+                                <button data-category="В избранном">В избранном</button>
+                                <button data-category="Пересматриваю">Пересматриваю</button>
+                                <button data-category="На паузе">На паузе</button>
+                                <button data-category="Не интересно">Не интересно</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
             <div class="detailed-info-right-column">
                 <img src="https://placehold.co/1280x720/0c0c0c/111111?text=Задник" alt="Задник фильма/сериала" class="detailed-info-backdrop-image">
             </div>
         </div>
     </div>
-
+    <div id="notification-modal" class="notification-modal">
+        <div class="notification-modal-content">
+            <span class="notification-close-btn">&times;</span>
+            <p id="notification-message"></p>
+        </div>
+    </div>
+    <div id="toast-notification" class="toast-notification">
+        <span id="toast-notification-message"></span>
+    </div>
     <script src="/js/home.js"></script>
 </body>
 </html>

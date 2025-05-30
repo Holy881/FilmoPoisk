@@ -6,7 +6,7 @@
     <title>Просмотр - ФильмоПОИСК</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/home.css"> 
+    <link rel="stylesheet" href="/css/home.css">
     <link rel="stylesheet" href="/css/watch.css">
     <link rel="icon" type="image/vnd.microsoft.icon" href="/images/favicon.ico" />
 </head>
@@ -106,7 +106,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="watch-page-container">
         <div class="anime_background_image">
             <div class="anime_background_image_dark"></div>
@@ -167,9 +167,10 @@
                     </div>
             </div>
         </div>
-        
+
         <div class="anime_additional_information_block">
             <div class="anime_additional_information_block_header">
+                <div class="tab-button-watch" data-tab-target="#tab-seasons-episodes" id="seasons-episodes-tab-button" style="display: none;">Сезоны и серии</div>
                 <div class="tab-button-watch" data-tab-target="#tab-stills">Кадры</div>
                 <div class="tab-button-watch active" data-tab-target="#tab-backdrops">Задники</div>
                 <div class="tab-button-watch" data-tab-target="#tab-posters">Постеры</div>
@@ -178,8 +179,18 @@
                 <div class="tab-button-watch" data-tab-target="#tab-recommendations">Рекомендации</div>
             </div>
             <div class="anime_additional_information_block_header_separator"></div>
-            
+
             <div class="tab-content-watch">
+                <div id="tab-seasons-episodes" class="tab-pane-watch">
+                    <div class="seasons-episodes-layout">
+                        <div class="seasons-list-panel">
+                            <p class="loading-seasons-placeholder" style="text-align: center; padding: 20px; color: #A0A0A0;">Загрузка сезонов...</p>
+                        </div>
+                        <div class="episodes-list-panel">
+                            <p class="select-season-placeholder" style="text-align: center; padding: 20px; color: #A0A0A0;">Выберите сезон для просмотра серий.</p>
+                        </div>
+                    </div>
+                </div>
                 <div id="tab-stills" class="tab-pane-watch">
                     <div class="search-loading-indicator" style="display:none; justify-content:center; padding:20px;"></div>
                     <p class="empty-tab-message" style="display:none;">Кадры для этого сериала не найдены.</p>
@@ -210,14 +221,14 @@
                 <p class="comments-loading-placeholder">Загрузка комментариев...</p>
             </div>
         </div>
-        </div>
-    
+    </div>
+
     <div id="toast-notification" class="toast-notification">
         <span id="toast-notification-message"></span>
     </div>
 
     <div id="image-lightbox" class="lightbox-modal">
-        <span class="lightbox-close-button">&times;</span>
+        <span class="lightbox-close-button">×</span>
         <img class="lightbox-content" id="lightbox-image">
         <div id="lightbox-caption"></div>
     </div>

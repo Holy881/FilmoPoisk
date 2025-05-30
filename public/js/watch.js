@@ -18,6 +18,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const catalogCategoryDropdown = document.getElementById('catalog-category-dropdown');
     const tabsContainer = document.querySelector('.anime_additional_information_block_header');
     const tabPanesContainer = document.querySelector('.tab-content-watch');
+
+    // --- Elements for new Seasons & Episodes Tab ---
+    const seasonsEpisodesTabButton = document.getElementById('seasons-episodes-tab-button');
+    const seasonsEpisodesTabPane = document.getElementById('tab-seasons-episodes');
+    // --- End Elements for new Seasons & Episodes Tab ---
+
     const stillsTabPane = document.getElementById('tab-stills');
     const backdropsTabPane = document.getElementById('tab-backdrops');
     const postersTabPane = document.getElementById('tab-posters');
@@ -45,6 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Constants and Variables ---
     const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';
     const POSTER_SIZE_CARD = 'w342';
+    const SEASON_POSTER_SIZE = 'w154'; // Or w185
+    const EPISODE_STILL_SIZE = 'w300'; // Or w185
     const MAX_POSTERS_BACKDROPS_TOTAL = 50;
     const MAX_STILLS_TOTAL = 50;
     const ITEMS_PER_DUAL_SHELF_ROW = 25;
@@ -55,6 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentMediaType = null;
     let currentItemData = null;
     let currentCommentsPage = 1;
+    let currentSelectedSeasonNumber = null;
+
 
     // --- User Profile & Navbar Logic ---
     function setDefaultUserIcon() {
@@ -296,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const childrenContainerElement = document.createElement('div');
             childrenContainerElement.className = 'comment-children-container';
             comment.children.forEach(childComment => {
-                childrenContainerElement.appendChild(createCommentElement(childComment, currentUserId));
+                childrenContainerElement.appendChild(createCommentElement(childComment, currentUserData ? currentUserData.id : null));
             });
             commentItemElement.appendChild(childrenContainerElement);
         }
@@ -545,6 +555,120 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Seasons and Episodes Tab Logic ---
+    function renderSeasonsAndEpisodesTab(seasonsData) {
+        if (!seasonsEpisodesTabPane) return;
+
+        const layoutContainer = seasonsEpisodesTabPane.querySelector('.seasons-episodes-layout');
+        if (!layoutContainer) return;
+
+        const seasonsListPanel = layoutContainer.querySelector('.seasons-list-panel');
+        const episodesListPanel = layoutContainer.querySelector('.episodes-list-panel');
+
+        if (!seasonsListPanel || !episodesListPanel) return;
+
+        seasonsListPanel.innerHTML = ''; // Clear previous seasons
+        episodesListPanel.innerHTML = '<p class="select-season-placeholder" style="text-align: center; padding: 20px; color: #A0A0A0;">Выберите сезон для просмотра серий.</p>'; // Reset episodes panel
+        episodesListPanel.classList.remove('active');
+        currentSelectedSeasonNumber = null;
+
+
+        if (!seasonsData || seasonsData.length === 0) {
+            seasonsListPanel.innerHTML = '<p class="no-seasons-message">Информация о сезонах отсутствует.</p>';
+            return;
+        }
+
+        // Filter out season 0 (Specials) from being displayed in the main list if it has no episodes or is generally problematic
+        const displayableSeasons = seasonsData.filter(season => season.season_number !== 0 || (season.season_number === 0 && season.episodes && season.episodes.length > 0));
+
+
+        displayableSeasons.forEach(season => {
+            if (season.season_number === 0 && (!season.episodes || season.episodes.length === 0)) {
+                 // Skip season 0 if it has no episodes, as TMDB sometimes lists "Specials" with 0 episodes.
+                return;
+            }
+            const seasonItem = document.createElement('div');
+            seasonItem.className = 'season-item';
+            seasonItem.dataset.seasonNumber = season.season_number;
+
+            const posterPath = season.poster_path ? `${TMDB_IMAGE_BASE_URL}${SEASON_POSTER_SIZE}${season.poster_path}` : 'https://placehold.co/154x231/1A1A1A/555555?text=Нет+постера';
+            const airYear = season.air_date ? new Date(season.air_date).getFullYear() : 'N/A';
+            const episodeCount = season.episode_count || (season.episodes ? season.episodes.length : 0);
+
+            seasonItem.innerHTML = `
+                <img src="${posterPath}" alt="Постер ${season.name}" class="season-item-poster" onerror="this.onerror=null;this.src='https://placehold.co/80x120/1A1A1A/555555?text=Нет+фото';">
+                <div class="season-item-info">
+                    <h4 class="season-item-title">${season.name} (${airYear})</h4>
+                    <p class="season-item-meta">${episodeCount} серий</p>
+                    <p class="season-item-overview">${season.overview || 'Описание сезона отсутствует.'}</p>
+                </div>
+            `;
+
+            seasonItem.addEventListener('click', () => {
+                // Remove active class from previously selected season
+                const currentActiveSeason = seasonsListPanel.querySelector('.season-item.active');
+                if (currentActiveSeason) {
+                    currentActiveSeason.classList.remove('active');
+                }
+                // Add active class to clicked season
+                seasonItem.classList.add('active');
+                currentSelectedSeasonNumber = season.season_number;
+
+                renderEpisodes(season.episodes || [], episodesListPanel, season.season_number);
+                episodesListPanel.classList.add('active'); // Animate in
+            });
+            seasonsListPanel.appendChild(seasonItem);
+        });
+         if (seasonsListPanel.children.length === 0) { // If all seasons were filtered out (e.g. only empty season 0)
+            seasonsListPanel.innerHTML = '<p class="no-seasons-message">Информация о сезонах отсутствует.</p>';
+        }
+    }
+
+    function renderEpisodes(episodesData, episodesPanelElement, seasonNumber) {
+        episodesPanelElement.innerHTML = ''; // Clear previous episodes
+
+        if (!episodesData || episodesData.length === 0) {
+            episodesPanelElement.innerHTML = '<p class="no-episodes-message">В этом сезоне нет информации о сериях.</p>';
+            return;
+        }
+
+        episodesData.forEach(episode => {
+            const episodeItem = document.createElement('div');
+            episodeItem.className = 'episode-item';
+            // Store episode name for the click handler
+            episodeItem.dataset.episodeName = episode.name || `Серия ${episode.episode_number}`;
+            episodeItem.dataset.episodeNumber = episode.episode_number;
+            episodeItem.dataset.seasonNumber = seasonNumber;
+
+
+            const stillPath = episode.still_path ? `${TMDB_IMAGE_BASE_URL}${EPISODE_STILL_SIZE}${episode.still_path}` : 'https://placehold.co/300x169/1A1A1A/555555?text=Нет+кадра';
+            const airDate = episode.air_date ? new Date(episode.air_date).toLocaleDateString('ru-RU') : 'N/A';
+            const runtime = episode.runtime ? `${episode.runtime} мин.` : 'N/A';
+
+            episodeItem.innerHTML = `
+                <img src="${stillPath}" alt="Кадр ${episode.name}" class="episode-item-still" onerror="this.onerror=null;this.src='https://placehold.co/178x100/1A1A1A/555555?text=Нет+фото';">
+                <div class="episode-item-details">
+                    <h5 class="episode-item-title">S${seasonNumber} E${episode.episode_number}: ${episode.name || 'Без названия'}</h5>
+                    <p class="episode-item-meta">Дата выхода: ${airDate} | Длительность: ${runtime}</p>
+                    <p class="episode-item-overview">${episode.overview || 'Описание серии отсутствует.'}</p>
+                    </div>
+            `;
+
+            // Add click listener to the entire episode item
+            episodeItem.addEventListener('click', () => {
+                const episodeTitle = episodeItem.dataset.episodeName;
+                showToastNotification(`Запуск просмотра: ${episodeTitle}`, false);
+                // Здесь будет логика для запуска плеера
+                // Например: playEpisode(currentTmdbId, episodeItem.dataset.seasonNumber, episodeItem.dataset.episodeNumber);
+                console.log(`Воспроизвести: Сериал ID ${currentTmdbId}, Сезон ${episodeItem.dataset.seasonNumber}, Эпизод ${episodeItem.dataset.episodeNumber} (${episodeTitle})`);
+
+            });
+
+            episodesPanelElement.appendChild(episodeItem);
+        });
+    }
+
+
     // --- Инициализация страницы ---
     async function fetchAndDisplayDetails(tmdbId, mediaType) {
         currentTmdbId = tmdbId;
@@ -568,10 +692,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ratingBadge) applyRatingStyles(ratingBadge, currentItemData.vote_average);
             if (infoListContainer) { infoListContainer.innerHTML = ''; const detailsMap = { "original_title": { label: "Оригинальное название", value: currentItemData.original_title || currentItemData.original_name }, "studios": { label: "Студия", value: currentItemData.production_companies?.map(c => c.name).join(', ') }, "status": { label: "Статус", value: currentItemData.status === 'Released' ? 'Вышел' : (currentItemData.status || 'Неизвестно') }, "number_of_episodes": { label: "Количество эпизодов", value: mediaType === 'tv' ? currentItemData.number_of_episodes : null }, "first_air_date": { label: "Год выпуска", value: releaseYear ? new Date(releaseYear).getFullYear() : 'N/A' }, "genres": { label: "Жанры", value: currentItemData.genres?.map(g => g.name).join(', ') }, "countries": { label: "Страна производства", value: currentItemData.production_countries?.map(c => c.name).join(', ') }, "runtime": { label: "Длительность", value: mediaType === 'tv' ? `${currentItemData.episode_run_time?.[0] || 'N/A'} мин.` : `${currentItemData.runtime || 'N/A'} мин.` }, "actors": { label: "Актеры", value: getNamesList(currentItemData.credits?.cast, 10) }, "directors": { label: "Режиссеры", value: getNamesList(currentItemData.credits?.crew?.filter(p => p.job === "Director"), 5) }, "producers": { label: "Продюсеры", value: getNamesList(currentItemData.credits?.crew?.filter(p => p.department === "Production" && (p.job === "Producer" || p.job === "Executive Producer")), 5) }, }; for (const key in detailsMap) { const item = detailsMap[key]; if (item.value && item.value !== 'N/A' && String(item.value).trim() !== '' && item.value !== 0) { const infoEl = document.createElement('div'); infoEl.className = 'anime_info_el'; infoEl.innerHTML = `<span class="anime_info_el_key">${item.label}</span><span class="anime_info_el_value">${item.value}</span>`; infoListContainer.appendChild(infoEl); } } }
             const userId = localStorage.getItem('userId'); if (userId) { const listItemData = await getItemListStatus(userId, currentItemData.id, currentItemData.media_type); if (listItemData) { currentItemData.userListCategory = listItemData.category; currentItemData.userRating = listItemData.rating; } } createRatingWidget(currentItemData.userRating); updateListCategoryDropdownCheckmarks();
+
+            // --- Logic for Seasons and Episodes Tab ---
+            if (mediaType === 'tv' && seasonsEpisodesTabButton) {
+                seasonsEpisodesTabButton.style.display = 'block'; // Show the tab button
+                if (currentItemData.all_season_details) {
+                    renderSeasonsAndEpisodesTab(currentItemData.all_season_details);
+                } else {
+                     const seasonsListPanel = seasonsEpisodesTabPane?.querySelector('.seasons-list-panel');
+                     if(seasonsListPanel) seasonsListPanel.innerHTML = '<p class="no-seasons-message">Подробная информация о сезонах не найдена.</p>';
+                }
+            } else if (seasonsEpisodesTabButton) {
+                seasonsEpisodesTabButton.style.display = 'none'; // Hide for movies
+            }
+            // --- End Logic for Seasons and Episodes Tab ---
+
+
             const stillsTabButton = document.querySelector('.tab-button-watch[data-tab-target="#tab-stills"]'); if (mediaType === 'tv' && stillsTabButton && stillsTabPane) { stillsTabButton.style.display = 'block'; stillsTabPane.innerHTML = '<div class="search-loading-indicator" style="display:flex; justify-content:center; padding:20px;"></div>'; if (currentItemData.all_season_details && currentItemData.all_season_details.length > 0) { const maxEpisodesToFetchStillsFrom = 20; let episodesWithDetails = []; currentItemData.all_season_details.forEach(season => { if (season.episodes && season.episodes.length > 0) { episodesWithDetails.push(...season.episodes.map(ep => ({...ep, season_number: season.season_number}))); } }); for (let i = episodesWithDetails.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [episodesWithDetails[i], episodesWithDetails[j]] = [episodesWithDetails[j], episodesWithDetails[i]]; } const episodesToFetch = episodesWithDetails.slice(0, maxEpisodesToFetchStillsFrom); if (episodesToFetch.length > 0) { const stillPromises = episodesToFetch.map(episode => fetchStillsForEpisode(tmdbId, episode.season_number, episode.episode_number)); const results = await Promise.all(stillPromises); renderStills(results.flat(), stillsTabPane); } else { renderStills([], stillsTabPane); } } else { renderStills([], stillsTabPane); } } else if (stillsTabButton) { stillsTabButton.style.display = 'none'; if(stillsTabPane) stillsTabPane.innerHTML = ''; }
             if (backdropsTabPane) { if (currentItemData.images?.backdrops && currentItemData.images.backdrops.length > 0) { renderBackdrops(currentItemData.images.backdrops, backdropsTabPane); } else { backdropsTabPane.innerHTML = '<p class="empty-tab-message">Задники отсутствуют.</p>'; } }
             if (postersTabPane) { if (currentItemData.images?.posters && currentItemData.images.posters.length > 0) { renderPosters(currentItemData.images.posters, postersTabPane); } else { postersTabPane.innerHTML = '<p class="empty-tab-message">Постеры отсутствуют.</p>'; } }
-            if (videosGrid) { videosGrid.innerHTML = ''; const trailers = currentItemData.videos?.results?.filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')) || []; if (trailers.length > 0) { trailers.slice(0, 12).forEach(video => { const videoEl = document.createElement('div'); videoEl.className = 'video-item media-item'; videoEl.innerHTML = ` <img src="https://i.ytimg.com/vi/${video.key}/mqdefault.jpg" alt="${video.name}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/320x180/1A1A1A/555555?text=No+Trailer+Thumb'; this.alt='Нет превью трейлера';"> <div class="play-icon"><i class="fas fa-play"></i></div> `; videoEl.addEventListener('click', () => { window.open(`https://www.youtube.com/watch?v=${video.key}`, '_blank'); }); videosGrid.appendChild(videoEl); }); } else { videosGrid.innerHTML = '<p class="empty-tab-message">Трейлеры отсутствуют.</p>'; } }
+            if (videosGrid) { videosGrid.innerHTML = ''; const trailers = currentItemData.videos?.results?.filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')) || []; if (trailers.length > 0) { trailers.slice(0, 12).forEach(video => { const videoEl = document.createElement('div'); videoEl.className = 'video-item media-item'; videoEl.innerHTML = ` <img src="https://i.ytimg.com/vi/${video.key}/mqdefault.jpg" alt="${video.name}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/320x180/1A1A1A/555555?text=No+Trailer+Thumb'; this.alt='Нет превью трейлера';"> <div class="play-icon"><i class="fas fa-play"></i></div> `; videoEl.addEventListener('click', () => { window.open(`https://www.youtube.com/watch?v=$${video.key}`, '_blank'); }); videosGrid.appendChild(videoEl); }); } else { videosGrid.innerHTML = '<p class="empty-tab-message">Трейлеры отсутствуют.</p>'; } }
             const similarTab = document.getElementById('tab-similar'); const recommendationsTab = document.getElementById('tab-recommendations');
             if (similarTab) { similarTab.innerHTML = ''; if (currentItemData.similar?.results?.length > 0) { const shelf = createShelfElement('similar-shelf', '', false); similarTab.appendChild(shelf); renderSingleShelf(shelf, currentItemData.similar.results.map(item => ({ ...item, id: item.id, media_type: item.media_type || mediaType, title: item.title, name: item.name, poster_path: item.poster_path, overview: item.overview, vote_average: item.vote_average }))); } else { similarTab.innerHTML = '<p class="empty-tab-message">Похожих не найдено.</p>'; } }
             if (recommendationsTab) { recommendationsTab.innerHTML = ''; if (currentItemData.recommendations?.results?.length > 0) { const shelf = createShelfElement('recommendations-shelf', '', false); recommendationsTab.appendChild(shelf); renderSingleShelf(shelf, currentItemData.recommendations.results.map(item => ({ ...item, id: item.id, media_type: item.media_type || mediaType, title: item.title, name: item.name, poster_path: item.poster_path, overview: item.overview, vote_average: item.vote_average }))); } else { recommendationsTab.innerHTML = '<p class="empty-tab-message">Рекомендаций не найдено.</p>'; } }
@@ -679,7 +819,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const targetPaneId = targetButton.dataset.tabTarget;
                 const targetPane = document.querySelector(targetPaneId);
-                if (targetPane) targetPane.classList.add('active');
+                if (targetPane) {
+                    targetPane.classList.add('active');
+                     // Если активирована вкладка "Сезоны и серии", а панель серий была активна,
+                    // но не для текущего выбранного сезона, скрыть её.
+                    if (targetPaneId === '#tab-seasons-episodes') {
+                        const episodesPanel = targetPane.querySelector('.episodes-list-panel');
+                        // Логика сброса панели серий, если нужно, чтобы при переключении на вкладку "Сезоны"
+                        // она не показывала серии от предыдущего активного сезона на другой вкладке (маловероятно, но для чистоты)
+                        // или если нужно, чтобы при каждом открытии вкладки "Сезоны" панель серий была скрыта до выбора сезона.
+                        if (episodesPanel && currentSelectedSeasonNumber === null) {
+                           // episodesPanel.classList.remove('active'); // Скрываем, если не выбран сезон
+                           // episodesPanel.innerHTML = '<p class="select-season-placeholder" style="text-align: center; padding: 20px; color: #A0A0A0;">Выберите сезон для просмотра серий.</p>';
+                        }
+                    }
+                }
             }
         });
     }
@@ -699,14 +853,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const tmdbIdParam = params.get('tmdbId');
     const mediaTypeParam = params.get('type');
+
+    // Reset active tabs before fetching details
     tabsContainer?.querySelectorAll('.tab-button-watch.active').forEach(b => b.classList.remove('active'));
     tabPanesContainer?.querySelectorAll('.tab-pane-watch.active').forEach(p => p.classList.remove('active'));
-    const stillsTabButtonDefault = document.querySelector('.tab-button-watch[data-tab-target="#tab-stills"]');
-    const backdropsTabButtonDefault = document.querySelector('.tab-button-watch[data-tab-target="#tab-backdrops"]');
-    if (mediaTypeParam === 'tv' && stillsTabButtonDefault) { stillsTabButtonDefault.classList.add('active'); if (stillsTabPane) stillsTabPane.classList.add('active');
-    } else if (backdropsTabButtonDefault) { backdropsTabButtonDefault.classList.add('active'); const backdropsPane = document.getElementById('tab-backdrops'); if (backdropsPane) backdropsPane.classList.add('active'); }
+
+    // Set default active tab based on media type AFTER details are fetched and seasons tab visibility is determined
+    // This will be handled inside fetchAndDisplayDetails or after it.
+    // For now, ensure a sensible default if nothing else is set.
+    const defaultActiveTabButton = document.querySelector('.tab-button-watch[data-tab-target="#tab-backdrops"]');
+    if (defaultActiveTabButton && !tabsContainer?.querySelector('.tab-button-watch.active')) {
+        defaultActiveTabButton.classList.add('active');
+        const defaultActivePane = document.querySelector(defaultActiveTabButton.dataset.tabTarget);
+        if (defaultActivePane) defaultActivePane.classList.add('active');
+    }
+
     if (tmdbIdParam && mediaTypeParam) {
-        fetchAndDisplayDetails(tmdbIdParam, mediaTypeParam);
+        fetchAndDisplayDetails(tmdbIdParam, mediaTypeParam).then(() => {
+            // After details are fetched, and seasons tab visibility is set,
+            // determine the actual default active tab.
+            const currentActiveButton = tabsContainer?.querySelector('.tab-button-watch.active');
+            if (!currentActiveButton) { // If no tab was made active by specific logic (e.g. stills for TV)
+                let newDefaultButton;
+                if (currentMediaType === 'tv') {
+                    // Prefer "Seasons & Episodes" if visible, then "Stills"
+                    newDefaultButton = seasonsEpisodesTabButton?.style.display !== 'none'
+                        ? seasonsEpisodesTabButton
+                        : document.querySelector('.tab-button-watch[data-tab-target="#tab-stills"]');
+                } else { // For movies
+                    newDefaultButton = document.querySelector('.tab-button-watch[data-tab-target="#tab-backdrops"]');
+                }
+
+                if (newDefaultButton) {
+                    newDefaultButton.classList.add('active');
+                    const newDefaultPane = document.querySelector(newDefaultButton.dataset.tabTarget);
+                    if (newDefaultPane) newDefaultPane.classList.add('active');
+                }
+            }
+        });
     } else {
         if (watchPageContainer) watchPageContainer.innerHTML = '<h1>Ошибка: ID или тип контента не указаны в URL.</h1>';
     }

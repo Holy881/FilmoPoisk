@@ -314,6 +314,197 @@
   font-style: italic;
 }
 
+#tab-seasons-episodes .seasons-episodes-layout {
+  display: flex;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+  min-height: 600px;
+  background-color: #1A1A1A;
+  padding: 15px;
+  border-radius: 6px;
+}
+#tab-seasons-episodes .seasons-list-panel {
+  max-width: 33%;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+#tab-seasons-episodes .seasons-list-panel .season-item {
+  background-color: #2e2e2e;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  gap: 12px;
+  border: 1px solid #383838;
+}
+#tab-seasons-episodes .seasons-list-panel .season-item:hover {
+  background-color: #393939;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+#tab-seasons-episodes .seasons-list-panel .season-item.active {
+  background-color: #2a2a2a;
+  box-shadow: 0 0 0 2px #4CAF50 inset, 0 4px 10px rgba(76, 175, 80, 0.3);
+}
+#tab-seasons-episodes .seasons-list-panel .season-item .season-item-poster {
+  width: 65px;
+  height: 97px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 3px;
+  flex-shrink: 0;
+  background-color: #2C2C2C;
+}
+#tab-seasons-episodes .seasons-list-panel .season-item .season-item-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+#tab-seasons-episodes .seasons-list-panel .season-item .season-item-info .season-item-title {
+  font-size: 0.95em;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0 0 4px 0;
+  white-space: nowrap;
+  display: flex;
+  overflow: visible;
+  text-overflow: ellipsis;
+}
+#tab-seasons-episodes .seasons-list-panel .season-item .season-item-info .season-item-meta {
+  font-size: 0.95em;
+  color: #A0A0A0;
+  margin-top: 0;
+  margin-left: 8px;
+  margin-bottom: 0;
+}
+#tab-seasons-episodes .seasons-list-panel .season-item .season-item-info .season-item-overview {
+  font-size: 0.8em;
+  color: #E0E0E0;
+  line-height: 1.45;
+  max-height: 5.8em;
+  overflow-y: auto;
+  padding-right: 5px;
+  margin: 0;
+}
+#tab-seasons-episodes .seasons-list-panel .season-item .season-item-info .season-item-overview::-webkit-scrollbar {
+  width: 6px;
+}
+#tab-seasons-episodes .seasons-list-panel .season-item .season-item-info .season-item-overview::-webkit-scrollbar-track {
+  background: transparent;
+}
+#tab-seasons-episodes .seasons-list-panel .season-item .season-item-info .season-item-overview::-webkit-scrollbar-thumb {
+  background: rgba(160, 160, 160, 0.25);
+  border-radius: 10px;
+}
+#tab-seasons-episodes .seasons-list-panel .season-item .season-item-info .season-item-overview::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 160, 160, 0.4);
+}
+#tab-seasons-episodes .seasons-list-panel .loading-seasons-placeholder, #tab-seasons-episodes .seasons-list-panel .no-seasons-message {
+  color: #A0A0A0;
+  text-align: center;
+  padding: 20px;
+  font-style: italic;
+}
+#tab-seasons-episodes .episodes-list-panel {
+  flex-grow: 1;
+  overflow-y: auto;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: calc(70% - 60px);
+  height: 100%;
+  background-color: #1A1A1A;
+  padding: 15px;
+  padding-right: 5px;
+  transform: translateX(102%);
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.4s ease-in-out, visibility 0s 0.45s;
+  z-index: 5;
+  border-left: 1px solid #383838;
+}
+#tab-seasons-episodes .episodes-list-panel.active {
+  transform: translateX(0);
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+#tab-seasons-episodes .episodes-list-panel .episode-item {
+  background-color: #272727;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  padding: 12px;
+  display: flex;
+  gap: 15px;
+  border: 1px solid #2b2b2b;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+#tab-seasons-episodes .episodes-list-panel .episode-item:hover {
+  background-color: #313131;
+}
+#tab-seasons-episodes .episodes-list-panel .episode-item .episode-item-still {
+  width: 178px;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background-color: #2C2C2C;
+}
+#tab-seasons-episodes .episodes-list-panel .episode-item .episode-item-details {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+#tab-seasons-episodes .episodes-list-panel .episode-item .episode-item-details .episode-item-title {
+  font-size: 1em;
+  font-weight: 500;
+  color: #FFFFFF;
+  margin: 0 0 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#tab-seasons-episodes .episodes-list-panel .episode-item .episode-item-details .episode-item-meta {
+  font-size: 0.75em;
+  color: #A0A0A0;
+  margin-bottom: 6px;
+  margin-top: 0;
+}
+#tab-seasons-episodes .episodes-list-panel .episode-item .episode-item-details .episode-item-overview {
+  font-size: 0.82em;
+  color: #E0E0E0;
+  line-height: 1.45;
+  margin-top: 0;
+  margin-bottom: 10px;
+  max-height: 3.567em;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+#tab-seasons-episodes .episodes-list-panel .episode-item .episode-item-details .episode-item-overview::-webkit-scrollbar {
+  width: 6px;
+}
+#tab-seasons-episodes .episodes-list-panel .episode-item .episode-item-details .episode-item-overview::-webkit-scrollbar-track {
+  background: transparent;
+}
+#tab-seasons-episodes .episodes-list-panel .episode-item .episode-item-details .episode-item-overview::-webkit-scrollbar-thumb {
+  background: rgba(160, 160, 160, 0.25);
+  border-radius: 10px;
+}
+#tab-seasons-episodes .episodes-list-panel .episode-item .episode-item-details .episode-item-overview::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 160, 160, 0.4);
+}
+#tab-seasons-episodes .episodes-list-panel .select-season-placeholder, #tab-seasons-episodes .episodes-list-panel .no-episodes-message {
+  color: #A0A0A0;
+  text-align: center;
+  padding: 30px 0;
+  font-style: italic;
+}
+
 .media-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -1316,6 +1507,17 @@
     margin-left: 9px;
     padding-left: 13.5px;
   }
+  #tab-seasons-episodes .seasons-list-panel {
+    flex: 0 0 220px;
+    max-width: 30%;
+  }
+  #tab-seasons-episodes .seasons-list-panel .season-item-poster {
+    width: 50px;
+    height: 75px;
+  }
+  #tab-seasons-episodes .episodes-list-panel {
+    width: calc(100% - 220px - 20px - 30px);
+  }
 }
 @media (max-width: 768px) {
   .watch-page-container {
@@ -1396,6 +1598,52 @@
     margin-left: 8px;
     padding-left: 12px;
     gap: 12px;
+  }
+  #tab-seasons-episodes .seasons-episodes-layout {
+    flex-direction: column;
+    overflow: visible;
+    background-color: transparent;
+    padding: 0;
+  }
+  #tab-seasons-episodes .seasons-list-panel {
+    flex: 1 1 auto;
+    max-width: 100%;
+    border-right: none;
+    margin-bottom: 20px;
+    max-height: none;
+    padding-right: 0;
+  }
+  #tab-seasons-episodes .seasons-list-panel .season-item {
+    padding: 12px;
+    gap: 12px;
+  }
+  #tab-seasons-episodes .seasons-list-panel .season-item-poster {
+    width: 70px;
+    height: 105px;
+  }
+  #tab-seasons-episodes .seasons-list-panel .season-item-overview {
+    max-height: 4.64em;
+  }
+  #tab-seasons-episodes .episodes-list-panel {
+    position: relative;
+    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+    width: 100%;
+    max-width: 100%;
+    padding-left: 0;
+    max-height: none;
+    border-left: none;
+    background-color: transparent;
+    padding: 0;
+  }
+  #tab-seasons-episodes .episodes-list-panel.active { /* No special active state needed for transform in mobile */ }
+  #tab-seasons-episodes .episodes-list-panel .episode-item {
+    flex-direction: column;
+  }
+  #tab-seasons-episodes .episodes-list-panel .episode-item .episode-item-still {
+    width: 100%;
+    height: 150px;
   }
 }
 @media (max-width: 480px) {
@@ -1502,5 +1750,15 @@
     width: 100%;
     justify-content: space-around;
     margin-top: 8px;
+  }
+  #tab-seasons-episodes .seasons-list-panel .season-item .season-item-poster {
+    width: 50px;
+    height: 75px;
+  }
+  #tab-seasons-episodes .seasons-list-panel .season-item .season-item-overview {
+    max-height: 3.48em;
+  }
+  #tab-seasons-episodes .episodes-list-panel .episode-item .episode-item-still {
+    height: 120px;
   }
 }

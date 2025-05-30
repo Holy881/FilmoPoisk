@@ -9,28 +9,29 @@ $text-light-emphasis: #FFFFFF;
 $border-color: #383838; 
 $subtle-border-color: rgba($border-color, 0.5); 
 $dashed-border-color: rgba(darken($border-color, 10%), 0.5); 
-
 $input-bg-color: #2C2C2C; 
 $accent-color: #4CAF50; 
 $button-bg-color: #252525; 
 $button-hover-bg-color: lighten($button-bg-color, 7%);
-
-// Цвета, используемые в home.scss для profile-dropdown
 $profile-dropdown-bg-color: #282828; 
 $interactive-hover-bg-color: #2a2a2a; 
 $rating-red: #E53935; 
 $rating-gray: #757575; 
 $rating-green: #4CAF50; 
 $rating-none-bg: rgba($surface-color, 0.7); 
-
 $transition-duration-fast: 0.2s;
 $transition-duration-smooth: 0.3s; 
 $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
-$ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94); // Добавлено для согласованности
-$ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для согласованности
+$ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+$ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+$avatar-size-base: 35px;
+$avatar-size-1024: 32px;
+$avatar-size-768: 30px;
+$avatar-size-480: 28px;
+$line-indent-base: 10px; 
+$child-content-padding-base: 15px; 
 
 
-// Миксин для кнопок
 @mixin button-style($bg: $button-bg-color, $hover-bg: $button-hover-bg-color, $text: $text-color, $border: darken($bg, 5%)) {
     color: $text;
     background-color: $bg;
@@ -46,20 +47,9 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
     justify-content: center;
     line-height: 1.2;
     user-select: none;
-
-    i {
-        margin-right: 8px;
-        font-size: 0.9em;
-    }
-
-    &:hover {
-        background-color: $hover-bg;
-        border-color: $bg; 
-        color: $text-light-emphasis;
-    }
-    &:active {
-        transform: translateY(1px);
-    }
+    i { margin-right: 8px; font-size: 0.9em; }
+    &:hover { background-color: $hover-bg; border-color: $bg; color: $text-light-emphasis; }
+    &:active { transform: translateY(1px); }
 }
 
 .watch-page-container {
@@ -126,7 +116,7 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
         border-radius: 7px; 
         overflow: hidden;
         aspect-ratio: 2 / 3;
-        background-color: $surface-color;
+        background-color: $surface-color; 
         box-shadow: 0 5px 20px rgba(0,0,0,0.4); 
 
         .poster-image {
@@ -469,8 +459,7 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
         .shelf-arrow {
             position: absolute;
             top: 50%;
-            // Исправленная строка:
-            transform: translateY(calc(-50% - 7px)); // Корректировка под новый padding-bottom
+            transform: translateY(calc(-50% - 7px)); 
             color: $text-light-emphasis;
             width: 36px; 
             height: 36px;
@@ -591,6 +580,7 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
             p {
                 font-size: 0.78em; line-height: 1.4; color: $text-secondary-color; margin: 0;
                 display: -webkit-box; line-clamp: 3; 
+                -webkit-line-clamp: 3; 
                 -webkit-box-orient: vertical; overflow: hidden;
                 text-overflow: ellipsis; max-height: calc(0.78em * 1.4 * 3); 
             }
@@ -783,7 +773,6 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
     }
 }
 
-/* Стили для виджета пользовательского рейтинга - ОБНОВЛЕННЫЕ V2 */
 #user-rating-widget-container {
     display: flex; 
     justify-content: flex-start; 
@@ -828,34 +817,30 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
             font-size: 1.4em; 
             margin-right: 6px;
             line-height: 1; 
-            // Цвет наследуется от .user-rating-widget или .rated-*
         }
         span.rate-text { 
             font-size: 0.9em;     
             line-height: 1;
-             // Цвет наследуется
         }
         span.user-rating-value { 
             font-size: 1.1em; 
             font-weight: 600; 
             margin-left: 0px; 
             line-height: 1;
-            // Цвет наследуется
         }
     }
     
     .rating-stars-flyout {
         position: absolute;
         left: 0; 
-        top: 100%; // Располагаем сразу под родительским элементом
-        // margin-top: 5px; // Убрали margin, чтобы не было зазора
+        top: 100%; 
         display: flex;
         flex-direction: column; 
         align-items: stretch; 
         background-color: darken($input-bg-color, 8%); 
         border: 1px solid $border-color;
-        border-top: none; // Убираем верхнюю границу, чтобы примыкало к основной кнопке
-        border-radius: 0 0 5px 5px; // Скругление только нижних углов
+        border-top: none; 
+        border-radius: 0 0 5px 5px; 
         padding: 5px; 
         opacity: 0;
         visibility: hidden;
@@ -867,7 +852,7 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
         min-width: 40px; 
 
         i.flyout-star { 
-            font-size: 1.5em; // Немного уменьшил для компактности в столбец
+            font-size: 1.5em; 
             color: #757575; 
             padding: 4px 6px; 
             display: block; 
@@ -882,6 +867,9 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
             }
             &.selected { 
                 color: $text-light-emphasis; 
+            }
+            &.hovered { 
+                 color: $text-light-emphasis; 
             }
         }
     }
@@ -901,9 +889,183 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
         pointer-events: none;
     }
 }
+// --- Конец предыдущих стилей ---
 
-// Адаптивность
+// --- Стили для секции комментариев ---
+.comments-section {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid $subtle-border-color;
+
+    h2 {
+        font-size: 1.5em;
+        color: $text-light-emphasis;
+        margin-bottom: 20px;
+        font-weight: 500;
+    }
+
+    .comment-form-container {
+        margin-bottom: 30px;
+        #new-comment-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            #comment-textarea {
+                background-color: $input-bg-color;
+                color: $text-color;
+                border: 1px solid $border-color;
+                border-radius: 6px;
+                padding: 12px 15px;
+                font-family: inherit;
+                font-size: 0.95em;
+                min-height: 80px;
+                resize: vertical; 
+                &::placeholder { color: $text-secondary-color; }
+                &:focus { outline: none; border-color: $accent-color; box-shadow: 0 0 0 2px rgba($accent-color, 0.2); }
+            }
+            button[type="submit"] {
+                @include button-style($bg: $accent-color, $hover-bg: lighten($accent-color, 10%), $text: $text-light-emphasis, $border: darken($accent-color, 5%));
+                align-self: flex-start; 
+                padding: 10px 20px;
+            }
+        }
+    }
+
+    .comments-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px; 
+        .comments-loading-placeholder, .no-comments-message, .comments-error-message {
+            color: $text-secondary-color; text-align: center; padding: 20px; font-style: italic;
+        }
+    }
+
+    .comment-item {
+        display: flex;
+        flex-direction: column; 
+        gap: 10px; 
+        position: relative; 
+    }
+
+    .comment-main { 
+        display: flex;
+        gap: 10px; 
+        padding-bottom: 10px; 
+        border-bottom: 1px solid $dashed-border-color; 
+        .comments-list > .comment-item:last-child > &, 
+        .comment-children-container > .comment-item:last-child > & { 
+             border-bottom: none; padding-bottom: 0;
+        }
+    }
+
+    .comment-author-avatar {
+        flex-shrink: 0;
+        width: $avatar-size-base; 
+        img { width: 100%; height: $avatar-size-base; border-radius: 50%; object-fit: cover; background-color: $surface-color; }
+    }
+
+    .comment-content-wrapper {
+        flex-grow: 1; display: flex; flex-direction: column; gap: 6px; 
+    }
+
+    .comment-header {
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap; 
+        .comment-author-name { font-weight: 600; color: $text-light-emphasis; font-size: 0.9em; }
+        .comment-date { font-size: 0.75em; color: $text-secondary-color; }
+        .comment-updated-date { font-size: 0.7em; color: darken($text-secondary-color, 10%); margin-left: 5px; font-style: italic;}
+    }
+
+    .comment-text {
+        font-size: 0.9em; line-height: 1.6; color: $text-color; word-wrap: break-word; white-space: pre-wrap; 
+    }
+
+    .comment-actions {
+        display: flex; gap: 10px; margin-top: 5px; align-items: center;
+        .action-button { 
+            @include button-style($bg: transparent, $hover-bg: rgba($button-bg-color, 0.5) , $text: $text-secondary-color, $border: transparent);
+            font-size: 0.8em; padding: 5px 8px;
+            i { margin-right: 4px; font-size: 0.9em;}
+            &:hover { color: $text-light-emphasis; }
+        }
+        .comment-votes {
+            display: flex; align-items: center; gap: 5px; margin-left: auto; 
+            .vote-btn {
+                background: none; border: none; color: $text-secondary-color; cursor: pointer; padding: 3px 5px;
+                display: inline-flex; align-items: center; gap: 4px;
+                font-size: 0.9em;
+                i { font-size: 0.9em; }
+                &:hover { color: $text-light-emphasis; }
+                &.active { 
+                    &.upvote-btn { color: $rating-green; }
+                    &.downvote-btn { color: $rating-red; }
+                }
+                .upvote-count, .downvote-count { font-size: 0.9em; }
+            }
+        }
+        .comment-owner-actions {
+            display: flex; gap: 5px; 
+             .action-button { 
+                padding: 5px 7px; 
+                i { font-size: 0.85em; }
+            }
+        }
+    }
+
+    .comment-children-container { 
+        margin-left: $line-indent-base; 
+        padding-left: $child-content-padding-base;         
+        display: flex; flex-direction: column; gap: 15px; position: relative; padding-top: 5px; 
+        &::before { 
+            content: ''; position: absolute; left: 0; top: 0px; bottom: 0px; width: 1px; background-color: $subtle-border-color;
+        }
+    }
+    
+    .reply-form-container { 
+        margin-top: 10px;
+        textarea {
+            background-color: lighten($input-bg-color, 5%); color: $text-color; border: 1px solid $border-color;
+            border-radius: 4px; padding: 8px 10px; font-family: inherit; font-size: 0.85em;
+            min-height: 60px; resize: vertical; width: 100%; margin-bottom: 8px;
+            &::placeholder { color: $text-secondary-color; }
+            &:focus { outline: none; border-color: $accent-color; box-shadow: 0 0 0 1px rgba($accent-color, 0.2); }
+        }
+        button.action-button {
+             @include button-style($bg: $accent-color, $hover-bg: lighten($accent-color, 10%), $text: $text-light-emphasis, $border: darken($accent-color, 5%));
+            font-size: 0.8em; padding: 6px 12px;
+        }
+    }
+
+    .comments-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 30px;
+        padding-top: 15px;
+        border-top: 1px solid $subtle-border-color;
+
+        .pagination-btn {
+            @include button-style($bg: $button-bg-color, $hover-bg: $button-hover-bg-color, $text: $text-secondary-color);
+            padding: 8px 15px;
+            font-size: 0.9em;
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                &:hover { background-color: $button-bg-color; color: $text-secondary-color; }
+            }
+        }
+        .pagination-info {
+            font-size: 0.9em;
+            color: $text-secondary-color;
+        }
+    }
+}
+
+// --- Адаптивность ---
 @media (max-width: 1024px) {
+    .watch-page-container { 
+        padding: 20px;
+    }
     .anime_body {
         flex-direction: column;
         gap: 30px; 
@@ -943,7 +1105,7 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
             width: 140px; 
             .movie-hover-details {
                 h3 { font-size: 0.85em; }
-                p { font-size: 0.75em; line-clamp: 2; max-height: calc(0.75em * 1.4 * 2); }
+                p { font-size: 0.75em; line-clamp: 2; -webkit-line-clamp: 2; max-height: calc(0.75em * 1.4 * 2); }
             }
             .movie-rating.rating-display-badge { font-size: 0.7em; padding: 2px 5px; }
         }
@@ -954,6 +1116,13 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
         }
          .shelf-grid-wrapper { 
             &.has-prev-scroll::before, &.has-next-scroll::after { width: 30px; }
+        }
+    }
+    .comments-section { 
+        .comment-author-avatar img { width: $avatar-size-1024; height: $avatar-size-1024; }
+        .comment-children-container {
+            margin-left: $line-indent-base * 0.9; 
+            padding-left: $child-content-padding-base * 0.9; 
         }
     }
 }
@@ -989,8 +1158,6 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
         top: 15px;
         right: 25px;
     }
-    .profile-dropdown {
-    }
     .movie-shelf {
         .shelf-grid {
             padding-left: 5px; padding-right: 5px; 
@@ -1008,6 +1175,18 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
         .shelf-controls .shelf-arrow { display: none; } 
         .shelf-grid-wrapper { 
             &.has-prev-scroll::before, &.has-next-scroll::after { display: none; } 
+        }
+    }
+     .comments-section { 
+        h2 { font-size: 1.3em; }
+        #new-comment-form #comment-textarea { font-size: 0.9em; min-height: 70px; }
+        .comment-main { gap: 8px; }
+        .comment-author-avatar img { width: $avatar-size-768; height: $avatar-size-768; }
+        .comment-actions { flex-wrap: wrap; .comment-votes { margin-left: 0; margin-top: 5px; width: 100%; justify-content: flex-start; } }
+        .comment-children-container {
+            margin-left: $line-indent-base * 0.8; 
+            padding-left: $child-content-padding-base * 0.8; 
+            gap: 12px; 
         }
     }
 }
@@ -1072,14 +1251,12 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
      #posters-grid.media-grid { 
          grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
     }
-    .anime_right_body { 
-    }
      .movie-shelf {
         .movie-tile { 
             width: 120px; 
              .movie-hover-details { 
                 h3 { font-size: 0.8em; }
-                p { font-size: 0.7em; line-clamp: 2; max-height: calc(0.7em * 1.4 * 2); }
+                p { font-size: 0.7em; line-clamp: 2; -webkit-line-clamp: 2; max-height: calc(0.7em * 1.4 * 2); }
             }
         }
         .media-item, .still-item { 
@@ -1088,5 +1265,16 @@ $ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для с�
         .still-item, .backdrop-item { width: 142px; } 
         .poster-item { width: 53px; } 
     }
+    .comments-section { 
+        .comment-author-avatar img { width: $avatar-size-480; height: $avatar-size-480; }
+         .comment-children-container {
+            margin-left: $line-indent-base * 0.7; 
+            padding-left: $child-content-padding-base * 0.7;
+        }
+        .comment-actions {
+            .reply-button { flex-grow: 1; text-align: center;} 
+            .comment-votes { width: 100%; justify-content: space-around; margin-top: 8px;}
+            .comment-owner-actions { width: 100%; justify-content: space-around; margin-top: 8px;}
+        }
+    }
 }
-

@@ -14,22 +14,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const infoListContainer = document.querySelector('.anime_info_list');
     const ratingBadge = document.getElementById('rating-badge');
     const watchNowMainBtn = document.getElementById('watch-now-main-btn');
-
     const addToCatalogBtn = document.getElementById('add-to-catalog-btn');
     const catalogCategoryDropdown = document.getElementById('catalog-category-dropdown');
-
     const tabsContainer = document.querySelector('.anime_additional_information_block_header');
     const tabPanesContainer = document.querySelector('.tab-content-watch');
-
     const stillsTabPane = document.getElementById('tab-stills');
     const backdropsTabPane = document.getElementById('tab-backdrops');
     const postersTabPane = document.getElementById('tab-posters');
     const videosGrid = document.getElementById('videos-grid');
-
     const lightboxModal = document.getElementById('image-lightbox');
     const lightboxImage = document.getElementById('lightbox-image');
     const lightboxCloseButton = document.querySelector('.lightbox-close-button');
-
     const userProfileLink = document.getElementById('user-profile-link');
     const userProfileIconContainer = document.getElementById('user-profile-icon-container');
     const profileDropdownMenu = document.getElementById('profile-dropdown-menu');
@@ -37,8 +32,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const dropdownProfileButton = document.getElementById('dropdown-profile-button');
     const dropdownLogoutButton = document.getElementById('dropdown-logout-button');
     const DEFAULT_AVATAR_PATH = '/images/default-avatar.png';
-
     const userRatingContainer = document.getElementById('user-rating-widget-container');
+
+    // --- Элементы для комментариев ---
+    const newCommentForm = document.getElementById('new-comment-form');
+    const commentTextarea = document.getElementById('comment-textarea');
+    const commentsListContainer = document.getElementById('comments-list');
+    const commentsLoadingPlaceholder = document.querySelector('.comments-loading-placeholder');
+    const commentsPaginationContainer = document.createElement('div');
+    commentsPaginationContainer.className = 'comments-pagination';
 
     // --- Constants and Variables ---
     const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';
@@ -46,11 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAX_POSTERS_BACKDROPS_TOTAL = 50;
     const MAX_STILLS_TOTAL = 50;
     const ITEMS_PER_DUAL_SHELF_ROW = 25;
+    const COMMENTS_PER_PAGE = 10;
 
     let currentUserData = null;
     let currentTmdbId = null;
     let currentMediaType = null;
     let currentItemData = null;
+    let currentCommentsPage = 1;
 
     // --- User Profile & Navbar Logic ---
     function setDefaultUserIcon() {
@@ -60,30 +64,55 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function updateUserProfileDisplay() {
-        if (!userProfileIconContainer) { setDefaultUserIcon(); if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); return; }
+        if (!userProfileIconContainer) {
+            setDefaultUserIcon();
+            if (profileDropdownMenu) profileDropdownMenu.classList.remove('active');
+            return;
+        }
         const userId = localStorage.getItem('userId');
         if (userId) {
             try {
                 const response = await fetch(`/api/user/${userId}`);
-                if (!response.ok) { localStorage.removeItem('userId'); currentUserData = null; setDefaultUserIcon(); if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); return; }
+                if (!response.ok) {
+                    localStorage.removeItem('userId');
+                    currentUserData = null;
+                    setDefaultUserIcon();
+                    if (profileDropdownMenu) profileDropdownMenu.classList.remove('active');
+                    return;
+                }
                 currentUserData = await response.json();
                 if (dropdownUsernameDisplay) dropdownUsernameDisplay.textContent = currentUserData?.username || 'Пользователь';
                 if (userProfileIconContainer) {
                     if (currentUserData?.avatar && currentUserData.avatar !== DEFAULT_AVATAR_PATH) {
                         const avatarImg = document.createElement('img');
                         avatarImg.src = currentUserData.avatar.startsWith('/') ? currentUserData.avatar : `/${currentUserData.avatar}`;
-                        avatarImg.alt = 'Аватар'; avatarImg.className = 'navbar-avatar';
+                        avatarImg.alt = 'Аватар';
+                        avatarImg.className = 'navbar-avatar';
                         avatarImg.onerror = () => { if (userProfileIconContainer) userProfileIconContainer.innerHTML = '<i class="fas fa-user"></i>'; };
-                        userProfileIconContainer.innerHTML = ''; userProfileIconContainer.appendChild(avatarImg);
-                    } else { userProfileIconContainer.innerHTML = '<i class="fas fa-user"></i>'; }
+                        userProfileIconContainer.innerHTML = '';
+                        userProfileIconContainer.appendChild(avatarImg);
+                    } else {
+                        userProfileIconContainer.innerHTML = '<i class="fas fa-user"></i>';
+                    }
                 }
-            } catch (error) { localStorage.removeItem('userId'); currentUserData = null; setDefaultUserIcon(); if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); }
-        } else { currentUserData = null; setDefaultUserIcon(); if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); }
+            } catch (error) {
+                console.error("Ошибка при обновлении профиля:", error);
+                localStorage.removeItem('userId');
+                currentUserData = null;
+                setDefaultUserIcon();
+                if (profileDropdownMenu) profileDropdownMenu.classList.remove('active');
+            }
+        } else {
+            currentUserData = null;
+            setDefaultUserIcon();
+            if (profileDropdownMenu) profileDropdownMenu.classList.remove('active');
+        }
     }
 
     if (userProfileLink) {
         userProfileLink.addEventListener('click', (event) => {
-            event.preventDefault(); event.stopPropagation();
+            event.preventDefault();
+            event.stopPropagation();
             const userId = localStorage.getItem('userId');
             if (userId) {
                 if (profileDropdownMenu) {
@@ -97,24 +126,39 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 }
-            } else { window.location.href = '/auth'; }
+            } else {
+                window.location.href = '/auth';
+            }
         });
     }
     if (dropdownProfileButton) {
-        dropdownProfileButton.addEventListener('click', () => { window.location.href = '/profile'; if (profileDropdownMenu) profileDropdownMenu.classList.remove('active'); });
+        dropdownProfileButton.addEventListener('click', () => {
+            window.location.href = '/profile';
+            if (profileDropdownMenu) profileDropdownMenu.classList.remove('active');
+        });
     }
     if (dropdownLogoutButton) {
-        dropdownLogoutButton.addEventListener('click', () => { localStorage.removeItem('userId'); currentUserData = null; window.location.reload(); });
+        dropdownLogoutButton.addEventListener('click', () => {
+            localStorage.removeItem('userId');
+            currentUserData = null;
+            window.location.reload();
+        });
     }
     document.addEventListener('click', (event) => {
-        if (profileDropdownMenu?.classList.contains('active') && !profileDropdownMenu.contains(event.target) && !(userProfileLink && userProfileLink.contains(event.target))) {
+        if (profileDropdownMenu?.classList.contains('active') &&
+            !profileDropdownMenu.contains(event.target) &&
+            !(userProfileLink && userProfileLink.contains(event.target))) {
             profileDropdownMenu.classList.remove('active');
         }
-        if (catalogCategoryDropdown?.classList.contains('active') && !(addToCatalogBtn && addToCatalogBtn.contains(event.target)) && !catalogCategoryDropdown.contains(event.target)) {
+        if (catalogCategoryDropdown?.classList.contains('active') &&
+            !(addToCatalogBtn && addToCatalogBtn.contains(event.target)) &&
+            !catalogCategoryDropdown.contains(event.target)) {
             catalogCategoryDropdown.classList.remove('active');
         }
         document.querySelectorAll('.search-modal-sidebar .custom-dropdown.open').forEach(dropdown => {
-            if (!dropdown.contains(event.target)) { dropdown.classList.remove('open'); }
+            if (!dropdown.contains(event.target)) {
+                dropdown.classList.remove('open');
+            }
         });
     });
 
@@ -162,440 +206,346 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.number-input-container').forEach(c => { const i = c.querySelector('input[type="number"]'), uA = c.querySelector('.up-arrow'), dA = c.querySelector('.down-arrow'); if (i && uA && dA) { uA.addEventListener('click', () => { i.stepUp(); i.dispatchEvent(new Event('input', { bubbles: true })); }); dA.addEventListener('click', () => { i.stepDown(); i.dispatchEvent(new Event('input', { bubbles: true })); }); } });
 
     // --- Lightbox Logic ---
-    function openLightbox(imageSrc) {
-        if (!lightboxModal || !lightboxImage) return;
-        lightboxImage.src = imageSrc;
-        lightboxModal.classList.add('active');
-        requestAnimationFrame(() => {
-            if (lightboxImage) lightboxImage.style.opacity = '1';
-            if (lightboxImage) lightboxImage.style.transform = 'scale(1)';
-        });
-        document.body.style.overflow = 'hidden';
-    }
-    function closeLightbox() {
-        if (!lightboxModal || !lightboxImage) return;
-        lightboxImage.style.opacity = '0';
-        lightboxImage.style.transform = 'scale(0.8)';
-        setTimeout(() => {
-            lightboxModal.classList.remove('active');
-            document.body.style.overflow = '';
-            lightboxImage.src = '';
-        }, 300);
-    }
+    function openLightbox(imageSrc) { if (!lightboxModal || !lightboxImage) return; lightboxImage.src = imageSrc; lightboxModal.classList.add('active'); requestAnimationFrame(() => { if (lightboxImage) lightboxImage.style.opacity = '1'; if (lightboxImage) lightboxImage.style.transform = 'scale(1)'; }); document.body.style.overflow = 'hidden'; }
+    function closeLightbox() { if (!lightboxModal || !lightboxImage) return; lightboxImage.style.opacity = '0'; lightboxImage.style.transform = 'scale(0.8)'; setTimeout(() => { lightboxModal.classList.remove('active'); document.body.style.overflow = ''; lightboxImage.src = ''; }, 300); }
     if (lightboxCloseButton) { lightboxCloseButton.addEventListener('click', closeLightbox); }
     if (lightboxModal) { lightboxModal.addEventListener('click', (event) => { if (event.target === lightboxModal) { closeLightbox(); } }); }
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && lightboxModal && lightboxModal.classList.contains('active')) { closeLightbox(); } });
 
     // --- Shelf and Tile Creation ---
-    function createShelfElement(id, titleText, isEmptyShelf = false) {
-        const shelfSection = document.createElement('section');
-        shelfSection.className = 'movie-shelf';
-        if (isEmptyShelf) shelfSection.classList.add('empty-shelf-placeholder');
-        shelfSection.id = id;
-        if (titleText) {
-            const title = document.createElement('h2');
-            title.textContent = titleText;
-            shelfSection.appendChild(title);
-        }
-        const gridWrapper = document.createElement('div');
-        gridWrapper.className = 'shelf-grid-wrapper';
-        const controls = document.createElement('div');
-        controls.className = 'shelf-controls';
-        controls.innerHTML = `
-            <button class="shelf-arrow prev-arrow" aria-label="Предыдущие"><i class="fas fa-chevron-left"></i></button>
-            <button class="shelf-arrow next-arrow" aria-label="Следующие"><i class="fas fa-chevron-right"></i></button>
-        `;
-        gridWrapper.appendChild(controls);
-        const grid = document.createElement('div');
-        grid.className = 'shelf-grid';
-        gridWrapper.appendChild(grid);
-        shelfSection.appendChild(gridWrapper);
+    function createShelfElement(id, titleText, isEmptyShelf = false) { const shelfSection = document.createElement('section'); shelfSection.className = 'movie-shelf'; if (isEmptyShelf) shelfSection.classList.add('empty-shelf-placeholder'); shelfSection.id = id; if (titleText) { const title = document.createElement('h2'); title.textContent = titleText; shelfSection.appendChild(title); } const gridWrapper = document.createElement('div'); gridWrapper.className = 'shelf-grid-wrapper'; const controls = document.createElement('div'); controls.className = 'shelf-controls'; controls.innerHTML = ` <button class="shelf-arrow prev-arrow" aria-label="Предыдущие"><i class="fas fa-chevron-left"></i></button> <button class="shelf-arrow next-arrow" aria-label="Следующие"><i class="fas fa-chevron-right"></i></button> `; gridWrapper.appendChild(controls); const grid = document.createElement('div'); grid.className = 'shelf-grid'; gridWrapper.appendChild(grid); shelfSection.appendChild(gridWrapper); const prevArrow = controls.querySelector('.prev-arrow'); const nextArrow = controls.querySelector('.next-arrow'); if (grid && prevArrow && nextArrow) { const getScrollAmount = () => (grid.querySelector('.movie-tile, .media-item, .still-item')?.offsetWidth || grid.clientWidth * 0.8) + (parseFloat(getComputedStyle(grid).gap) || 15); prevArrow.addEventListener('click', () => grid.scrollBy({ left: -getScrollAmount(), behavior: 'smooth' })); nextArrow.addEventListener('click', () => grid.scrollBy({ left: getScrollAmount(), behavior: 'smooth' })); const updateShelfControlsVisibility = () => { requestAnimationFrame(() => { const scrollLeft = Math.round(grid.scrollLeft); const scrollWidth = grid.scrollWidth; const clientWidth = grid.clientWidth; if (grid.children.length === 0) { prevArrow.classList.remove('visible'); nextArrow.classList.remove('visible'); gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll'); return; } const canScrollLeft = scrollLeft > 1; const canScrollRight = (scrollWidth - clientWidth - scrollLeft) > 1; prevArrow.classList.toggle('visible', canScrollLeft); nextArrow.classList.toggle('visible', canScrollRight); gridWrapper.classList.toggle('has-prev-scroll', canScrollLeft); gridWrapper.classList.toggle('has-next-scroll', canScrollRight); }); }; const observer = new IntersectionObserver(entries => { entries.forEach(entry => { if (entry.isIntersecting) { setTimeout(() => updateShelfControlsVisibility(), 200); } else { prevArrow.classList.remove('visible'); nextArrow.classList.remove('visible'); gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll'); } }); }, { threshold: 0.01 }); observer.observe(shelfSection); grid.addEventListener('scroll', updateShelfControlsVisibility, { passive: true }); window.addEventListener('resize', updateShelfControlsVisibility, { passive: true }); setTimeout(() => updateShelfControlsVisibility(), 300); } return shelfSection; }
+    function applyTileRatingStyles(targetElement, ratingValue) { if (!targetElement) return; const rating = parseFloat(ratingValue); targetElement.classList.remove('rating-red', 'rating-gray', 'rating-green', 'rating-none'); targetElement.style.backgroundColor = ''; if (isNaN(rating) || rating === 0) { targetElement.textContent = '–'; targetElement.classList.add('rating-none'); } else { targetElement.textContent = `★ ${rating.toFixed(1)}`; if (rating < 5) targetElement.classList.add('rating-red'); else if (rating < 7) targetElement.classList.add('rating-gray'); else targetElement.classList.add('rating-green'); } }
+    function createMovieTileForTabs(movie) { const tile = document.createElement('a'); tile.className = 'movie-tile'; tile.href = `watch.html?tmdbId=${movie.id}&type=${movie.media_type || currentMediaType}`; const posterUrl = movie.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_CARD}${movie.poster_path}` : '/images/default-poster.jpg'; const ratingElement = document.createElement('span'); ratingElement.className = 'movie-rating rating-display-badge'; applyTileRatingStyles(ratingElement, movie.vote_average); let overviewText = movie.overview || 'Описание отсутствует.'; if (overviewText.length > 100) { overviewText = overviewText.substring(0, 97) + '...'; } tile.innerHTML = ` <img src="${posterUrl}" alt="${movie.title || movie.name}" class="movie-poster-img" loading="lazy" onerror="this.onerror=null;this.src='/images/error.png';"> <div class="movie-hover-details"> <h3>${movie.title || movie.name}</h3> <p>${overviewText}</p> </div> `; tile.insertBefore(ratingElement, tile.firstChild); return tile; }
+    function renderItemsToGrid(gridElement, items, itemType, countLimit) { if (!gridElement || !items) return; gridElement.innerHTML = ''; const itemsToDisplay = items.slice(0, countLimit); itemsToDisplay.forEach(itemData => { let element; const commonImgSrc = itemData.file_path || itemData.poster_path; if (itemType === 'still' || itemType === 'backdrop' || itemType === 'poster') { element = document.createElement('div'); element.className = `${itemType}-item media-item`; let finalSmallImgSrc = `${TMDB_IMAGE_BASE_URL}w780${commonImgSrc}`; if (itemType === 'poster') { finalSmallImgSrc = `${TMDB_IMAGE_BASE_URL}w342${commonImgSrc}`; } else if (itemType === 'still') { finalSmallImgSrc = `${TMDB_IMAGE_BASE_URL}w500${commonImgSrc}`; } const largeImgSrc = `${TMDB_IMAGE_BASE_URL}original${commonImgSrc}`; element.innerHTML = `<img src="${finalSmallImgSrc}" alt="${itemType}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/780x439/1A1A1A/555555?text=Error'; this.alt='Ошибка загрузки';">`; element.addEventListener('click', () => openLightbox(largeImgSrc)); } else { element = createMovieTileForTabs(itemData); } if(element) gridElement.appendChild(element); }); }
+    function createDualShelfForTab(tabPaneElement, allItems, itemType, totalItemLimit) { if (!tabPaneElement) return; tabPaneElement.innerHTML = ''; if (!allItems || allItems.length === 0) { const emptyMsgEl = Object.assign(document.createElement('p'), { className: 'empty-tab-message', textContent: `Нет данных для отображения (${itemType}).`, style: 'display:block; text-align:center; padding: 20px; color: #A0A0A0;' }); tabPaneElement.appendChild(emptyMsgEl); return; } const itemsForShelf1 = allItems.slice(0, Math.ceil(totalItemLimit / 2)); const itemsForShelf2 = allItems.slice(Math.ceil(totalItemLimit / 2), totalItemLimit); if (itemsForShelf1.length > 0) { const shelf1 = createShelfElement(`${itemType}-shelf-1`, null); tabPaneElement.appendChild(shelf1); renderItemsToGrid(shelf1.querySelector('.shelf-grid'), itemsForShelf1, itemType, ITEMS_PER_DUAL_SHELF_ROW); } if (itemsForShelf2.length > 0) { const shelf2 = createShelfElement(`${itemType}-shelf-2`, null); tabPaneElement.appendChild(shelf2); renderItemsToGrid(shelf2.querySelector('.shelf-grid'), itemsForShelf2, itemType, ITEMS_PER_DUAL_SHELF_ROW); } if (itemsForShelf1.length === 0 && itemsForShelf2.length === 0 && allItems.length > 0) { const shelfSingle = createShelfElement(`${itemType}-shelf-single`, null); tabPaneElement.appendChild(shelfSingle); renderItemsToGrid(shelfSingle.querySelector('.shelf-grid'), allItems, itemType, ITEMS_PER_DUAL_SHELF_ROW * 2); } }
+    function applyRatingStyles(targetElement, ratingValue) { if (!targetElement) return; const rating = parseFloat(ratingValue); targetElement.classList.remove('rating-red', 'rating-gray', 'rating-green', 'rating-none'); targetElement.style.backgroundColor = ''; if (isNaN(rating) || rating === 0 || rating < 1) { targetElement.textContent = '–'; targetElement.classList.add('rating-none'); } else { targetElement.textContent = `${rating.toFixed(1)}`; if (rating < 5) targetElement.classList.add('rating-red'); else if (rating < 7) targetElement.classList.add('rating-gray'); else targetElement.classList.add('rating-green'); } }
+    function showToastNotification(message, isError = false, duration = 3000) { const toast = document.getElementById('toast-notification'); const toastMessage = document.getElementById('toast-notification-message'); if (!toast || !toastMessage) return; toastMessage.textContent = message; toast.className = 'toast-notification'; toast.classList.add(isError ? 'error' : 'success'); toast.classList.add('active'); if (toast.toastTimeout) { clearTimeout(toast.toastTimeout); } toast.toastTimeout = setTimeout(() => toast.classList.remove('active'), duration); }
+    function getNamesList(array, limit = 5) { if (!array || array.length === 0) return 'N/A'; return array.slice(0, limit).map(item => item.name).join(', ') + (array.length > limit ? ' и др.' : ''); }
+    async function getItemListStatus(userId, tmdbId, mediaType) { if (!userId || !tmdbId || !mediaType) return null; try { const response = await fetch(`/api/user/${userId}/lists?tmdb_id=${tmdbId}&media_type=${mediaType}`); if (response.ok) { return await response.json(); } return null; } catch (error) { console.error('Ошибка при запросе статуса элемента списка:', error); return null; } }
+    function updateListCategoryDropdownCheckmarks() { if (!catalogCategoryDropdown || !currentItemData) return; catalogCategoryDropdown.querySelectorAll('button').forEach(button => { const existingCheckmark = button.querySelector('.list-category-checkmark'); if (existingCheckmark) existingCheckmark.remove(); const checkmarkContainer = document.createElement('span'); checkmarkContainer.className = 'list-category-checkmark'; if (currentItemData.userListCategory && button.dataset.category === currentItemData.userListCategory) { const checkmark = document.createElement('i'); checkmark.className = 'fas fa-check'; checkmarkContainer.appendChild(checkmark); } else { checkmarkContainer.innerHTML = ' '; } button.prepend(checkmarkContainer); }); }
+    async function fetchStillsForEpisode(tvId, seasonNumber, episodeNumber) { try { const response = await fetch(`/api/tv/${tvId}/season/${seasonNumber}/episode/${episodeNumber}/images`); if (!response.ok) { if (response.status !== 404) { console.warn(`Не удалось загрузить кадры для S${seasonNumber}E${episodeNumber}, статус: ${response.status}`); } return []; } return await response.json(); } catch (error) { console.error('Сетевая ошибка при запросе кадров:', error); return []; } }
+    function renderStills(stillsData, targetPaneElement) { createDualShelfForTab(targetPaneElement, stillsData, 'still', MAX_STILLS_TOTAL); }
+    function renderBackdrops(backdropsData, targetPaneElement) { createDualShelfForTab(targetPaneElement, backdropsData, 'backdrop', MAX_POSTERS_BACKDROPS_TOTAL); }
+    function renderPosters(postersData, targetPaneElement) { createDualShelfForTab(targetPaneElement, postersData, 'poster', MAX_POSTERS_BACKDROPS_TOTAL); }
+    function renderSingleShelf(shelfElement, moviesData, itemType = 'movie') { if (!shelfElement) return; const grid = shelfElement.querySelector('.shelf-grid'); if (!grid) { console.error("Grid not found in shelf:", shelfElement); return; } grid.innerHTML = ''; if (!moviesData || moviesData.length === 0) { return; } moviesData.forEach(movie => { grid.appendChild(createMovieTileForTabs(movie)); }); const gridWrapper = shelfElement.querySelector('.shelf-grid-wrapper'); const prevArrow = shelfElement.querySelector('.prev-arrow'); const nextArrow = shelfElement.querySelector('.next-arrow'); if (gridWrapper && prevArrow && nextArrow) { setTimeout(() => { const scrollLeft = Math.round(grid.scrollLeft); const scrollWidth = grid.scrollWidth; const clientWidth = grid.clientWidth; if (grid.children.length === 0) { prevArrow.classList.remove('visible'); nextArrow.classList.remove('visible'); gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll'); return; } const canScrollLeft = scrollLeft > 1; const canScrollRight = (scrollWidth - clientWidth - scrollLeft) > 1; prevArrow.classList.toggle('visible', canScrollLeft); nextArrow.classList.toggle('visible', canScrollRight); gridWrapper.classList.toggle('has-prev-scroll', canScrollLeft); gridWrapper.classList.toggle('has-next-scroll', canScrollRight); }, 100); } }
+    async function saveUserRating(rating) { const userId = localStorage.getItem('userId'); if (!userId || !currentItemData) { showToastNotification('Не удалось сохранить оценку. Пользователь не найден или данные фильма не загружены.', true); return; } const { id: tmdb_id, media_type, title, name, poster_path, userListCategory } = currentItemData; const categoryToSend = userListCategory || 'Просмотрено'; const dataToSend = { tmdb_id: parseInt(tmdb_id, 10), media_type: media_type, category: categoryToSend, title: title || name, poster_path: poster_path, rating: rating }; try { const response = await fetch(`/api/user/${userId}/lists`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSend) }); const result = await response.json(); if (response.ok) { showToastNotification(rating ? `Ваша оценка ${rating} сохранена!` : 'Оценка сброшена.', false); currentItemData.userRating = rating; if (!currentItemData.userListCategory && rating) { currentItemData.userListCategory = categoryToSend; updateListCategoryDropdownCheckmarks(); } createRatingWidget(rating); } else { showToastNotification(`Ошибка: ${result.error || 'Не удалось сохранить оценку.'}`, true); } } catch (error) { console.error('Сетевая ошибка при сохранении оценки:', error); showToastNotification('Сетевая ошибка при сохранении оценки.', true); } }
+    function createRatingWidget(currentUserRating = null) { if (!userRatingContainer) return; const userId = localStorage.getItem('userId'); userRatingContainer.innerHTML = ''; const widget = document.createElement('div'); widget.className = 'user-rating-widget'; if (currentUserRating) { if (currentUserRating >= 7) widget.classList.add('rated-green'); else if (currentUserRating >= 5) widget.classList.add('rated-gray'); else widget.classList.add('rated-red'); } if (!userId) { userRatingContainer.classList.add('disabled'); widget.setAttribute('title', 'Войдите, чтобы оценить'); const mainContent = document.createElement('div'); mainContent.className = 'widget-main-content'; mainContent.innerHTML = `<i class="far fa-star main-star-icon"></i> <span class="rate-text">Оценить</span>`; widget.appendChild(mainContent); userRatingContainer.appendChild(widget); return; } userRatingContainer.classList.remove('disabled'); const mainContent = document.createElement('div'); mainContent.className = 'widget-main-content'; const mainStarIcon = document.createElement('i'); mainStarIcon.className = 'main-star-icon'; const rateTextSpan = document.createElement('span'); if (currentUserRating) { mainStarIcon.classList.add('fas', 'fa-star'); rateTextSpan.className = 'user-rating-value'; rateTextSpan.textContent = currentUserRating; } else { mainStarIcon.classList.add('far', 'fa-star'); rateTextSpan.className = 'rate-text'; rateTextSpan.textContent = 'Оценить'; } mainContent.appendChild(mainStarIcon); mainContent.appendChild(rateTextSpan); const starsFlyout = document.createElement('div'); starsFlyout.className = 'rating-stars-flyout'; for (let i = 1; i <= 10; i++) { const star = document.createElement('i'); star.className = 'fas fa-star flyout-star'; star.dataset.value = i; if (currentUserRating && i <= currentUserRating) { star.classList.add('selected'); } starsFlyout.appendChild(star); } widget.appendChild(mainContent); widget.appendChild(starsFlyout); userRatingContainer.appendChild(widget); const allFlyoutStars = starsFlyout.querySelectorAll('.flyout-star'); starsFlyout.addEventListener('mouseover', (event) => { if (event.target.classList.contains('flyout-star')) { const hoverValue = parseInt(event.target.dataset.value, 10); allFlyoutStars.forEach((star) => { star.classList.toggle('hovered', parseInt(star.dataset.value, 10) <= hoverValue); }); } }); starsFlyout.addEventListener('mouseout', () => { allFlyoutStars.forEach(star => { star.classList.remove('hovered'); }); }); starsFlyout.addEventListener('click', (event) => { if (event.target.classList.contains('flyout-star')) { const ratingValue = parseInt(event.target.dataset.value, 10); if (currentUserRating === ratingValue) { saveUserRating(null); } else { saveUserRating(ratingValue); } } }); }
 
-        const prevArrow = controls.querySelector('.prev-arrow');
-        const nextArrow = controls.querySelector('.next-arrow');
-        if (grid && prevArrow && nextArrow) {
-            const getScrollAmount = () => (grid.querySelector('.movie-tile, .media-item, .still-item')?.offsetWidth || grid.clientWidth * 0.8) + (parseFloat(getComputedStyle(grid).gap) || 15);
-            prevArrow.addEventListener('click', () => grid.scrollBy({ left: -getScrollAmount(), behavior: 'smooth' }));
-            nextArrow.addEventListener('click', () => grid.scrollBy({ left: getScrollAmount(), behavior: 'smooth' }));
-            
-            const updateShelfControlsVisibility = () => {
-                requestAnimationFrame(() => {
-                    const scrollLeft = Math.round(grid.scrollLeft);
-                    const scrollWidth = grid.scrollWidth;
-                    const clientWidth = grid.clientWidth;
-                    if (grid.children.length === 0) {
-                        prevArrow.classList.remove('visible'); nextArrow.classList.remove('visible');
-                        gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll'); return;
-                    }
-                    const canScrollLeft = scrollLeft > 1;
-                    const canScrollRight = (scrollWidth - clientWidth - scrollLeft) > 1;
-                    prevArrow.classList.toggle('visible', canScrollLeft);
-                    nextArrow.classList.toggle('visible', canScrollRight);
-                    gridWrapper.classList.toggle('has-prev-scroll', canScrollLeft);
-                    gridWrapper.classList.toggle('has-next-scroll', canScrollRight);
-                });
-            };
-            const observer = new IntersectionObserver(entries => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) { setTimeout(() => updateShelfControlsVisibility(), 200); }
-                    else { prevArrow.classList.remove('visible'); nextArrow.classList.remove('visible'); gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll'); }
-                });
-            }, { threshold: 0.01 });
-            observer.observe(shelfSection);
-            grid.addEventListener('scroll', updateShelfControlsVisibility, { passive: true });
-            window.addEventListener('resize', updateShelfControlsVisibility, { passive: true });
-            setTimeout(() => updateShelfControlsVisibility(), 300); 
-        }
-        return shelfSection;
-    }
-    
-    function applyTileRatingStyles(targetElement, ratingValue) {
-        if (!targetElement) return;
-        const rating = parseFloat(ratingValue);
-        targetElement.classList.remove('rating-red', 'rating-gray', 'rating-green', 'rating-none');
-        targetElement.style.backgroundColor = '';
-        if (isNaN(rating) || rating === 0) {
-            targetElement.textContent = '–';
-            targetElement.classList.add('rating-none');
-        } else {
-            targetElement.textContent = `★ ${rating.toFixed(1)}`;
-            if (rating < 5) targetElement.classList.add('rating-red');
-            else if (rating < 7) targetElement.classList.add('rating-gray');
-            else targetElement.classList.add('rating-green');
-        }
-    }
+    // --- Функции для Комментариев ---
+    function createCommentElement(comment, currentUserId) {
+        const commentItemElement = document.createElement('div');
+        commentItemElement.className = 'comment-item';
+        commentItemElement.dataset.commentId = comment.id;
 
-    function createMovieTileForTabs(movie) {
-        const tile = document.createElement('a');
-        tile.className = 'movie-tile';
-        tile.href = `watch.html?tmdbId=${movie.id}&type=${movie.media_type || currentMediaType}`;
-        const posterUrl = movie.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_CARD}${movie.poster_path}` : '/images/default-poster.jpg';
-        const ratingElement = document.createElement('span');
-        ratingElement.className = 'movie-rating rating-display-badge';
-        applyTileRatingStyles(ratingElement, movie.vote_average);
-        let overviewText = movie.overview || 'Описание отсутствует.';
-        if (overviewText.length > 100) {
-            overviewText = overviewText.substring(0, 97) + '...';
+        const commentMainElement = document.createElement('div');
+        commentMainElement.className = 'comment-main';
+
+        const commentDate = new Date(comment.created_at).toLocaleString('ru-RU', {
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        const updatedAtDate = comment.updated_at && (new Date(comment.updated_at) > new Date(comment.created_at))
+            ? new Date(comment.updated_at).toLocaleString('ru-RU', {
+                year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+              })
+            : null;
+
+        const avatarSrc = (comment.avatar && comment.avatar !== DEFAULT_AVATAR_PATH)
+            ? (comment.avatar.startsWith('/') ? comment.avatar : `/${comment.avatar}`)
+            : DEFAULT_AVATAR_PATH;
+
+        let editDeleteButtons = '';
+        if (currentUserId && comment.user_id === currentUserId) {
+            editDeleteButtons = `
+                <button class="action-button edit-comment-btn" data-comment-id="${comment.id}"><i class="fas fa-edit"></i></button>
+                <button class="action-button delete-comment-btn" data-comment-id="${comment.id}"><i class="fas fa-trash"></i></button>
+            `;
         }
-        tile.innerHTML = `
-            <img src="${posterUrl}" alt="${movie.title || movie.name}" class="movie-poster-img" loading="lazy" onerror="this.onerror=null;this.src='/images/error.png';">
-            <div class="movie-hover-details">
-                <h3>${movie.title || movie.name}</h3>
-                <p>${overviewText}</p>
+
+        const userVote = comment.user_vote;
+
+        commentMainElement.innerHTML = `
+            <div class="comment-author-avatar">
+                <img src="${avatarSrc}" alt="Аватар пользователя ${comment.username || 'Аноним'}" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR_PATH}';">
+            </div>
+            <div class="comment-content-wrapper">
+                <div class="comment-header">
+                    <span class="comment-author-name">${comment.username || 'Аноним'}</span>
+                    <span class="comment-date">${commentDate}</span>
+                    ${updatedAtDate ? `<span class="comment-updated-date">(изм. ${updatedAtDate})</span>` : ''}
+                </div>
+                <p class="comment-text">${comment.content.replace(/\n/g, '<br>')}</p>
+                <div class="comment-actions">
+                    <button class="action-button reply-button" data-comment-id="${comment.id}">Ответить</button>
+                    <div class="comment-votes">
+                        <button class="vote-btn upvote-btn ${userVote === 1 ? 'active' : ''}" data-vote-type="1" data-comment-id="${comment.id}">
+                            <i class="fas fa-arrow-up"></i> <span class="upvote-count">${comment.upvotes || 0}</span>
+                        </button>
+                        <button class="vote-btn downvote-btn ${userVote === -1 ? 'active' : ''}" data-vote-type="-1" data-comment-id="${comment.id}">
+                            <i class="fas fa-arrow-down"></i> <span class="downvote-count">${comment.downvotes || 0}</span>
+                        </button>
+                    </div>
+                    <div class="comment-owner-actions">
+                        ${editDeleteButtons}
+                    </div>
+                </div>
             </div>
         `;
-        tile.insertBefore(ratingElement, tile.firstChild);
-        return tile;
-    }
-    
-    function renderItemsToGrid(gridElement, items, itemType, countLimit) {
-        if (!gridElement || !items) return;
-        gridElement.innerHTML = '';
+        commentItemElement.appendChild(commentMainElement);
 
-        const itemsToDisplay = items.slice(0, countLimit);
-
-        itemsToDisplay.forEach(itemData => {
-            let element;
-            const commonImgSrc = itemData.file_path || itemData.poster_path;
-
-            if (itemType === 'still' || itemType === 'backdrop' || itemType === 'poster') {
-                element = document.createElement('div');
-                element.className = `${itemType}-item media-item`;
-                let finalSmallImgSrc = `${TMDB_IMAGE_BASE_URL}w780${commonImgSrc}`;
-                if (itemType === 'poster') {
-                    finalSmallImgSrc = `${TMDB_IMAGE_BASE_URL}w342${commonImgSrc}`;
-                }
-                const largeImgSrc = `${TMDB_IMAGE_BASE_URL}original${commonImgSrc}`;
-                element.innerHTML = `<img src="${finalSmallImgSrc}" alt="${itemType}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/780x439/1A1A1A/555555?text=Error'; this.alt='Ошибка загрузки';">`;
-                element.addEventListener('click', () => openLightbox(largeImgSrc));
-            } else {
-                element = createMovieTileForTabs(itemData);
-            }
-            if(element) gridElement.appendChild(element);
-        });
-    }
-
-    function createDualShelfForTab(tabPaneElement, allItems, itemType, totalItemLimit) {
-        if (!tabPaneElement) return;
-        tabPaneElement.innerHTML = '';
-
-        if (!allItems || allItems.length === 0) {
-            const emptyMsgEl = Object.assign(document.createElement('p'), {
-                className: 'empty-tab-message',
-                textContent: `Нет данных для отображения (${itemType}).`,
-                style: 'display:block; text-align:center; padding: 20px; color: #A0A0A0;'
+        if (comment.children && comment.children.length > 0) {
+            const childrenContainerElement = document.createElement('div');
+            childrenContainerElement.className = 'comment-children-container';
+            comment.children.forEach(childComment => {
+                childrenContainerElement.appendChild(createCommentElement(childComment, currentUserId));
             });
-            tabPaneElement.appendChild(emptyMsgEl);
-            return;
+            commentItemElement.appendChild(childrenContainerElement);
         }
-
-        const itemsForShelf1 = allItems.slice(0, Math.ceil(totalItemLimit / 2));
-        const itemsForShelf2 = allItems.slice(Math.ceil(totalItemLimit / 2), totalItemLimit);
-
-        if (itemsForShelf1.length > 0) {
-            const shelf1 = createShelfElement(`${itemType}-shelf-1`, null);
-            tabPaneElement.appendChild(shelf1);
-            renderItemsToGrid(shelf1.querySelector('.shelf-grid'), itemsForShelf1, itemType, ITEMS_PER_DUAL_SHELF_ROW);
-        }
-
-        if (itemsForShelf2.length > 0) {
-            const shelf2 = createShelfElement(`${itemType}-shelf-2`, null);
-            tabPaneElement.appendChild(shelf2);
-            renderItemsToGrid(shelf2.querySelector('.shelf-grid'), itemsForShelf2, itemType, ITEMS_PER_DUAL_SHELF_ROW);
-        }
-        if (itemsForShelf1.length === 0 && itemsForShelf2.length === 0 && allItems.length > 0) {
-            const shelfSingle = createShelfElement(`${itemType}-shelf-single`, null);
-            tabPaneElement.appendChild(shelfSingle);
-            renderItemsToGrid(shelfSingle.querySelector('.shelf-grid'), allItems, itemType, ITEMS_PER_DUAL_SHELF_ROW * 2);
-        }
+        return commentItemElement;
     }
 
-    function applyRatingStyles(targetElement, ratingValue) {
-        if (!targetElement) return;
-        const rating = parseFloat(ratingValue);
-        targetElement.classList.remove('rating-red', 'rating-gray', 'rating-green', 'rating-none');
-        targetElement.style.backgroundColor = '';
-        if (isNaN(rating) || rating === 0 || rating < 1) {
-            targetElement.textContent = '–';
-            targetElement.classList.add('rating-none');
-        } else {
-            targetElement.textContent = `${rating.toFixed(1)}`;
-            if (rating < 5) targetElement.classList.add('rating-red');
-            else if (rating < 7) targetElement.classList.add('rating-gray');
-            else targetElement.classList.add('rating-green');
-        }
-    }
-    function showToastNotification(message, isError = false, duration = 3000) {
-        const toast = document.getElementById('toast-notification');
-        const toastMessage = document.getElementById('toast-notification-message');
-        if (!toast || !toastMessage) return;
-        toastMessage.textContent = message;
-        toast.className = 'toast-notification';
-        toast.classList.add(isError ? 'error' : 'success');
-        toast.classList.add('active');
-        if (toast.toastTimeout) { clearTimeout(toast.toastTimeout); }
-        toast.toastTimeout = setTimeout(() => toast.classList.remove('active'), duration);
-    }
-    function getNamesList(array, limit = 5) {
-        if (!array || array.length === 0) return 'N/A';
-        return array.slice(0, limit).map(item => item.name).join(', ') + (array.length > limit ? ' и др.' : '');
-    }
-    async function getItemListStatus(userId, tmdbId, mediaType) {
-        if (!userId || !tmdbId || !mediaType) return null;
-        try {
-            const response = await fetch(`/api/user/${userId}/lists?tmdb_id=${tmdbId}&media_type=${mediaType}`);
-            if (response.ok) { return await response.json(); }
-            return null;
-        } catch (error) { console.error('Ошибка при запросе статуса элемента списка:', error); return null; }
-    }
-    function updateListCategoryDropdownCheckmarks() {
-        if (!catalogCategoryDropdown || !currentItemData) return;
-        catalogCategoryDropdown.querySelectorAll('button').forEach(button => {
-            const existingCheckmark = button.querySelector('.list-category-checkmark');
-            if (existingCheckmark) existingCheckmark.remove();
-            const checkmarkContainer = document.createElement('span');
-            checkmarkContainer.className = 'list-category-checkmark';
-            if (currentItemData.userListCategory && button.dataset.category === currentItemData.userListCategory) {
-                const checkmark = document.createElement('i');
-                checkmark.className = 'fas fa-check';
-                checkmarkContainer.appendChild(checkmark);
-            } else {
-                checkmarkContainer.innerHTML = ' ';
-            }
-            button.prepend(checkmarkContainer);
-        });
-    }
-    
-    async function fetchStillsForEpisode(tvId, seasonNumber, episodeNumber) {
-        try {
-            const response = await fetch(`/api/tv/${tvId}/season/${seasonNumber}/episode/${episodeNumber}/images`);
-            if (!response.ok) {
-                if (response.status !== 404) { console.warn(`Не удалось загрузить кадры для S${seasonNumber}E${episodeNumber}`); }
-                return [];
-            }
-            return await response.json();
-        } catch (error) { console.error('Ошибка сети при запросе кадров:', error); return []; }
-    }
-
-    function renderStills(stillsData, targetPaneElement) {
-        createDualShelfForTab(targetPaneElement, stillsData, 'still', MAX_STILLS_TOTAL);
-    }
-    function renderBackdrops(backdropsData, targetPaneElement) {
-        createDualShelfForTab(targetPaneElement, backdropsData, 'backdrop', MAX_POSTERS_BACKDROPS_TOTAL);
-    }
-    function renderPosters(postersData, targetPaneElement) {
-        createDualShelfForTab(targetPaneElement, postersData, 'poster', MAX_POSTERS_BACKDROPS_TOTAL);
-    }
-    
-    function renderSingleShelf(shelfElement, moviesData, itemType = 'movie') {
-        if (!shelfElement) return;
-        const grid = shelfElement.querySelector('.shelf-grid');
-        if (!grid) { console.error("Grid not found in shelf:", shelfElement); return; }
-        grid.innerHTML = '';
-        if (!moviesData || moviesData.length === 0) { return; }
-        
-        moviesData.forEach(movie => {
-            grid.appendChild(createMovieTileForTabs(movie));
-        });
-        
-        const gridWrapper = shelfElement.querySelector('.shelf-grid-wrapper');
-        const prevArrow = shelfElement.querySelector('.prev-arrow');
-        const nextArrow = shelfElement.querySelector('.next-arrow');
-        if (gridWrapper && prevArrow && nextArrow) {
-             setTimeout(() => {
-                const scrollLeft = Math.round(grid.scrollLeft);
-                const scrollWidth = grid.scrollWidth;
-                const clientWidth = grid.clientWidth;
-                 if (grid.children.length === 0) {
-                    prevArrow.classList.remove('visible'); nextArrow.classList.remove('visible');
-                    gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll');
-                    return;
-                }
-                const canScrollLeft = scrollLeft > 1;
-                const canScrollRight = (scrollWidth - clientWidth - scrollLeft) > 1;
-                prevArrow.classList.toggle('visible', canScrollLeft);
-                nextArrow.classList.toggle('visible', canScrollRight);
-                gridWrapper.classList.toggle('has-prev-scroll', canScrollLeft);
-                gridWrapper.classList.toggle('has-next-scroll', canScrollRight);
-            }, 100);
-        }
-    }
-
-    async function saveUserRating(rating) {
+    async function loadComments(page = 1) {
+        if (!currentTmdbId || !currentMediaType || !commentsListContainer) return;
+        currentCommentsPage = page;
+        if (commentsLoadingPlaceholder) commentsLoadingPlaceholder.style.display = 'block';
+        commentsListContainer.innerHTML = '';
+        if (commentsPaginationContainer) commentsPaginationContainer.innerHTML = '';
         const userId = localStorage.getItem('userId');
-        if (!userId || !currentItemData) {
-            showToastNotification('Не удалось сохранить оценку. Пользователь не найден или данные фильма не загружены.', true);
-            return;
-        }
-        const { id: tmdb_id, media_type, title, name, poster_path, userListCategory } = currentItemData;
-        const categoryToSend = userListCategory || 'Просмотрено';
-        const dataToSend = {
-            tmdb_id: parseInt(tmdb_id, 10),
-            media_type: media_type,
-            category: categoryToSend,
-            title: title || name,
-            poster_path: poster_path,
-            rating: rating
-        };
+        const url = `/api/comments/${currentMediaType}/${currentTmdbId}?page=${page}&limit=${COMMENTS_PER_PAGE}${userId ? `&userId=${userId}` : ''}`;
         try {
-            const response = await fetch(`/api/user/${userId}/lists`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataToSend)
-            });
-            const result = await response.json();
-            if (response.ok) {
-                showToastNotification(rating ? `Ваша оценка ${rating} сохранена!` : 'Оценка сброшена.', false);
-                currentItemData.userRating = rating;
-                if (!currentItemData.userListCategory && rating) {
-                    currentItemData.userListCategory = categoryToSend;
-                    updateListCategoryDropdownCheckmarks();
-                }
-                createRatingWidget(rating);
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Не удалось загрузить комментарии (статус: ${response.status})`);
+            const data = await response.json();
+            if (commentsLoadingPlaceholder) commentsLoadingPlaceholder.style.display = 'none';
+            if (data.comments.length === 0 && page === 1) {
+                commentsListContainer.innerHTML = '<p class="no-comments-message">Комментариев пока нет. Будьте первым!</p>';
             } else {
-                showToastNotification(`Ошибка: ${result.error || 'Не удалось сохранить оценку.'}`, true);
+                data.comments.forEach(comment => {
+                    commentsListContainer.appendChild(createCommentElement(comment, currentUserData ? currentUserData.id : null));
+                });
+                renderPaginationControls(data.currentPage, data.totalPages);
             }
         } catch (error) {
-            console.error('Сетевая ошибка при сохранении оценки:', error);
-            showToastNotification('Сетевая ошибка при сохранении оценки.', true);
+            console.error("Ошибка загрузки комментариев:", error);
+            if (commentsLoadingPlaceholder) commentsLoadingPlaceholder.style.display = 'none';
+            commentsListContainer.innerHTML = `<p class="comments-error-message">Ошибка загрузки комментариев: ${error.message}</p>`;
         }
     }
 
-    function createRatingWidget(currentUserRating = null) {
-        if (!userRatingContainer) return;
-        
-        const userId = localStorage.getItem('userId');
-        userRatingContainer.innerHTML = ''; 
-
-        const widget = document.createElement('div');
-        widget.className = 'user-rating-widget';
-
-        // Применяем классы для цвета фона виджета в зависимости от оценки
-        if (currentUserRating) {
-            if (currentUserRating >= 7) widget.classList.add('rated-green');
-            else if (currentUserRating >= 5) widget.classList.add('rated-gray');
-            else widget.classList.add('rated-red');
-        }
-
-
-        if (!userId) {
-            userRatingContainer.classList.add('disabled');
-            widget.setAttribute('title', 'Войдите, чтобы оценить');
-            const mainContent = document.createElement('div');
-            mainContent.className = 'widget-main-content';
-            mainContent.innerHTML = `<i class="far fa-star main-star-icon"></i> <span class="rate-text">Оценить</span>`;
-            widget.appendChild(mainContent);
-            userRatingContainer.appendChild(widget);
+    function renderPaginationControls(currentPage, totalPages) {
+        if (!commentsPaginationContainer || totalPages <= 1) {
+            if(commentsPaginationContainer) commentsPaginationContainer.innerHTML = '';
             return;
         }
-        
-        userRatingContainer.classList.remove('disabled');
-
-        const mainContent = document.createElement('div');
-        mainContent.className = 'widget-main-content';
-        const mainStarIcon = document.createElement('i');
-        mainStarIcon.className = 'main-star-icon'; 
-        
-        const rateTextSpan = document.createElement('span');
-        
-        if (currentUserRating) {
-            mainStarIcon.classList.add('fas', 'fa-star'); // Заполненная звезда
-            // Класс 'rated-star' больше не нужен для иконки, т.к. цвет управляется родительским .user-rating-widget
-            rateTextSpan.className = 'user-rating-value';
-            rateTextSpan.textContent = currentUserRating;
-        } else {
-            mainStarIcon.classList.add('far', 'fa-star'); // Контурная звезда
-            rateTextSpan.className = 'rate-text';
+        commentsPaginationContainer.innerHTML = '';
+        const prevButton = document.createElement('button');
+        prevButton.textContent = 'Назад';
+        prevButton.className = 'action-button pagination-btn';
+        prevButton.disabled = currentPage === 1;
+        prevButton.addEventListener('click', () => loadComments(currentPage - 1));
+        commentsPaginationContainer.appendChild(prevButton);
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'pagination-info';
+        pageInfo.textContent = `Страница ${currentPage} из ${totalPages}`;
+        commentsPaginationContainer.appendChild(pageInfo);
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Вперед';
+        nextButton.className = 'action-button pagination-btn';
+        nextButton.disabled = currentPage === totalPages;
+        nextButton.addEventListener('click', () => loadComments(currentPage + 1));
+        commentsPaginationContainer.appendChild(nextButton);
+        if (!commentsListContainer.nextElementSibling || !commentsListContainer.nextElementSibling.classList.contains('comments-pagination')) {
+            commentsListContainer.insertAdjacentElement('afterend', commentsPaginationContainer);
         }
-        mainContent.appendChild(mainStarIcon);
-        mainContent.appendChild(rateTextSpan);
+    }
 
-        const starsFlyout = document.createElement('div');
-        starsFlyout.className = 'rating-stars-flyout';
-        
-        for (let i = 1; i <= 10; i++) { 
-            const star = document.createElement('i');
-            star.className = 'fas fa-star flyout-star'; 
-            star.dataset.value = i;
-            if (currentUserRating && i <= currentUserRating) {
-                star.classList.add('selected'); 
+    if (newCommentForm) {
+        newCommentForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const content = commentTextarea.value.trim();
+            const userId = localStorage.getItem('userId');
+            if (!content) { showToastNotification('Комментарий не может быть пустым', true); return; }
+            if (!userId) { showToastNotification('Для отправки комментария необходимо авторизоваться', true); return; }
+            if (!currentTmdbId || !currentMediaType) { showToastNotification('Ошибка: ID фильма или тип не определены.', true); return; }
+            const parentIdInput = newCommentForm.querySelector('input[name="parent_id"]');
+            const parent_id = parentIdInput ? parentIdInput.value : null;
+            const editingCommentIdInput = newCommentForm.querySelector('input[name="editing_comment_id"]');
+            const editing_comment_id = editingCommentIdInput ? editingCommentIdInput.value : null;
+            const requestMethod = editing_comment_id ? 'PUT' : 'POST';
+            const requestUrl = editing_comment_id ? `/api/comments/${editing_comment_id}` : '/api/comments';
+            const body = { userId: userId, content: content };
+            if (!editing_comment_id) {
+                body.tmdb_id = currentTmdbId;
+                body.media_type = currentMediaType;
+                body.parent_id = parent_id;
             }
-            starsFlyout.appendChild(star); 
-        }
-
-        widget.appendChild(mainContent);
-        widget.appendChild(starsFlyout);
-        userRatingContainer.appendChild(widget);
-
-        const allFlyoutStars = starsFlyout.querySelectorAll('.flyout-star');
-        
-        starsFlyout.addEventListener('mouseover', (event) => {
-            if (event.target.classList.contains('flyout-star')) {
-                const hoverValue = parseInt(event.target.dataset.value, 10);
-                allFlyoutStars.forEach((star) => {
-                    star.classList.toggle('hovered', parseInt(star.dataset.value, 10) <= hoverValue);
+            try {
+                const response = await fetch(requestUrl, {
+                    method: requestMethod,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
                 });
-            }
-        });
-
-        starsFlyout.addEventListener('mouseout', () => {
-            allFlyoutStars.forEach(star => {
-                star.classList.remove('hovered');
-            });
-        });
-
-        starsFlyout.addEventListener('click', (event) => {
-            if (event.target.classList.contains('flyout-star')) {
-                const ratingValue = parseInt(event.target.dataset.value, 10);
-                if (currentUserRating === ratingValue) {
-                    saveUserRating(null); 
+                const result = await response.json();
+                if (response.ok) {
+                    if (editing_comment_id) {
+                        const commentElement = commentsListContainer.querySelector(`.comment-item[data-comment-id="${editing_comment_id}"] .comment-text`);
+                        if (commentElement) commentElement.innerHTML = result.content.replace(/\n/g, '<br>');
+                        const updatedDateElement = commentsListContainer.querySelector(`.comment-item[data-comment-id="${editing_comment_id}"] .comment-updated-date`);
+                        if(updatedDateElement) {
+                             updatedDateElement.textContent = `(изм. ${new Date(result.updated_at).toLocaleString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })})`;
+                        } else {
+                            const header = commentsListContainer.querySelector(`.comment-item[data-comment-id="${editing_comment_id}"] .comment-header`);
+                            if(header) {
+                                const newUpdatedDateEl = document.createElement('span');
+                                newUpdatedDateEl.className = 'comment-updated-date';
+                                newUpdatedDateEl.textContent = `(изм. ${new Date(result.updated_at).toLocaleString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })})`;
+                                header.appendChild(newUpdatedDateEl);
+                            }
+                        }
+                        showToastNotification('Комментарий успешно обновлен!', false);
+                    } else {
+                        loadComments(parent_id ? currentCommentsPage : 1);
+                        showToastNotification('Комментарий успешно добавлен!', false);
+                    }
+                    commentTextarea.value = '';
+                    if (parentIdInput) parentIdInput.remove();
+                    if (editingCommentIdInput) editingCommentIdInput.remove();
+                    newCommentForm.removeAttribute('data-editing');
                 } else {
-                    saveUserRating(ratingValue);
+                    showToastNotification(result.error || 'Произошла ошибка', true);
                 }
+            } catch (error) {
+                console.error("Сетевая ошибка:", error);
+                showToastNotification('Сетевая ошибка.', true);
             }
         });
     }
 
+    if (commentsListContainer) {
+        commentsListContainer.addEventListener('click', async (event) => {
+            const target = event.target;
+            const userId = localStorage.getItem('userId');
+            if (target.closest('.vote-btn')) {
+                if (!userId) { showToastNotification('Для голосования необходимо авторизоваться.', true); return; }
+                const voteButton = target.closest('.vote-btn');
+                const commentId = voteButton.dataset.commentId;
+                const voteType = parseInt(voteButton.dataset.voteType);
+                const effectiveVoteType = voteButton.classList.contains('active') ? 0 : voteType;
+                try {
+                    const response = await fetch(`/api/comments/${commentId}/vote`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: userId, voteType: effectiveVoteType })
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        const commentVotesElement = voteButton.closest('.comment-votes');
+                        if (commentVotesElement) {
+                            commentVotesElement.querySelector('.upvote-count').textContent = result.upvotes;
+                            commentVotesElement.querySelector('.downvote-count').textContent = result.downvotes;
+                            const upvoteBtn = commentVotesElement.querySelector('.upvote-btn');
+                            const downvoteBtn = commentVotesElement.querySelector('.downvote-btn');
+                            upvoteBtn.classList.remove('active');
+                            downvoteBtn.classList.remove('active');
+                            if (result.userVote === 1) upvoteBtn.classList.add('active');
+                            if (result.userVote === -1) downvoteBtn.classList.add('active');
+                        }
+                    } else {
+                        showToastNotification(result.error || 'Ошибка голосования.', true);
+                    }
+                } catch (error) {
+                    showToastNotification('Сетевая ошибка при голосовании.', true);
+                }
+            }
+            if (target.classList.contains('reply-button')) {
+                const commentId = target.dataset.commentId;
+                const commentMainElement = target.closest('.comment-main');
+                if (!commentMainElement) return;
+                const commentItemElement = commentMainElement.parentElement;
+                const existingReplyForm = commentItemElement.querySelector('.reply-form-container');
+                if (existingReplyForm) {
+                    existingReplyForm.remove();
+                    return;
+                }
+                const replyFormContainer = document.createElement('div');
+                replyFormContainer.className = 'reply-form-container';
+                const replyTextarea = document.createElement('textarea');
+                replyTextarea.placeholder = 'Написать ответ...';
+                replyTextarea.required = true;
+                const replySubmitButton = document.createElement('button');
+                replySubmitButton.type = 'button';
+                replySubmitButton.className = 'action-button';
+                replySubmitButton.textContent = 'Отправить ответ';
+                replyFormContainer.appendChild(replyTextarea);
+                replyFormContainer.appendChild(replySubmitButton);
+                commentMainElement.insertAdjacentElement('afterend', replyFormContainer);
+                replyTextarea.focus();
+                replySubmitButton.addEventListener('click', async () => {
+                    const content = replyTextarea.value.trim();
+                    if (!content) { showToastNotification('Ответ не может быть пустым', true); return; }
+                    if (!userId) { showToastNotification('Для ответа необходимо авторизоваться', true); return; }
+                    const currentParentIdInput = newCommentForm.querySelector('input[name="parent_id"]');
+                    if (currentParentIdInput) currentParentIdInput.remove();
+                    const hiddenParentIdInput = document.createElement('input');
+                    hiddenParentIdInput.type = 'hidden';
+                    hiddenParentIdInput.name = 'parent_id';
+                    hiddenParentIdInput.value = commentId;
+                    newCommentForm.appendChild(hiddenParentIdInput);
+                    commentTextarea.value = content;
+                    newCommentForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    replyFormContainer.remove();
+                });
+            }
+            if (target.closest('.edit-comment-btn')) {
+                if (!userId) { showToastNotification('Для редактирования необходимо авторизоваться.', true); return; }
+                const editButton = target.closest('.edit-comment-btn');
+                const commentId = editButton.dataset.commentId;
+                const commentItem = editButton.closest('.comment-item');
+                const commentTextElement = commentItem.querySelector('.comment-text');
+                commentTextarea.value = commentTextElement.innerHTML.replace(/<br\s*\/?>/gi, "\n"); // Заменяем <br> на переносы строк для редактирования
+                newCommentForm.querySelector('input[name="parent_id"]')?.remove();
+                newCommentForm.querySelector('input[name="editing_comment_id"]')?.remove();
+                const editingInput = document.createElement('input');
+                editingInput.type = 'hidden';
+                editingInput.name = 'editing_comment_id';
+                editingInput.value = commentId;
+                newCommentForm.appendChild(editingInput);
+                newCommentForm.setAttribute('data-editing', 'true');
+                commentTextarea.focus();
+                window.scrollTo({ top: newCommentForm.offsetTop - 100, behavior: 'smooth' });
+            }
+            if (target.closest('.delete-comment-btn')) {
+                if (!userId) { showToastNotification('Для удаления необходимо авторизоваться.', true); return; }
+                const deleteButton = target.closest('.delete-comment-btn');
+                const commentId = deleteButton.dataset.commentId;
+                // Используем кастомное модальное окно вместо confirm
+                // Для примера просто выполняем действие, но в реальном приложении нужна замена confirm
+                // if (confirm('Вы уверены, что хотите удалить этот комментарий? Это действие необратимо.')) {
+                try {
+                    const response = await fetch(`/api/comments/${commentId}`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: userId })
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        showToastNotification(result.message, false);
+                        const commentElement = deleteButton.closest('.comment-item');
+                        if (commentElement) commentElement.remove();
+                        if (commentsListContainer.children.length === 0) {
+                            loadComments(currentCommentsPage > 1 ? currentCommentsPage -1 : 1);
+                        }
+                    } else {
+                        showToastNotification(result.error || 'Ошибка удаления.', true);
+                    }
+                } catch (error) {
+                    showToastNotification('Сетевая ошибка при удалении.', true);
+                }
+                // }
+            }
+        });
+    }
+
+    // --- Инициализация страницы ---
     async function fetchAndDisplayDetails(tmdbId, mediaType) {
         currentTmdbId = tmdbId;
         currentMediaType = mediaType;
@@ -603,207 +553,130 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`/api/tmdb/details/${mediaType}/${tmdbId}?append_to_response=images,videos,credits,similar,recommendations,release_dates,content_ratings,all_season_details`);
             if (!response.ok) { throw new Error('Не удалось загрузить данные о контенте.'); }
             const data = await response.json();
-            
-            currentItemData = { 
-                ...data, 
-                media_type: mediaType, 
-                userListCategory: null, 
-                userRating: null 
-            };
-            
+            currentItemData = { ...data, media_type: mediaType, userListCategory: null, userRating: null };
             document.title = `${currentItemData.title || currentItemData.name} - ФильмоПОИСК`;
-            if (bgImage) {
-                const newBgSrc = currentItemData.backdrop_path ? `${TMDB_IMAGE_BASE_URL}original${currentItemData.backdrop_path}` : '/images/no_image.png';
-                bgImage.onerror = function() { this.onerror = null; this.src = 'https://placehold.co/1920x1080/0D0D0D/333333?text=Error+Loading+Background'; this.alt = 'Ошибка загрузки фона'; };
-                bgImage.src = newBgSrc;
-            }
-            if (posterImage) {
-                const newPosterSrc = currentItemData.poster_path ? `${TMDB_IMAGE_BASE_URL}w500${currentItemData.poster_path}` : '/images/default-poster.jpg';
-                posterImage.onerror = function() { this.onerror = null; this.src = 'https://placehold.co/500x750/1A1A1A/555555?text=Error+Loading+Poster'; this.alt = 'Ошибка загрузки постера'; };
-                posterImage.src = newPosterSrc;
-            }
+            if (bgImage) { const newBgSrc = currentItemData.backdrop_path ? `${TMDB_IMAGE_BASE_URL}original${currentItemData.backdrop_path}` : '/images/no_image.png'; bgImage.onerror = function() { this.onerror = null; this.src = 'https://placehold.co/1920x1080/0D0D0D/333333?text=Error+Loading+Background'; this.alt = 'Ошибка загрузки фона'; }; bgImage.src = newBgSrc; }
+            if (posterImage) { const newPosterSrc = currentItemData.poster_path ? `${TMDB_IMAGE_BASE_URL}w500${currentItemData.poster_path}` : '/images/default-poster.jpg'; posterImage.onerror = function() { this.onerror = null; this.src = 'https://placehold.co/500x750/1A1A1A/555555?text=Error+Loading+Poster'; this.alt = 'Ошибка загрузки постера'; }; posterImage.src = newPosterSrc; }
             if (titleElement) titleElement.textContent = currentItemData.title || currentItemData.name;
             if (statusElement) statusElement.textContent = currentItemData.status === 'Released' ? 'Вышел' : (currentItemData.status || 'Неизвестно');
             if (typeElement) typeElement.textContent = mediaType === 'movie' ? 'Фильм' : 'Сериал';
             if (episodesElement) episodesElement.textContent = mediaType === 'tv' ? `${currentItemData.number_of_episodes || 'N/A'} эп.` : '';
             const releaseYear = currentItemData.release_date || currentItemData.first_air_date;
             if (yearElement) yearElement.textContent = releaseYear ? new Date(releaseYear).getFullYear() : 'N/A';
-            if (ageRatingElement) {
-                let itemAgeRatingText = 'N/A';
-                if (currentItemData.content_ratings?.results) { const ruRating = currentItemData.content_ratings.results.find(r => r.iso_3166_1 === 'RU'); if (ruRating?.rating) itemAgeRatingText = ruRating.rating; }
-                else if (currentItemData.release_dates?.results) { const ruRelease = currentItemData.release_dates.results.find(r => r.iso_3166_1 === 'RU'); if (ruRelease?.release_dates?.length > 0) { const cert = ruRelease.release_dates.find(rd => rd.certification && rd.certification !== ""); if (cert) itemAgeRatingText = cert.certification; } }
-                ageRatingElement.textContent = itemAgeRatingText;
-            }
+            if (ageRatingElement) { let itemAgeRatingText = 'N/A'; if (currentItemData.content_ratings?.results) { const ruRating = currentItemData.content_ratings.results.find(r => r.iso_3166_1 === 'RU'); if (ruRating?.rating) itemAgeRatingText = ruRating.rating; } else if (currentItemData.release_dates?.results) { const ruRelease = currentItemData.release_dates.results.find(r => r.iso_3166_1 === 'RU'); if (ruRelease?.release_dates?.length > 0) { const cert = ruRelease.release_dates.find(rd => rd.certification && rd.certification !== ""); if (cert) itemAgeRatingText = cert.certification; } } ageRatingElement.textContent = itemAgeRatingText; }
             if (descriptionElement) descriptionElement.textContent = currentItemData.overview || 'Описание отсутствует.';
             if (ratingBadge) applyRatingStyles(ratingBadge, currentItemData.vote_average);
-            if (infoListContainer) {
-                infoListContainer.innerHTML = '';
-                const detailsMap = {
-                    "original_title": { label: "Оригинальное название", value: currentItemData.original_title || currentItemData.original_name },
-                    "studios": { label: "Студия", value: currentItemData.production_companies?.map(c => c.name).join(', ') },
-                    "status": { label: "Статус", value: currentItemData.status === 'Released' ? 'Вышел' : (currentItemData.status || 'Неизвестно') },
-                    "number_of_episodes": { label: "Количество эпизодов", value: mediaType === 'tv' ? currentItemData.number_of_episodes : null },
-                    "first_air_date": { label: "Год выпуска", value: releaseYear ? new Date(releaseYear).getFullYear() : 'N/A' },
-                    "genres": { label: "Жанры", value: currentItemData.genres?.map(g => g.name).join(', ') },
-                    "countries": { label: "Страна производства", value: currentItemData.production_countries?.map(c => c.name).join(', ') },
-                    "runtime": { label: "Длительность эпизода", value: mediaType === 'tv' ? `${currentItemData.episode_run_time?.[0] || 'N/A'} мин.` : `${currentItemData.runtime || 'N/A'} мин.` },
-                    "actors": { label: "Актеры", value: getNamesList(currentItemData.credits?.cast, 10) },
-                    "directors": { label: "Директоры", value: getNamesList(currentItemData.credits?.crew?.filter(p => p.job === "Director"), 5) },
-                    "producers": { label: "Продюсеры", value: getNamesList(currentItemData.credits?.crew?.filter(p => p.department === "Production" && (p.job === "Producer" || p.job === "Executive Producer")), 5) },
-                };
-                for (const key in detailsMap) {
-                    const item = detailsMap[key];
-                    if (item.value && item.value !== 'N/A' && String(item.value).trim() !== '' && item.value !== 0) {
-                        const infoEl = document.createElement('div');
-                        infoEl.className = 'anime_info_el';
-                        infoEl.innerHTML = `<span class="anime_info_el_key">${item.label}</span><span class="anime_info_el_value">${item.value}</span>`;
-                        infoListContainer.appendChild(infoEl);
-                    }
-                }
-            }
+            if (infoListContainer) { infoListContainer.innerHTML = ''; const detailsMap = { "original_title": { label: "Оригинальное название", value: currentItemData.original_title || currentItemData.original_name }, "studios": { label: "Студия", value: currentItemData.production_companies?.map(c => c.name).join(', ') }, "status": { label: "Статус", value: currentItemData.status === 'Released' ? 'Вышел' : (currentItemData.status || 'Неизвестно') }, "number_of_episodes": { label: "Количество эпизодов", value: mediaType === 'tv' ? currentItemData.number_of_episodes : null }, "first_air_date": { label: "Год выпуска", value: releaseYear ? new Date(releaseYear).getFullYear() : 'N/A' }, "genres": { label: "Жанры", value: currentItemData.genres?.map(g => g.name).join(', ') }, "countries": { label: "Страна производства", value: currentItemData.production_countries?.map(c => c.name).join(', ') }, "runtime": { label: "Длительность", value: mediaType === 'tv' ? `${currentItemData.episode_run_time?.[0] || 'N/A'} мин.` : `${currentItemData.runtime || 'N/A'} мин.` }, "actors": { label: "Актеры", value: getNamesList(currentItemData.credits?.cast, 10) }, "directors": { label: "Режиссеры", value: getNamesList(currentItemData.credits?.crew?.filter(p => p.job === "Director"), 5) }, "producers": { label: "Продюсеры", value: getNamesList(currentItemData.credits?.crew?.filter(p => p.department === "Production" && (p.job === "Producer" || p.job === "Executive Producer")), 5) }, }; for (const key in detailsMap) { const item = detailsMap[key]; if (item.value && item.value !== 'N/A' && String(item.value).trim() !== '' && item.value !== 0) { const infoEl = document.createElement('div'); infoEl.className = 'anime_info_el'; infoEl.innerHTML = `<span class="anime_info_el_key">${item.label}</span><span class="anime_info_el_value">${item.value}</span>`; infoListContainer.appendChild(infoEl); } } }
+            const userId = localStorage.getItem('userId'); if (userId) { const listItemData = await getItemListStatus(userId, currentItemData.id, currentItemData.media_type); if (listItemData) { currentItemData.userListCategory = listItemData.category; currentItemData.userRating = listItemData.rating; } } createRatingWidget(currentItemData.userRating); updateListCategoryDropdownCheckmarks();
+            const stillsTabButton = document.querySelector('.tab-button-watch[data-tab-target="#tab-stills"]'); if (mediaType === 'tv' && stillsTabButton && stillsTabPane) { stillsTabButton.style.display = 'block'; stillsTabPane.innerHTML = '<div class="search-loading-indicator" style="display:flex; justify-content:center; padding:20px;"></div>'; if (currentItemData.all_season_details && currentItemData.all_season_details.length > 0) { const maxEpisodesToFetchStillsFrom = 20; let episodesWithDetails = []; currentItemData.all_season_details.forEach(season => { if (season.episodes && season.episodes.length > 0) { episodesWithDetails.push(...season.episodes.map(ep => ({...ep, season_number: season.season_number}))); } }); for (let i = episodesWithDetails.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [episodesWithDetails[i], episodesWithDetails[j]] = [episodesWithDetails[j], episodesWithDetails[i]]; } const episodesToFetch = episodesWithDetails.slice(0, maxEpisodesToFetchStillsFrom); if (episodesToFetch.length > 0) { const stillPromises = episodesToFetch.map(episode => fetchStillsForEpisode(tmdbId, episode.season_number, episode.episode_number)); const results = await Promise.all(stillPromises); renderStills(results.flat(), stillsTabPane); } else { renderStills([], stillsTabPane); } } else { renderStills([], stillsTabPane); } } else if (stillsTabButton) { stillsTabButton.style.display = 'none'; if(stillsTabPane) stillsTabPane.innerHTML = ''; }
+            if (backdropsTabPane) { if (currentItemData.images?.backdrops && currentItemData.images.backdrops.length > 0) { renderBackdrops(currentItemData.images.backdrops, backdropsTabPane); } else { backdropsTabPane.innerHTML = '<p class="empty-tab-message">Задники отсутствуют.</p>'; } }
+            if (postersTabPane) { if (currentItemData.images?.posters && currentItemData.images.posters.length > 0) { renderPosters(currentItemData.images.posters, postersTabPane); } else { postersTabPane.innerHTML = '<p class="empty-tab-message">Постеры отсутствуют.</p>'; } }
+            if (videosGrid) { videosGrid.innerHTML = ''; const trailers = currentItemData.videos?.results?.filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')) || []; if (trailers.length > 0) { trailers.slice(0, 12).forEach(video => { const videoEl = document.createElement('div'); videoEl.className = 'video-item media-item'; videoEl.innerHTML = ` <img src="https://i.ytimg.com/vi/${video.key}/mqdefault.jpg" alt="${video.name}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/320x180/1A1A1A/555555?text=No+Trailer+Thumb'; this.alt='Нет превью трейлера';"> <div class="play-icon"><i class="fas fa-play"></i></div> `; videoEl.addEventListener('click', () => { window.open(`https://www.youtube.com/watch?v=${video.key}`, '_blank'); }); videosGrid.appendChild(videoEl); }); } else { videosGrid.innerHTML = '<p class="empty-tab-message">Трейлеры отсутствуют.</p>'; } }
+            const similarTab = document.getElementById('tab-similar'); const recommendationsTab = document.getElementById('tab-recommendations');
+            if (similarTab) { similarTab.innerHTML = ''; if (currentItemData.similar?.results?.length > 0) { const shelf = createShelfElement('similar-shelf', '', false); similarTab.appendChild(shelf); renderSingleShelf(shelf, currentItemData.similar.results.map(item => ({ ...item, id: item.id, media_type: item.media_type || mediaType, title: item.title, name: item.name, poster_path: item.poster_path, overview: item.overview, vote_average: item.vote_average }))); } else { similarTab.innerHTML = '<p class="empty-tab-message">Похожих не найдено.</p>'; } }
+            if (recommendationsTab) { recommendationsTab.innerHTML = ''; if (currentItemData.recommendations?.results?.length > 0) { const shelf = createShelfElement('recommendations-shelf', '', false); recommendationsTab.appendChild(shelf); renderSingleShelf(shelf, currentItemData.recommendations.results.map(item => ({ ...item, id: item.id, media_type: item.media_type || mediaType, title: item.title, name: item.name, poster_path: item.poster_path, overview: item.overview, vote_average: item.vote_average }))); } else { recommendationsTab.innerHTML = '<p class="empty-tab-message">Рекомендаций не найдено.</p>'; } }
 
-            const userId = localStorage.getItem('userId');
-            if (userId) {
-                const listItemData = await getItemListStatus(userId, currentItemData.id, currentItemData.media_type);
-                if (listItemData) {
-                    currentItemData.userListCategory = listItemData.category;
-                    currentItemData.userRating = listItemData.rating;
-                }
-            }
-            createRatingWidget(currentItemData.userRating);
-            updateListCategoryDropdownCheckmarks();
-
-            const stillsTabButton = document.querySelector('.tab-button-watch[data-tab-target="#tab-stills"]');
-            if (mediaType === 'tv' && stillsTabButton && stillsTabPane) {
-                stillsTabButton.style.display = 'block';
-                stillsTabPane.innerHTML = '<div class="search-loading-indicator" style="display:flex; justify-content:center; padding:20px;"></div>';
-                if (currentItemData.all_season_details && currentItemData.all_season_details.length > 0) {
-                    const maxEpisodesToFetchStillsFrom = 20;
-                    let episodesWithDetails = [];
-                    currentItemData.all_season_details.forEach(season => {
-                        if (season.episodes && season.episodes.length > 0) {
-                            episodesWithDetails.push(...season.episodes.map(ep => ({...ep, season_number: season.season_number})));
-                        }
-                    });
-                    for (let i = episodesWithDetails.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [episodesWithDetails[i], episodesWithDetails[j]] = [episodesWithDetails[j], episodesWithDetails[i]]; }
-                    const episodesToFetch = episodesWithDetails.slice(0, maxEpisodesToFetchStillsFrom);
-                    if (episodesToFetch.length > 0) {
-                        const stillPromises = episodesToFetch.map(episode => fetchStillsForEpisode(tmdbId, episode.season_number, episode.episode_number));
-                        const results = await Promise.all(stillPromises);
-                        renderStills(results.flat(), stillsTabPane);
-                    } else { renderStills([], stillsTabPane); }
-                } else { renderStills([], stillsTabPane); }
-            } else if (stillsTabButton) {
-                stillsTabButton.style.display = 'none';
-                if(stillsTabPane) stillsTabPane.innerHTML = '';
-            }
-            
-            if (backdropsTabPane) {
-                if (currentItemData.images?.backdrops && currentItemData.images.backdrops.length > 0) {
-                    renderBackdrops(currentItemData.images.backdrops, backdropsTabPane);
-                } else {
-                    backdropsTabPane.innerHTML = '<p class="empty-tab-message">Задники отсутствуют.</p>';
-                }
-            }
-
-            if (postersTabPane) {
-                if (currentItemData.images?.posters && currentItemData.images.posters.length > 0) {
-                    renderPosters(currentItemData.images.posters, postersTabPane);
-                } else {
-                    postersTabPane.innerHTML = '<p class="empty-tab-message">Постеры отсутствуют.</p>';
-                }
-            }
-            
-            if (videosGrid) {
-                videosGrid.innerHTML = '';
-                const trailers = currentItemData.videos?.results?.filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')) || [];
-                if (trailers.length > 0) {
-                    trailers.slice(0, 12).forEach(video => {
-                        const videoEl = document.createElement('div');
-                        videoEl.className = 'video-item media-item';
-                        videoEl.innerHTML = `
-                            <img src="https://i.ytimg.com/vi/${video.key}/mqdefault.jpg" alt="${video.name}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/320x180/1A1A1A/555555?text=No+Trailer+Thumb'; this.alt='Нет превью трейлера';">
-                            <div class="play-icon"><i class="fas fa-play"></i></div>
-                        `;
-                        videoEl.addEventListener('click', () => { window.open(`https://www.youtube.com/watch?v=${video.key}`, '_blank'); });
-                        videosGrid.appendChild(videoEl);
-                    });
-                } else { videosGrid.innerHTML = '<p class="empty-tab-message">Трейлеры отсутствуют.</p>'; }
-            }
-            const similarTab = document.getElementById('tab-similar');
-            const recommendationsTab = document.getElementById('tab-recommendations');
-            if (similarTab) {
-                similarTab.innerHTML = '';
-                if (currentItemData.similar?.results?.length > 0) {
-                    const shelf = createShelfElement('similar-shelf', '', false);
-                    similarTab.appendChild(shelf);
-                    renderSingleShelf(shelf, currentItemData.similar.results.map(item => ({ ...item, id: item.id, media_type: item.media_type || mediaType, title: item.title, name: item.name, poster_path: item.poster_path, overview: item.overview, vote_average: item.vote_average })));
-                } else { similarTab.innerHTML = '<p class="empty-tab-message">Похожих не найдено.</p>'; }
-            }
-            if (recommendationsTab) {
-                recommendationsTab.innerHTML = '';
-                if (currentItemData.recommendations?.results?.length > 0) {
-                    const shelf = createShelfElement('recommendations-shelf', '', false);
-                    recommendationsTab.appendChild(shelf);
-                     renderSingleShelf(shelf, currentItemData.recommendations.results.map(item => ({ ...item, id: item.id, media_type: item.media_type || mediaType, title: item.title, name: item.name, poster_path: item.poster_path, overview: item.overview, vote_average: item.vote_average })));
-                } else { recommendationsTab.innerHTML = '<p class="empty-tab-message">Рекомендаций не найдено.</p>'; }
-            }
-
+            loadComments(1);
         } catch (error) {
             console.error("Ошибка при загрузке деталей:", error);
             if (watchPageContainer) watchPageContainer.innerHTML = `<h1>Ошибка загрузки. Пожалуйста, попробуйте позже.</h1><p>${error.message}</p>`;
         }
     }
-    
+
+    // --- ВОССТАНОВЛЕННЫЙ КОД ДЛЯ КНОПКИ "ДОБАВИТЬ В СПИСОК" ---
     if (addToCatalogBtn && catalogCategoryDropdown) {
         addToCatalogBtn.addEventListener('click', async (event) => {
             event.stopPropagation();
             const userId = localStorage.getItem('userId');
-            if (!userId) { showToastNotification('Для добавления в список необходимо авторизоваться.', true); return; }
-            if (!currentItemData) { showToastNotification('Данные о фильме/сериале не загружены.', true); return; }
-            const listItemData = await getItemListStatus(userId, currentItemData.id, currentItemData.media_type);
-            currentItemData.userListCategory = listItemData ? listItemData.category : null;
-            if (listItemData && typeof listItemData.rating !== 'undefined') {
-                currentItemData.userRating = listItemData.rating;
+            if (!userId) {
+                showToastNotification('Для добавления в список необходимо авторизоваться.', true);
+                return;
             }
-            createRatingWidget(currentItemData.userRating);
-            updateListCategoryDropdownCheckmarks();
+            if (!currentItemData) {
+                showToastNotification('Данные о фильме/сериале не загружены.', true);
+                return;
+            }
+
+            // Обновляем статус перед открытием дропдауна
+            const listItemData = await getItemListStatus(userId, currentItemData.id, currentItemData.media_type);
+            if (listItemData) {
+                currentItemData.userListCategory = listItemData.category;
+                if (typeof listItemData.rating !== 'undefined') { // Проверяем, есть ли оценка
+                     currentItemData.userRating = listItemData.rating;
+                }
+            } else {
+                 currentItemData.userListCategory = null; // Сбрасываем, если нет в списках
+                 // userRating остается как есть, если он был установлен ранее через виджет
+            }
+            createRatingWidget(currentItemData.userRating); // Обновляем виджет оценки
+            updateListCategoryDropdownCheckmarks(); // Обновляем галочки в дропдауне
+
             catalogCategoryDropdown.classList.toggle('active');
         });
+
         catalogCategoryDropdown.querySelectorAll('button').forEach(categoryButton => {
             categoryButton.addEventListener('click', async () => {
                 const selectedCategory = categoryButton.dataset.category;
                 const userId = localStorage.getItem('userId');
-                if (!userId || !currentItemData) { showToastNotification('Ошибка: Пользователь не авторизован или данные фильма не найдены.', true); catalogCategoryDropdown.classList.remove('active'); return; }
+
+                if (!userId || !currentItemData) {
+                    showToastNotification('Ошибка: Пользователь не авторизован или данные фильма не найдены.', true);
+                    catalogCategoryDropdown.classList.remove('active');
+                    return;
+                }
+
                 const { id: tmdb_id, media_type, title, name, poster_path, userRating } = currentItemData;
-                const itemTitle = title || name;
-                const dataToSend = { tmdb_id: parseInt(tmdb_id, 10), media_type: media_type, category: selectedCategory, title: itemTitle, poster_path: poster_path, rating: userRating };
+                const itemTitle = title || name; // Используем title или name
+                const dataToSend = {
+                    tmdb_id: parseInt(tmdb_id, 10),
+                    media_type: media_type,
+                    category: selectedCategory,
+                    title: itemTitle,
+                    poster_path: poster_path,
+                    rating: userRating // Отправляем текущую пользовательскую оценку
+                };
+
                 try {
-                    const response = await fetch(`/api/user/${userId}/lists`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSend) });
+                    const response = await fetch(`/api/user/${userId}/lists`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(dataToSend)
+                    });
                     const result = await response.json();
                     if (response.ok) {
                         const message = result.message || `"${itemTitle}" успешно добавлен(а) в категорию "${selectedCategory}"!`;
                         showToastNotification(message, false);
-                        currentItemData.userListCategory = selectedCategory;
-                        updateListCategoryDropdownCheckmarks();
-                        createRatingWidget(currentItemData.userRating);
-                    } else { showToastNotification(`Ошибка: ${result.error || 'Не удалось обновить список.'}`, true); }
-                } catch (error) { console.error('Сетевая ошибка или ошибка сервера:', error); showToastNotification('Сетевая ошибка при обновлении списка.', true); }
-                finally { catalogCategoryDropdown.classList.remove('active'); }
+                        currentItemData.userListCategory = selectedCategory; // Обновляем локальное состояние
+                        updateListCategoryDropdownCheckmarks(); // Обновляем галочки
+                        createRatingWidget(currentItemData.userRating); // Обновляем виджет оценки, если это необходимо
+                    } else {
+                        showToastNotification(`Ошибка: ${result.error || 'Не удалось обновить список.'}`, true);
+                    }
+                } catch (error) {
+                    console.error('Сетевая ошибка или ошибка сервера:', error);
+                    showToastNotification('Сетевая ошибка при обновлении списка.', true);
+                }
+                finally {
+                    catalogCategoryDropdown.classList.remove('active');
+                }
             });
         });
     }
 
+    // --- ВОССТАНОВЛЕННЫЙ КОД ДЛЯ ПЕРЕКЛЮЧЕНИЯ ВКЛАДОК ---
     if (tabsContainer) {
         tabsContainer.addEventListener('click', (event) => {
             const targetButton = event.target.closest('.tab-button-watch');
             if (!targetButton || targetButton.classList.contains('active')) return;
+
             const currentActiveButton = tabsContainer.querySelector('.tab-button-watch.active');
             if (currentActiveButton) currentActiveButton.classList.remove('active');
             targetButton.classList.add('active');
+
             if (tabPanesContainer) {
                 const currentActivePane = tabPanesContainer.querySelector('.tab-pane-watch.active');
                 if (currentActivePane) currentActivePane.classList.remove('active');
+
                 const targetPaneId = targetButton.dataset.tabTarget;
                 const targetPane = document.querySelector(targetPaneId);
                 if (targetPane) targetPane.classList.add('active');
@@ -811,37 +684,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
     if (watchNowMainBtn) {
         watchNowMainBtn.addEventListener('click', () => {
-            if (currentTmdbId && currentMediaType) { showToastNotification(`Запуск плеера для ID ${currentTmdbId} (${currentMediaType})... (демо)`, false); }
-            else { showToastNotification('Не удалось определить ID или тип контента для просмотра.', true); }
+            if (currentTmdbId && currentMediaType) {
+                showToastNotification(`Запуск плеера для ID ${currentTmdbId} (${currentMediaType})... (демо)`, false);
+                // Здесь будет логика для перехода к плееру или его открытия
+            } else {
+                showToastNotification('Не удалось определить ID или тип контента для просмотра.', true);
+            }
         });
     }
 
     const params = new URLSearchParams(window.location.search);
     const tmdbIdParam = params.get('tmdbId');
     const mediaTypeParam = params.get('type');
-    
     tabsContainer?.querySelectorAll('.tab-button-watch.active').forEach(b => b.classList.remove('active'));
     tabPanesContainer?.querySelectorAll('.tab-pane-watch.active').forEach(p => p.classList.remove('active'));
-
     const stillsTabButtonDefault = document.querySelector('.tab-button-watch[data-tab-target="#tab-stills"]');
     const backdropsTabButtonDefault = document.querySelector('.tab-button-watch[data-tab-target="#tab-backdrops"]');
-
-    if (mediaTypeParam === 'tv' && stillsTabButtonDefault) {
-        stillsTabButtonDefault.classList.add('active');
-        if (stillsTabPane) stillsTabPane.classList.add('active');
-    } else if (backdropsTabButtonDefault) {
-        backdropsTabButtonDefault.classList.add('active');
-        const backdropsPane = document.getElementById('tab-backdrops');
-        if (backdropsPane) backdropsPane.classList.add('active');
-    }
-
+    if (mediaTypeParam === 'tv' && stillsTabButtonDefault) { stillsTabButtonDefault.classList.add('active'); if (stillsTabPane) stillsTabPane.classList.add('active');
+    } else if (backdropsTabButtonDefault) { backdropsTabButtonDefault.classList.add('active'); const backdropsPane = document.getElementById('tab-backdrops'); if (backdropsPane) backdropsPane.classList.add('active'); }
     if (tmdbIdParam && mediaTypeParam) {
         fetchAndDisplayDetails(tmdbIdParam, mediaTypeParam);
     } else {
         if (watchPageContainer) watchPageContainer.innerHTML = '<h1>Ошибка: ID или тип контента не указаны в URL.</h1>';
     }
-    
-    updateUserProfileDisplay(); 
+    updateUserProfileDisplay();
 });

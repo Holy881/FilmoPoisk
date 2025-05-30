@@ -30,15 +30,10 @@ const upload = multer({ dest: UPLOADS_DIR });
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'html', 'home.html'));
-});
-app.get('/auth', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'html', 'auth.html'));
-});
-app.get('/profile', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'html', 'profile.html'));
-});
+// --- Роуты для страниц ---
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'html', 'home.html')));
+app.get('/auth', (req, res) => res.sendFile(path.join(__dirname, 'public', 'html', 'auth.html')));
+app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'public', 'html', 'profile.html')));
 app.get('/watch.html', (req, res) => {
     const watchPath = path.join(__dirname, 'public', 'html', 'watch.html');
     if (fs.existsSync(watchPath)) {
@@ -48,6 +43,7 @@ app.get('/watch.html', (req, res) => {
     }
 });
 
+// --- Настройка Базы Данных ---
 const dbPath = path.join(__dirname, 'database.db');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
@@ -58,29 +54,57 @@ const db = new sqlite3.Database(dbPath, (err) => {
             if (pragmaErr) console.error('Ошибка при включении внешних ключей:', pragmaErr);
             else console.log('Внешние ключи включены.');
         });
-        db.run(`CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL UNIQUE,
-            email TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL,
-            avatar TEXT
-        )`);
-        db.run(`CREATE TABLE IF NOT EXISTS user_lists (
-            item_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            tmdb_id INTEGER,
-            media_type TEXT,
-            category TEXT NOT NULL,
-            title TEXT NOT NULL,
-            poster_path TEXT,
-            rating INTEGER DEFAULT NULL CHECK (rating IS NULL OR (rating >= 0 AND rating <= 10)),
-            added_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, tmdb_id, media_type), -- Гарантирует уникальность элемента для пользователя
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )`);
+        db.serialize(() => {
+            db.run(`CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                email TEXT NOT NULL UNIQUE,
+                password TEXT NOT NULL,
+                avatar TEXT
+            )`);
+            db.run(`CREATE TABLE IF NOT EXISTS user_lists (
+                item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                tmdb_id INTEGER,
+                media_type TEXT,
+                category TEXT NOT NULL,
+                title TEXT NOT NULL,
+                poster_path TEXT,
+                rating INTEGER DEFAULT NULL CHECK (rating IS NULL OR (rating >= 0 AND rating <= 10)),
+                added_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, tmdb_id, media_type),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+            db.run(`CREATE TABLE IF NOT EXISTS comments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                tmdb_id INTEGER NOT NULL,
+                media_type TEXT NOT NULL,
+                parent_id INTEGER DEFAULT NULL,
+                content TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE 
+            )`);
+            db.run(`CREATE INDEX IF NOT EXISTS idx_comments_tmdb_parent ON comments (tmdb_id, media_type, parent_id, created_at)`);
+            
+            db.run(`CREATE TABLE IF NOT EXISTS comment_votes (
+                vote_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                comment_id INTEGER NOT NULL,
+                vote_type INTEGER NOT NULL CHECK (vote_type IN (1, -1)),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (user_id, comment_id),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE
+            )`);
+            db.run(`CREATE INDEX IF NOT EXISTS idx_comment_votes_comment_user ON comment_votes (comment_id, user_id)`);
+        });
     }
 });
 
+// --- API для Пользователей ---
 app.post('/api/register', async (req, res) => {
     const { username, email, password } = req.body;
     if (!username || !email || !password) {
@@ -442,6 +466,237 @@ app.put('/api/user/:id/lists/:item_id', (req, res) => {
     });
 });
 
+
+// --- API для Комментариев ---
+app.get('/api/comments/:media_type/:tmdb_id', async (req, res) => {
+    const { media_type, tmdb_id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10; 
+    const offset = (page - 1) * limit;
+    const currentUserId = req.query.userId ? parseInt(req.query.userId) : null;
+
+    if (!media_type || !tmdb_id) {
+        return res.status(400).json({ error: 'media_type и tmdb_id обязательны' });
+    }
+
+    try {
+        const totalRootCommentsSql = `SELECT COUNT(*) as total FROM comments WHERE media_type = ? AND tmdb_id = ? AND parent_id IS NULL`;
+        const totalResult = await new Promise((resolve, reject) => {
+            db.get(totalRootCommentsSql, [media_type, tmdb_id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+        const totalItems = totalResult.total;
+        const totalPages = Math.ceil(totalItems / limit);
+
+        const rootCommentsSql = `
+            SELECT 
+                c.id, c.content, c.parent_id, c.created_at, c.updated_at, c.user_id,
+                u.username, u.avatar,
+                (SELECT COUNT(*) FROM comment_votes cv WHERE cv.comment_id = c.id AND cv.vote_type = 1) as upvotes,
+                (SELECT COUNT(*) FROM comment_votes cv WHERE cv.comment_id = c.id AND cv.vote_type = -1) as downvotes
+                ${currentUserId ? ', (SELECT cv.vote_type FROM comment_votes cv WHERE cv.comment_id = c.id AND cv.user_id = ?) as user_vote' : ''}
+            FROM comments c
+            JOIN users u ON c.user_id = u.id
+            WHERE c.media_type = ? AND c.tmdb_id = ? AND c.parent_id IS NULL
+            ORDER BY c.created_at DESC 
+            LIMIT ? OFFSET ?`;
+        
+        const queryParams = currentUserId 
+            ? [currentUserId, media_type, tmdb_id, limit, offset]
+            : [media_type, tmdb_id, limit, offset];
+
+        const rootComments = await new Promise((resolve, reject) => {
+            db.all(rootCommentsSql, queryParams, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+        
+        const allCommentsSql = `
+            SELECT 
+                c.id, c.content, c.parent_id, c.created_at, c.updated_at, c.user_id,
+                u.username, u.avatar,
+                (SELECT COUNT(*) FROM comment_votes cv WHERE cv.comment_id = c.id AND cv.vote_type = 1) as upvotes,
+                (SELECT COUNT(*) FROM comment_votes cv WHERE cv.comment_id = c.id AND cv.vote_type = -1) as downvotes
+                ${currentUserId ? ', (SELECT cv.vote_type FROM comment_votes cv WHERE cv.comment_id = c.id AND cv.user_id = ?) as user_vote' : ''}
+            FROM comments c
+            JOIN users u ON c.user_id = u.id
+            WHERE c.media_type = ? AND c.tmdb_id = ?
+            ORDER BY c.created_at ASC`;
+
+        const allCommentsParams = currentUserId ? [currentUserId, media_type, tmdb_id] : [media_type, tmdb_id];
+        const allComments = await new Promise((resolve, reject) => {
+            db.all(allCommentsSql, allCommentsParams, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+        
+        const commentMap = {};
+        allComments.forEach(comment => {
+            comment.children = [];
+            commentMap[comment.id] = comment;
+        });
+
+        const finalRootComments = [];
+        rootComments.forEach(rootComment => { 
+            const fullRootComment = commentMap[rootComment.id];
+            if (fullRootComment) {
+                function buildChildren(parent) {
+                    allComments.forEach(potentialChild => {
+                        if (potentialChild.parent_id === parent.id) {
+                            const fullChild = commentMap[potentialChild.id];
+                            if(fullChild) {
+                                parent.children.push(fullChild);
+                                buildChildren(fullChild); 
+                            }
+                        }
+                    });
+                }
+                buildChildren(fullRootComment);
+                finalRootComments.push(fullRootComment);
+            }
+        });
+
+        res.status(200).json({
+            comments: finalRootComments,
+            currentPage: page,
+            totalPages: totalPages,
+            totalItems: totalItems
+        });
+
+    } catch (error) {
+        console.error('Ошибка при получении комментариев из БД:', error.message);
+        res.status(500).json({ error: 'Ошибка сервера при получении комментариев' });
+    }
+});
+
+app.post('/api/comments', (req, res) => {
+    const { userId, tmdb_id, media_type, content, parent_id = null } = req.body;
+
+    if (!userId) return res.status(401).json({ error: 'Действие доступно только авторизованным пользователям' });
+    if (!tmdb_id || !media_type || !content) return res.status(400).json({ error: 'tmdb_id, media_type и content обязательны' });
+
+    db.get('SELECT id FROM users WHERE id = ?', [userId], (userErr, userRow) => {
+        if (userErr || !userRow) return res.status(403).json({ error: 'Пользователь не найден или недействителен' });
+
+        const sql = `INSERT INTO comments (user_id, tmdb_id, media_type, content, parent_id, created_at, updated_at) 
+                     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
+        const params = [userId, tmdb_id, media_type, content, parent_id];
+
+        db.run(sql, params, function (err) {
+            if (err) {
+                console.error('Ошибка добавления комментария в БД:', err.message);
+                return res.status(500).json({ error: 'Не удалось добавить комментарий' });
+            }
+            const newCommentId = this.lastID;
+            const currentUserIdForVote = parseInt(userId); 
+            db.get(`
+                SELECT c.id, c.content, c.parent_id, c.created_at, c.updated_at, c.user_id, 
+                       u.username, u.avatar,
+                       0 as upvotes, 0 as downvotes
+                       ${currentUserIdForVote ? ', NULL as user_vote' : ''}
+                FROM comments c 
+                JOIN users u ON c.user_id = u.id
+                WHERE c.id = ?`, 
+                [newCommentId], (fetchErr, newComment) => {
+                    if (fetchErr || !newComment) {
+                        console.error('Ошибка получения созданного комментария:', fetchErr?.message);
+                        return res.status(201).json({ id: newCommentId, message: 'Комментарий создан, но не удалось получить его данные.' });
+                    }
+                    newComment.children = [];
+                    res.status(201).json(newComment);
+            });
+        });
+    });
+});
+
+app.put('/api/comments/:comment_id', (req, res) => {
+    const { comment_id } = req.params;
+    const { userId, content } = req.body;
+
+    if (!userId) return res.status(401).json({ error: 'Авторизация не пройдена' });
+    if (!content || content.trim() === '') return res.status(400).json({ error: 'Комментарий не может быть пустым' });
+
+    db.get('SELECT user_id FROM comments WHERE id = ?', [comment_id], (err, comment) => {
+        if (err) return res.status(500).json({ error: 'Ошибка сервера при поиске комментария' });
+        if (!comment) return res.status(404).json({ error: 'Комментарий не найден' });
+        if (comment.user_id !== parseInt(userId)) {
+            return res.status(403).json({ error: 'Вы не можете редактировать этот комментарий' });
+        }
+
+        const sql = `UPDATE comments SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+        db.run(sql, [content, comment_id], function(updateErr) {
+            if (updateErr) return res.status(500).json({ error: 'Не удалось обновить комментарий' });
+            res.status(200).json({ message: 'Комментарий успешно обновлен', content: content, updated_at: new Date().toISOString() });
+        });
+    });
+});
+
+app.delete('/api/comments/:comment_id', (req, res) => {
+    const { comment_id } = req.params;
+    const { userId } = req.body; 
+
+    if (!userId) return res.status(401).json({ error: 'Авторизация не пройдена' });
+
+    db.get('SELECT user_id FROM comments WHERE id = ?', [comment_id], (err, comment) => {
+        if (err) return res.status(500).json({ error: 'Ошибка сервера' });
+        if (!comment) return res.status(404).json({ error: 'Комментарий не найден' });
+        if (comment.user_id !== parseInt(userId)) {
+            return res.status(403).json({ error: 'Вы не можете удалить этот комментарий' });
+        }
+        db.run('DELETE FROM comment_votes WHERE comment_id = ?', [comment_id], (voteErr) => {
+            if (voteErr) console.error("Ошибка при удалении голосов комментария:", voteErr.message);
+            db.run('DELETE FROM comments WHERE id = ?', [comment_id], function(deleteErr) {
+                if (deleteErr) return res.status(500).json({ error: 'Не удалось удалить комментарий' });
+                if (this.changes === 0) return res.status(404).json({ error: 'Комментарий не найден для удаления (возможно, уже удален)' });
+                res.status(200).json({ message: 'Комментарий успешно удален' });
+            });
+        });
+    });
+});
+
+app.post('/api/comments/:comment_id/vote', (req, res) => {
+    const { comment_id } = req.params;
+    const { userId, voteType } = req.body; 
+
+    if (!userId) return res.status(401).json({ error: 'Авторизация не пройдена' });
+    if (![1, -1, 0].includes(voteType)) return res.status(400).json({ error: 'Неверный тип голоса' });
+
+    db.get('SELECT vote_type FROM comment_votes WHERE user_id = ? AND comment_id = ?', [userId, comment_id], (err, existingVote) => {
+        if (err) return res.status(500).json({ error: 'Ошибка сервера при проверке голоса' });
+
+        db.serialize(() => {
+            if (existingVote) { 
+                if (voteType === 0 || existingVote.vote_type === voteType) { 
+                    db.run('DELETE FROM comment_votes WHERE user_id = ? AND comment_id = ?', [userId, comment_id]);
+                } else { 
+                    db.run('UPDATE comment_votes SET vote_type = ?, created_at = CURRENT_TIMESTAMP WHERE user_id = ? AND comment_id = ?', [voteType, userId, comment_id]);
+                }
+            } else if (voteType !== 0) { 
+                db.run('INSERT INTO comment_votes (user_id, comment_id, vote_type) VALUES (?, ?, ?)', [userId, comment_id, voteType]);
+            }
+            db.get(`
+                SELECT 
+                    (SELECT COUNT(*) FROM comment_votes WHERE comment_id = ? AND vote_type = 1) as upvotes,
+                    (SELECT COUNT(*) FROM comment_votes WHERE comment_id = ? AND vote_type = -1) as downvotes
+            `, [comment_id, comment_id], (countErr, counts) => {
+                if (countErr) return res.status(500).json({ error: 'Ошибка при получении новых счетчиков голосов' });
+                res.status(200).json({ 
+                    message: 'Голос обновлен', 
+                    upvotes: counts.upvotes, 
+                    downvotes: counts.downvotes,
+                    userVote: voteType === 0 ? null : (existingVote && existingVote.vote_type === voteType ? null : voteType) 
+                });
+            });
+        });
+    });
+});
+
+
+// --- TMDB API эндпоинты ---
 const LOCAL_HERO_TRAILERS = {
     '550': '/videos/hero_trailers/fight_club.mp4',
     '46648-true-detective': '/videos/hero_trailers/true_detective_season_1.mp4',
@@ -462,18 +717,14 @@ app.get('/api/tmdb/hero-content', async (req, res) => {
     const language = 'ru-RU';
     try {
         const localTmdbKeys = Object.keys(LOCAL_HERO_TRAILERS);
-
         if (localTmdbKeys.length === 0) {
             return res.status(404).json({ error: 'Список локальных трейлеров для hero пуст.' });
         }
-
         const randomIndex = Math.floor(Math.random() * localTmdbKeys.length);
         const randomKey = localTmdbKeys[randomIndex];
         const localTrailerPath = LOCAL_HERO_TRAILERS[randomKey];
-        
         let itemTmdbId;
         let itemType;
-
         if (randomKey.includes('-')) {
             itemTmdbId = randomKey.split('-')[0];
             itemType = 'tv';
@@ -481,39 +732,25 @@ app.get('/api/tmdb/hero-content', async (req, res) => {
             itemTmdbId = randomKey;
             itemType = 'movie';
         }
-
         const detailsUrl = `${TMDB_BASE_URL}/${itemType}/${itemTmdbId}`;
-        
         const detailsResponse = await axios.get(detailsUrl, {
             params: {
                 api_key: TMDB_API_KEY,
                 language: language,
                 append_to_response: 'images',
-                include_image_language: 'ru,en,null' // Для изображений в hero
+                include_image_language: 'ru,en,null'
             }
         });
         const itemDetails = detailsResponse.data;
-
-        const videoInfo = {
-            type: 'html5_local', 
-            key_or_url: localTrailerPath 
-        };
-        
+        const videoInfo = { type: 'html5_local', key_or_url: localTrailerPath };
         let backdropPath = itemDetails.backdrop_path;
-        // Логика выбора лучшего задника уже учтена в TMDB API при include_image_language
-        // Если TMDB возвращает основной backdrop_path, он должен быть наиболее релевантным
-        // Дополнительная проверка на русские/английские не всегда нужна, если основной уже хороший
         if (itemDetails.images && itemDetails.images.backdrops && itemDetails.images.backdrops.length > 0) {
-           // Можно оставить текущий backdrop_path, если он есть, или выбрать первый из массива, если основного нет
            if (!backdropPath && itemDetails.images.backdrops[0]) {
                backdropPath = itemDetails.images.backdrops[0].file_path;
            }
         }
-
-
         const title = itemType === 'movie' ? itemDetails.title : itemDetails.name;
         const release_date = itemType === 'movie' ? itemDetails.release_date : itemDetails.first_air_date;
-
         res.status(200).json({
             id: itemDetails.id,
             title: title,
@@ -525,7 +762,6 @@ app.get('/api/tmdb/hero-content', async (req, res) => {
             video_info: videoInfo,
             media_type: itemType
         });
-
     } catch (error) {
         console.error('Ошибка при получении контента для Hero:',
             error.response ? { status: error.response.status, data: error.response.data, config_url: error.config ? error.config.url : 'N/A' } : error.message
@@ -576,68 +812,37 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
                 api_key: TMDB_API_KEY, 
                 language: language, 
                 append_to_response: 'credits,videos,images,recommendations,similar,release_dates,content_ratings',
-                include_image_language: 'ru,en,null' // Включаем русские, английские и изображения без языка
+                include_image_language: 'ru,en,null' 
             }
         });
         let itemData = response.data;
-
-        // Дополнительная обработка для получения деталей сезонов, если это сериал
         if (type === 'tv' && itemData.seasons && itemData.seasons.length > 0) {
             try {
                 const seasonDetailPromises = itemData.seasons.map(season => {
-                    // Пропускаем "Specials" сезоны (season_number: 0), если у них нет постера, 
-                    // или если мы хотим только "настоящие" сезоны
-                    if (season.season_number === 0 /* && !season.poster_path */) { 
-                        return Promise.resolve({
-                            ...season, // Возвращаем базовую информацию о сезоне 0
-                            episodes: [], // Предполагаем, что детали эпизодов для сезона 0 не нужны
-                            episode_count: season.episode_count || 0,
-                            poster_path: season.poster_path || null
-                        });
+                    if (season.season_number === 0) { 
+                        return Promise.resolve({ ...season, episodes: [], episode_count: season.episode_count || 0, poster_path: season.poster_path || null });
                     }
-                    // Запрашиваем детали для каждого "настоящего" сезона
                     return axios.get(`${TMDB_BASE_URL}/tv/${tmdbId}/season/${season.season_number}`, {
                         params: { api_key: TMDB_API_KEY, language: language }
                     })
-                    .then(seasonRes => ({ // Собираем нужную информацию о сезоне
-                        id: seasonRes.data.id,
-                        air_date: seasonRes.data.air_date,
-                        episodes: seasonRes.data.episodes || [], // Массив эпизодов
-                        name: seasonRes.data.name,
-                        overview: seasonRes.data.overview,
-                        poster_path: seasonRes.data.poster_path,
-                        season_number: seasonRes.data.season_number,
-                        vote_average: seasonRes.data.vote_average,
+                    .then(seasonRes => ({ 
+                        id: seasonRes.data.id, air_date: seasonRes.data.air_date, episodes: seasonRes.data.episodes || [], 
+                        name: seasonRes.data.name, overview: seasonRes.data.overview, poster_path: seasonRes.data.poster_path, 
+                        season_number: seasonRes.data.season_number, vote_average: seasonRes.data.vote_average,
                         episode_count: seasonRes.data.episodes ? seasonRes.data.episodes.length : (season.episode_count || 0)
                     }))
-                    .catch(err => { // Обработка ошибок для запроса деталей сезона
+                    .catch(err => { 
                         console.warn(`Не удалось загрузить детали для сезона ${season.season_number} сериала ${tmdbId}: ${err.message}`);
-                        // Возвращаем базовую информацию о сезоне, если детали не загрузились
-                        return { 
-                            ...season,
-                            episodes: [], 
-                            episode_count: season.episode_count || 0, 
-                            poster_path: season.poster_path || null 
-                        };
+                        return { ...season, episodes: [], episode_count: season.episode_count || 0, poster_path: season.poster_path || null };
                     });
                 });
-                
-                // Дожидаемся выполнения всех запросов деталей сезонов
                 const detailedSeasonsData = (await Promise.all(seasonDetailPromises)).filter(Boolean);
-                itemData.all_season_details = detailedSeasonsData; // Добавляем детали сезонов к основным данным
-
-            } catch (seasonFetchError) { // Обработка общей ошибки при загрузке деталей сезонов
+                itemData.all_season_details = detailedSeasonsData; 
+            } catch (seasonFetchError) { 
                 console.error(`Ошибка при загрузке некоторых деталей сезонов для сериала ${tmdbId}: ${seasonFetchError.message}`);
-                // Если произошла ошибка, но базовый список сезонов есть, используем его
                 if (itemData.seasons && !itemData.all_season_details) {
                     itemData.all_season_details = itemData.seasons
-                        // .filter(s => s.season_number !== 0) // Опционально: исключить сезон 0, если не нужен
-                        .map(s => ({ // Преобразуем в ожидаемый формат
-                            ...s,
-                            episodes: [],
-                            episode_count: s.episode_count || 0,
-                            poster_path: s.poster_path || null
-                        }));
+                        .map(s => ({ ...s, episodes: [], episode_count: s.episode_count || 0, poster_path: s.poster_path || null }));
                 }
             }
         }
@@ -645,30 +850,19 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
     } catch (error) {
         console.error(`Ошибка при запросе к TMDB для ${type}/${tmdbId}:`, error.response ? error.response.data : error.message);
         const status = error.response ? error.response.status : 500;
-        const message = error.response?.data?.status_message 
-                        ? error.response.data.status_message 
-                        : 'Не удалось получить данные от TMDB.';
+        const message = error.response?.data?.status_message ? error.response.data.status_message : 'Не удалось получить данные от TMDB.';
         res.status(status).json({ error: message, details: error.response ? error.response.data : null });
     }
 });
 
 app.get('/api/tv/:tv_id/season/:season_number/episode/:episode_number/images', async (req, res) => {
     const { tv_id, season_number, episode_number } = req.params;
-    
     if (!TMDB_API_KEY) {
         return res.status(500).json({ error: 'API ключ TMDB не настроен на сервере.' });
     }
-
     const tmdbUrl = `${TMDB_BASE_URL}/tv/${tv_id}/season/${season_number}/episode/${episode_number}/images`;
-
     try {
-        const response = await axios.get(tmdbUrl, {
-            params: {
-                api_key: TMDB_API_KEY,
-                // Язык здесь обычно не так важен, так как это просто изображения
-            }
-        });
-        // Фильтруем и возвращаем только массив 'stills'
+        const response = await axios.get(tmdbUrl, { params: { api_key: TMDB_API_KEY } });
         res.status(200).json(response.data.stills || []);
     } catch (error) {
         console.error(`Ошибка при запросе кадров для tv/${tv_id}/season/${season_number}/episode/${episode_number}:`, error.response ? error.response.data : error.message);
@@ -679,96 +873,36 @@ app.get('/api/tv/:tv_id/season/:season_number/episode/:episode_number/images', a
 });
 
 app.get('/api/tmdb/search', async (req, res) => {
-    const { 
-        query,
-        media_type,
-        genres,
-        year_from,
-        year_to,
-        rating_from,
-        rating_to,
-        page = 1,
-        language = 'ru-RU',
-        sort_by = 'popularity.desc',
-        with_types, 
-        without_genres,
-        list_type 
-    } = req.query;
-
+    const { query, media_type, genres, year_from, year_to, rating_from, rating_to, page = 1, language = 'ru-RU', sort_by = 'popularity.desc', with_types, without_genres, list_type } = req.query;
     if (!TMDB_API_KEY) return res.status(500).json({ error: 'API ключ TMDB не найден.' });
-
     let tmdbUrl;
-    const params = { 
-        api_key: TMDB_API_KEY, 
-        language: language, 
-        page: parseInt(page, 10), 
-        include_adult: false,
-        include_image_language: 'ru,en,null' // Добавляем и для поиска, чтобы постеры были релевантнее
-    };
-
+    const params = { api_key: TMDB_API_KEY, language: language, page: parseInt(page, 10), include_adult: false, include_image_language: 'ru,en,null' };
     if (list_type) {
-        if (list_type === 'now_playing' && media_type === 'movie') {
-            tmdbUrl = `${TMDB_BASE_URL}/movie/now_playing`;
-        } else if (list_type === 'trending_movie_week' && media_type === 'movie') { 
-            tmdbUrl = `${TMDB_BASE_URL}/trending/movie/week`;
-        } else if (list_type === 'trending_tv_week' && media_type === 'tv') { 
-            tmdbUrl = `${TMDB_BASE_URL}/trending/tv/week`;
-        } else if (list_type === 'on_the_air_tv' && media_type === 'tv') {
-            tmdbUrl = `${TMDB_BASE_URL}/tv/on_the_air`;
-        }
-         else {
-            return res.status(400).json({ error: "Неизвестный тип списка или неверная комбинация с media_type." });
-        }
+        if (list_type === 'now_playing' && media_type === 'movie') tmdbUrl = `${TMDB_BASE_URL}/movie/now_playing`;
+        else if (list_type === 'trending_movie_week' && media_type === 'movie') tmdbUrl = `${TMDB_BASE_URL}/trending/movie/week`;
+        else if (list_type === 'trending_tv_week' && media_type === 'tv') tmdbUrl = `${TMDB_BASE_URL}/trending/tv/week`;
+        else if (list_type === 'on_the_air_tv' && media_type === 'tv') tmdbUrl = `${TMDB_BASE_URL}/tv/on_the_air`;
+        else return res.status(400).json({ error: "Неизвестный тип списка или неверная комбинация с media_type." });
     } else if (query) { 
         const searchType = (media_type === 'movie' || media_type === 'tv') ? media_type : 'multi';
         tmdbUrl = `${TMDB_BASE_URL}/search/${searchType}`;
         params.query = query;
-
-        if (year_from) {
-            const yearFromInt = parseInt(year_from, 10);
-            if (!isNaN(yearFromInt)) {
-                if (searchType === 'movie') {
-                    params.year = yearFromInt; // Для фильмов используем 'year'
-                } else if (searchType === 'tv') {
-                    params.first_air_date_year = yearFromInt; // Для сериалов 'first_air_date_year'
-                }
-                 // Для 'multi' этот параметр может не работать или работать не так, как ожидается для одного из типов
-            }
-        }
+        if (year_from) { const yearFromInt = parseInt(year_from, 10); if (!isNaN(yearFromInt)) { if (searchType === 'movie') params.year = yearFromInt; else if (searchType === 'tv') params.first_air_date_year = yearFromInt; } }
     } else if (media_type && (media_type === 'movie' || media_type === 'tv')) { 
         tmdbUrl = `${TMDB_BASE_URL}/discover/${media_type}`;
-        
         if (genres) params.with_genres = genres;
-        
         const dateParamPrefix = media_type === 'movie' ? 'primary_release_date' : 'first_air_date';
-        if (year_from) {
-            params[`${dateParamPrefix}.gte`] = `${year_from}-01-01`;
-            if (!year_to) params[`${dateParamPrefix}.lte`] = `${year_from}-12-31`; // Если только "от", то до конца этого года
-        }
-        if (year_to) {
-            params[`${dateParamPrefix}.lte`] = `${year_to}-12-31`;
-            if (!year_from) params[`${dateParamPrefix}.gte`] = `1900-01-01`; // Если только "до", то от начала времен
-        }
-
+        if (year_from) { params[`${dateParamPrefix}.gte`] = `${year_from}-01-01`; if (!year_to) params[`${dateParamPrefix}.lte`] = `${year_from}-12-31`; }
+        if (year_to) { params[`${dateParamPrefix}.lte`] = `${year_to}-12-31`; if (!year_from) params[`${dateParamPrefix}.gte`] = `1900-01-01`; }
         if (rating_from) params['vote_average.gte'] = parseFloat(rating_from);
         if (rating_to) params['vote_average.lte'] = parseFloat(rating_to);
-        
-        if (media_type === 'tv') {
-            if (with_types) { // Например, 4 для Scripted (сериалы), 2 для Documentary
-                params.with_types = with_types;
-            }
-            if (without_genres) { // Исключить жанры
-                params.without_genres = without_genres;
-            }
-        }
-        
+        if (media_type === 'tv') { if (with_types) params.with_types = with_types; if (without_genres) params.without_genres = without_genres; }
         params.sort_by = sort_by || 'popularity.desc';
     } else {
          return res.status(400).json({ error: "Для поиска необходим текстовый запрос или указание типа медиа (фильм/сериал) вместе с другими фильтрами." });
     }
-
     try {
-        console.log(`[TMDB ЗАПРОС] URL: ${tmdbUrl}, Параметры: ${JSON.stringify(params)}`);
+        // console.log(`[TMDB ЗАПРОС] URL: ${tmdbUrl}, Параметры: ${JSON.stringify(params)}`);
         const response = await axios.get(tmdbUrl, { params });
         res.status(200).json(response.data);
     } catch (error) {

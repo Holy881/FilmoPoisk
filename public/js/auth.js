@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             if (response.ok) {
                 localStorage.setItem('userId', data.id);
-                window.location.href = 'home.html';
+                window.location.href = '/';
             } else {
                 showFormError(loginForm, data.error || 'Неверно введён адрес электронной почты или пароль');
             }
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             if (response.ok) {
                 localStorage.setItem('userId', data.id);
-                window.location.href = 'home.html';
+                window.location.href = '/';
             } else {
                 showFormError(registerForm, data.error || 'Ошибка регистрации');
             }

@@ -652,6 +652,32 @@ app.get('/api/tmdb/details/:type/:tmdbId', async (req, res) => {
     }
 });
 
+app.get('/api/tv/:tv_id/season/:season_number/episode/:episode_number/images', async (req, res) => {
+    const { tv_id, season_number, episode_number } = req.params;
+    
+    if (!TMDB_API_KEY) {
+        return res.status(500).json({ error: 'API ключ TMDB не настроен на сервере.' });
+    }
+
+    const tmdbUrl = `${TMDB_BASE_URL}/tv/${tv_id}/season/${season_number}/episode/${episode_number}/images`;
+
+    try {
+        const response = await axios.get(tmdbUrl, {
+            params: {
+                api_key: TMDB_API_KEY,
+                // Язык здесь обычно не так важен, так как это просто изображения
+            }
+        });
+        // Фильтруем и возвращаем только массив 'stills'
+        res.status(200).json(response.data.stills || []);
+    } catch (error) {
+        console.error(`Ошибка при запросе кадров для tv/${tv_id}/season/${season_number}/episode/${episode_number}:`, error.response ? error.response.data : error.message);
+        const status = error.response ? error.response.status : 500;
+        const message = error.response?.data?.status_message || 'Не удалось получить кадры для эпизода от TMDB.';
+        res.status(status).json({ error: message });
+    }
+});
+
 app.get('/api/tmdb/search', async (req, res) => {
     const { 
         query,

@@ -16,10 +16,9 @@ $button-bg-color: #252525;
 $button-hover-bg-color: lighten($button-bg-color, 7%);
 
 // Цвета, используемые в home.scss для profile-dropdown
-$profile-dropdown-bg-color: #282828; // Из home.scss
-$interactive-hover-bg-color: #2a2a2a; // Из home.scss
-$rating-red: #E53935; // Уже есть, но используется в home.scss для logout hover
-
+$profile-dropdown-bg-color: #282828; 
+$interactive-hover-bg-color: #2a2a2a; 
+$rating-red: #E53935; 
 $rating-gray: #757575; 
 $rating-green: #4CAF50; 
 $rating-none-bg: rgba($surface-color, 0.7); 
@@ -27,6 +26,9 @@ $rating-none-bg: rgba($surface-color, 0.7);
 $transition-duration-fast: 0.2s;
 $transition-duration-smooth: 0.3s; 
 $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
+$ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94); // Добавлено для согласованности
+$ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1); // Добавлено для согласованности
+
 
 // Миксин для кнопок
 @mixin button-style($bg: $button-bg-color, $hover-bg: $button-hover-bg-color, $text: $text-color, $border: darken($bg, 5%)) {
@@ -151,8 +153,6 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
     
     .anime_add_to_folders { 
         position: relative; 
-        .action-button { 
-        }
 
         .list-category-dropdown {
             visibility: hidden;
@@ -293,9 +293,10 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
 }
 
 .anime_right_body {
-    flex: 0 0 70px; 
+    flex: 0 0 auto; 
     display: flex;
-    justify-content: flex-end; 
+    flex-direction: column; 
+    align-items: flex-end; 
     padding-top: 5px; 
 
     #rating-badge { 
@@ -308,6 +309,7 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
         color: $text-light-emphasis; 
         border-radius: 5px;
         font-weight: 600;
+        margin-bottom: 10px; 
 
         &.rating-red { background-color: $rating-red; border-color: darken($rating-red, 10%); }
         &.rating-gray { background-color: $rating-gray; border-color: darken($rating-gray, 10%);}
@@ -366,7 +368,7 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
             }
             .movie-shelf { 
                 padding-top: 0;
-                h2 { display: none; }
+                h2 { display: none; } 
             }
              p.empty-tab-message { 
                 color: $text-secondary-color;
@@ -378,7 +380,7 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
     }
 }
 
-.media-grid {
+.media-grid { 
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
     gap: 10px; 
@@ -405,14 +407,12 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
             object-fit: cover;
         }
     }
-    .poster-item { 
-        aspect-ratio: 2 / 3; 
-    }
-    
     &#posters-grid.media-grid { 
          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+         .media-item { 
+            aspect-ratio: 2 / 3;
+         }
     }
-
 
     .video-item { 
         display: flex;
@@ -440,6 +440,164 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
         }
     }
 }
+
+.movie-shelf {
+    margin-bottom: 20px; 
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    .shelf-grid-wrapper {
+        position: relative;
+    }
+
+    .shelf-grid {
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 10px; 
+        padding: 5px 0 15px 0; 
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+
+        &::-webkit-scrollbar { height: 6px; }
+        &::-webkit-scrollbar-track { background: transparent; }
+        &::-webkit-scrollbar-thumb { background: rgba($text-secondary-color, 0.25); border-radius: 10px; &:hover { background: rgba($text-secondary-color, 0.4); } }
+    }
+
+    .shelf-controls {
+        .shelf-arrow {
+            position: absolute;
+            top: 50%;
+            // Исправленная строка:
+            transform: translateY(calc(-50% - 7px)); // Корректировка под новый padding-bottom
+            color: $text-light-emphasis;
+            width: 36px; 
+            height: 36px;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease, opacity 0.3s ease, visibility 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+
+            &.prev-arrow { left: -18px; } 
+            &.next-arrow { right: -18px; }
+            &.visible { opacity: 1; visibility: visible; }
+        }
+    }
+    .shelf-grid-wrapper:hover .shelf-arrow.visible { opacity: 1; }
+    .shelf-grid-wrapper {
+        &.has-prev-scroll::before,
+        &.has-next-scroll::after {
+            content: ""; position: absolute; top: 0; bottom: 15px; 
+            width: 40px; z-index: 5; pointer-events: none;
+        }
+        &.has-prev-scroll::before { left: 0; background: linear-gradient(to right, $bg-color 15%, transparent 100%); }
+        &.has-next-scroll::after { right: 0; background: linear-gradient(to left, $bg-color 15%, transparent 100%); }
+    }
+
+    .media-item, .still-item { 
+        flex: 0 0 auto; 
+        border-radius: 5px;
+        overflow: hidden;
+        background-color: $input-bg-color;
+        cursor: pointer;
+        transition: transform 0.2s ease-out, box-shadow 0.2s ease;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.15);
+        height: 100px; 
+
+        img { width: 100%; height: 100%; object-fit: cover; }
+        &:hover { transform: scale(1.03); box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+    }
+    .still-item, .backdrop-item { 
+        width: 178px; 
+        aspect-ratio: 16 / 9;
+    }
+    .poster-item { 
+         height: 180px; 
+         width: 100px; 
+         aspect-ratio: 2 / 3;
+    }
+
+    .movie-tile {
+        flex: 0 0 auto; 
+        width: 160px; 
+        background-color: $surface-color; 
+        border-radius: 7px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        transition: transform $transition-duration-smooth $ease-out-quad, 
+                    box-shadow $transition-duration-smooth $ease-out-quad;
+        text-decoration: none; 
+        color: $text-color;   
+
+        &:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            .movie-hover-details {
+                transform: translateY(0%);
+                opacity: 1;
+            }
+        }
+
+        .movie-poster-img {
+            display: block; width: 100%; height: auto;
+            aspect-ratio: 2 / 3; object-fit: cover;
+            border-bottom: 1px solid $border-color; 
+        }
+
+        .movie-rating { 
+            &.rating-display-badge { 
+                    display: inline-block;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 0.9em;
+                    font-weight: 600;
+                    color: $text-light-emphasis;
+                    text-align: center;
+                    line-height: 1.2;
+                    vertical-align: middle;
+
+                &.rating-red { background-color: $rating-red; border: 1px solid darken($rating-red, 10%);}
+                &.rating-gray { background-color: $rating-gray; border: 1px solid darken($rating-gray, 10%);}
+                &.rating-green { background-color: $rating-green; border: 1px solid darken($rating-green, 10%);}
+                &.rating-none {
+                    background-color: rgba(darken($surface-color, 5%), 0.8);
+                    color: $text-secondary-color; border: 1px solid $border-color;
+                }
+            }
+        }
+
+        .movie-hover-details {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(to top, rgba($bg-color, 0.95) 20%, rgba($bg-color, 0.85) 60%, transparent 100%);
+            padding: 12px; padding-top: 20px; 
+            color: $text-color;
+            transform: translateY(101%); 
+            opacity: 0;
+            transition: transform $transition-duration-smooth $ease-out-expo, 
+                        opacity $transition-duration-smooth ease-in-out ($transition-duration-smooth * 0.2); 
+
+            h3 {
+                font-size: 0.9em; font-weight: 600; margin: 0 0 5px 0;
+                color: $text-light-emphasis; white-space: nowrap;
+                overflow: hidden; text-overflow: ellipsis;
+            }
+
+            p {
+                font-size: 0.78em; line-height: 1.4; color: $text-secondary-color; margin: 0;
+                display: -webkit-box; line-clamp: 3; 
+                -webkit-box-orient: vertical; overflow: hidden;
+                text-overflow: ellipsis; max-height: calc(0.78em * 1.4 * 3); 
+            }
+        }
+    }
+}
+
 
 #toast-notification {
     position: fixed;
@@ -538,31 +696,11 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
     }
 }
 
-// Стили для profile-dropdown, перенесенные из home.scss
-.navbar-profile-container { // Этот класс должен быть у родительского div для иконки и дропдауна в HTML
+.navbar-profile-container { 
     position: relative;
 }
 
-.navbar-icon { // Предполагается, что стили для .navbar-icon уже есть в watch.css или home.css (если он подключен)
-                // Если нет, нужно будет добавить базовые стили для .navbar-icon из home.scss
-    // Пример базовых стилей, если их нет:
-    // background-color: transparent;
-    // border-color: transparent;
-    // padding: 8px;
-    // font-size: 1.3em;
-    // margin-left: 5px;
-    // color: $text-secondary-color;
-    // width: 40px;
-    // height: 40px;
-    // display: inline-flex;
-    // align-items: center;
-    // justify-content: center;
-    // cursor: pointer;
-    // &:hover {
-    //     background-color: $interactive-hover-bg-color;
-    //     color: $text-light-emphasis;
-    // }
-
+.navbar-icon { 
     #user-profile-icon-container {
         display: flex;
         align-items: center;
@@ -571,8 +709,8 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
         height: 100%;
     }
 
-    img.navbar-avatar { // Этот стиль уже есть в home.scss, убедимся, что он применяется
-        width: 28px;    // Размер аватара в навбаре
+    img.navbar-avatar { 
+        width: 28px;    
         height: 28px;
         border-radius: 50%;
         object-fit: cover;
@@ -582,13 +720,13 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
 
 .profile-dropdown {
     position: absolute;
-    top: calc(100% + 10px); // Отступ от навбара
+    top: calc(100% + 10px); 
     right: 0;
     background-color: $profile-dropdown-bg-color;
     border: 1px solid $border-color;
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    z-index: 1001; // Должен быть выше других элементов навбара
+    z-index: 1001; 
     width: 200px;
     padding: 10px;
     visibility: hidden;
@@ -620,35 +758,149 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
         margin: 8px 0;
     }
     .dropdown-button {
-        // Используем @extend, если есть общий стиль для кнопок, или определяем здесь
-        // @extend .action-button; // Если есть общий стиль .action-button
-        // Если нет, то:
-        display: block; // Чтобы занимали всю ширину
+        display: block; 
         width: 100%;
         text-align: left;
         padding: 10px 12px;
         font-size: 0.9em;
         margin-bottom: 5px;
         background-color: transparent;
-        border: none; // Убираем рамку по умолчанию, если она есть от других стилей
-        border-radius: 4px; // Небольшое скругление для кнопок внутри дропдауна
+        border: none; 
+        border-radius: 4px; 
         color: $text-secondary-color;
         cursor: pointer;
         transition: background-color 0.2s ease, color 0.2s ease;
-
 
         &:last-child { margin-bottom: 0; }
         &:hover {
             background-color: lighten($profile-dropdown-bg-color, 8%);
             color: $text-color;
         }
-         &.logout-button:hover { // Специальный стиль для кнопки выхода
+         &.logout-button:hover { 
             background-color: darken($rating-red, 10%);
-            color: $text-light-emphasis; // Яркий текст для акцента
+            color: $text-light-emphasis; 
         }
     }
 }
 
+/* Стили для виджета пользовательского рейтинга - ОБНОВЛЕННЫЕ V2 */
+#user-rating-widget-container {
+    display: flex; 
+    justify-content: flex-start; 
+    margin-top: 10px; 
+    position: relative; 
+}
+
+.user-rating-widget {
+    cursor: pointer;
+    display: flex; 
+    align-items: center;
+    background-color: $rating-none-bg; 
+    border: 1px solid $border-color;
+    border-radius: 5px;    
+    padding: 7px 10px;        
+    min-height: 38px; 
+    transition: background-color 0.2s ease;
+    color: $text-secondary-color; 
+
+    &:not(.disabled):hover {
+        background-color: lighten($input-bg-color, 5%);
+        .rating-stars-flyout {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transform: translateY(0); 
+            transition-delay: 0s; 
+        }
+    }
+
+    &.rated-green { background-color: $rating-green; border-color: darken($rating-green, 10%); color: $text-light-emphasis; .widget-main-content i.main-star-icon, .widget-main-content span.user-rating-value {color: $text-light-emphasis;} }
+    &.rated-gray { background-color: $rating-gray; border-color: darken($rating-gray, 10%); color: $text-light-emphasis; .widget-main-content i.main-star-icon, .widget-main-content span.user-rating-value {color: $text-light-emphasis;} }
+    &.rated-red { background-color: $rating-red; border-color: darken($rating-red, 10%); color: $text-light-emphasis; .widget-main-content i.main-star-icon, .widget-main-content span.user-rating-value {color: $text-light-emphasis;} }
+
+
+    .widget-main-content { 
+        display: flex;
+        align-items: center;
+        white-space: nowrap; 
+
+        i.main-star-icon { 
+            font-size: 1.4em; 
+            margin-right: 6px;
+            line-height: 1; 
+            // Цвет наследуется от .user-rating-widget или .rated-*
+        }
+        span.rate-text { 
+            font-size: 0.9em;     
+            line-height: 1;
+             // Цвет наследуется
+        }
+        span.user-rating-value { 
+            font-size: 1.1em; 
+            font-weight: 600; 
+            margin-left: 0px; 
+            line-height: 1;
+            // Цвет наследуется
+        }
+    }
+    
+    .rating-stars-flyout {
+        position: absolute;
+        left: 0; 
+        top: 100%; // Располагаем сразу под родительским элементом
+        // margin-top: 5px; // Убрали margin, чтобы не было зазора
+        display: flex;
+        flex-direction: column; 
+        align-items: stretch; 
+        background-color: darken($input-bg-color, 8%); 
+        border: 1px solid $border-color;
+        border-top: none; // Убираем верхнюю границу, чтобы примыкало к основной кнопке
+        border-radius: 0 0 5px 5px; // Скругление только нижних углов
+        padding: 5px; 
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(-10px); 
+        transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s 0.2s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        z-index: 100; 
+        min-width: 40px; 
+
+        i.flyout-star { 
+            font-size: 1.5em; // Немного уменьшил для компактности в столбец
+            color: #757575; 
+            padding: 4px 6px; 
+            display: block; 
+            text-align: center; 
+            transition: background-color 0.1s ease, color 0.1s ease;
+            cursor: pointer;
+            border-radius: 3px;
+
+            &:hover { 
+                color: $text-light-emphasis; 
+                background-color: lighten(darken($input-bg-color, 8%), 5%); 
+            }
+            &.selected { 
+                color: $text-light-emphasis; 
+            }
+        }
+    }
+}
+
+#user-rating-widget-container.disabled {
+    .user-rating-widget {
+        cursor: not-allowed;
+        opacity: 0.6;
+        &:hover {
+            background-color: $rating-none-bg; 
+        }
+    }
+    &:hover .user-rating-widget .rating-stars-flyout { 
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+}
 
 // Адаптивность
 @media (max-width: 1024px) {
@@ -662,11 +914,14 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
         align-self: center; 
     }
     .anime_right_body {
-        position: absolute; 
-        top: 20px; 
-        right: 30px;
+        position: static; 
+        width: 100%;
+        max-width: 300px; 
+        align-self: center;
+        margin-top: 20px; 
+        align-items: center; 
     }
-    .media-grid {
+    .media-grid { 
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
     }
      .anime_central_body_info .anime_info_list {
@@ -682,6 +937,25 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
         max-width: 95vw;
         max-height: 85vh;
     }
+    .movie-shelf { 
+        .shelf-grid { gap: 12px; }
+        .movie-tile {
+            width: 140px; 
+            .movie-hover-details {
+                h3 { font-size: 0.85em; }
+                p { font-size: 0.75em; line-clamp: 2; max-height: calc(0.75em * 1.4 * 2); }
+            }
+            .movie-rating.rating-display-badge { font-size: 0.7em; padding: 2px 5px; }
+        }
+         .shelf-controls .shelf-arrow { 
+            width: 36px; height: 36px; font-size: 1em;
+            &.prev-arrow { left: -10px; } 
+            &.next-arrow { right: -10px; }
+        }
+         .shelf-grid-wrapper { 
+            &.has-prev-scroll::before, &.has-next-scroll::after { width: 30px; }
+        }
+    }
 }
 
 @media (max-width: 768px) {
@@ -691,21 +965,13 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
     .anime_central_body_title {
         font-size: 2em; 
     }
-    .anime_right_body {
-        top: 15px;
-        right: 20px; 
-        #rating-badge {
-            font-size: 1.4em; 
-            padding: 7px 13px;
-        }
-    }
     .anime_additional_information_block_header {
         .tab-button-watch {
             font-size: 0.95em; 
             padding: 9px 10px;
         }
     }
-    .media-grid {
+    .media-grid { 
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
         .media-item { 
             .play-icon { 
@@ -715,7 +981,7 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
             }
         }
     }
-     #posters-grid.media-grid { 
+     #posters-grid.media-grid {  
          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     }
      .lightbox-close-button {
@@ -723,10 +989,26 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
         top: 15px;
         right: 25px;
     }
-    // Адаптивность для profile-dropdown, если нужно
     .profile-dropdown {
-        // Может понадобиться调整位置 или ширину на мобильных
-        // Например, сделать его шире или центрировать
+    }
+    .movie-shelf {
+        .shelf-grid {
+            padding-left: 5px; padding-right: 5px; 
+            gap: 8px;
+             &::-webkit-scrollbar { display: none; } 
+            -ms-overflow-style: none;  
+            scrollbar-width: none;  
+        }
+        .media-item, .still-item { 
+            height: 90px;
+        }
+        .still-item, .backdrop-item { width: 160px; } 
+        .poster-item { width: 60px; } 
+
+        .shelf-controls .shelf-arrow { display: none; } 
+        .shelf-grid-wrapper { 
+            &.has-prev-scroll::before, &.has-next-scroll::after { display: none; } 
+        }
     }
 }
 
@@ -783,14 +1065,28 @@ $ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1);
             white-space: nowrap; 
         }
     }
-    .media-grid {
+    .media-grid { 
         grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
         gap: 6px;
     }
-     #posters-grid.media-grid {
+     #posters-grid.media-grid { 
          grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
     }
     .anime_right_body { 
-        display: none; 
+    }
+     .movie-shelf {
+        .movie-tile { 
+            width: 120px; 
+             .movie-hover-details { 
+                h3 { font-size: 0.8em; }
+                p { font-size: 0.7em; line-clamp: 2; max-height: calc(0.7em * 1.4 * 2); }
+            }
+        }
+        .media-item, .still-item { 
+            height: 80px;
+        }
+        .still-item, .backdrop-item { width: 142px; } 
+        .poster-item { width: 53px; } 
     }
 }
+

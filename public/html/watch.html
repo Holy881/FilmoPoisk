@@ -163,12 +163,13 @@
 
             <div class="anime_right_body">
                 <div class="search_rank anime rating-display-badge rating-none" id="rating-badge">...</div>
+                <div id="user-rating-widget-container"></div>
             </div>
         </div>
         
         <div class="anime_additional_information_block">
             <div class="anime_additional_information_block_header">
-                <div class="tab-button-watch active" data-tab-target="#tab-backdrops">Задники</div>
+                <div class="tab-button-watch" data-tab-target="#tab-stills">Кадры</div> <div class="tab-button-watch active" data-tab-target="#tab-backdrops">Задники</div>
                 <div class="tab-button-watch" data-tab-target="#tab-posters">Постеры</div>
                 <div class="tab-button-watch" data-tab-target="#tab-videos">Видео</div>
                 <div class="tab-button-watch" data-tab-target="#tab-similar">Похожее</div>
@@ -176,23 +177,28 @@
             </div>
             <div class="anime_additional_information_block_header_separator"></div>
             
-            <div class="tab-content-watch">
-                <div id="tab-backdrops" class="tab-pane-watch active">
-                    <div class="media-grid" id="backdrops-grid">
-                        </div>
-                </div>
-                <div id="tab-posters" class="tab-pane-watch">
-                    <div class="media-grid" id="posters-grid">
-                        </div>
-                </div>
-                <div id="tab-videos" class="tab-pane-watch">
-                     <div class="media-grid" id="videos-grid">
-                        </div>
-                </div>
-                <div id="tab-similar" class="tab-pane-watch">
+                <div class="tab-content-watch">
+                    <div id="tab-stills" class="tab-pane-watch">
+                        <div class="search-loading-indicator" style="display:none; justify-content:center; padding:20px;"></div>
+                        <p class="empty-tab-message" style="display:none;">Кадры для этого сериала не найдены.</p>
                     </div>
-                <div id="tab-recommendations" class="tab-pane-watch">
+                    <div id="tab-backdrops" class="tab-pane-watch active">
+                        <div class="media-grid" id="backdrops-grid">
+                            </div>
                     </div>
+                    <div id="tab-posters" class="tab-pane-watch">
+                        <div class="media-grid" id="posters-grid">
+                            </div>
+                    </div>
+                    <div id="tab-videos" class="tab-pane-watch">
+                        <div class="media-grid" id="videos-grid">
+                            </div>
+                    </div>
+                    <div id="tab-similar" class="tab-pane-watch">
+                        </div>
+                    <div id="tab-recommendations" class="tab-pane-watch">
+                        </div>
+                </div>
             </div>
         </div>
     </div>

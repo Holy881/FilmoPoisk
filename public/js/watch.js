@@ -1,6 +1,6 @@
 // watch.js
 document.addEventListener('DOMContentLoaded', () => {
-    // --- DOM Elements ---
+    // --- DOM Elements (существующие) ---
     const watchPageContainer = document.querySelector('.watch-page-container');
     const bgImage = document.querySelector('.anime_background_image_image');
     const posterImage = document.querySelector('.poster-image');
@@ -19,10 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabsContainer = document.querySelector('.anime_additional_information_block_header');
     const tabPanesContainer = document.querySelector('.tab-content-watch');
 
-    // --- Elements for new Seasons & Episodes Tab ---
     const seasonsEpisodesTabButton = document.getElementById('seasons-episodes-tab-button');
     const seasonsEpisodesTabPane = document.getElementById('tab-seasons-episodes');
-    // --- End Elements for new Seasons & Episodes Tab ---
 
     const stillsTabPane = document.getElementById('tab-stills');
     const backdropsTabPane = document.getElementById('tab-backdrops');
@@ -40,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const DEFAULT_AVATAR_PATH = '/images/default-avatar.png';
     const userRatingContainer = document.getElementById('user-rating-widget-container');
 
-    // --- Элементы для комментариев ---
     const newCommentForm = document.getElementById('new-comment-form');
     const commentTextarea = document.getElementById('comment-textarea');
     const commentsListContainer = document.getElementById('comments-list');
@@ -48,11 +45,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const commentsPaginationContainer = document.createElement('div');
     commentsPaginationContainer.className = 'comments-pagination';
 
-    // --- Constants and Variables ---
+    // --- Kinobox Player Modal Elements (НОВЫЕ) ---
+    const playerModal = document.getElementById('kinobox-player-modal'); // Должен быть в HTML
+    const playerModalContent = playerModal?.querySelector('.player-modal-content');
+    const kinoboxPlayerTarget = document.getElementById('kinobox-player-target'); // div внутри player-modal-content
+    const playerModalCloseBtn = playerModal?.querySelector('.player-modal-close');
+    let kinoboxExternalScript = null; // Для отслеживания динамически добавленного скрипта Kinobox
+
+    // --- Constants and Variables (существующие) ---
     const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';
     const POSTER_SIZE_CARD = 'w342';
-    const SEASON_POSTER_SIZE = 'w154'; // Or w185
-    const EPISODE_STILL_SIZE = 'w300'; // Or w185
+    const SEASON_POSTER_SIZE = 'w154';
+    const EPISODE_STILL_SIZE = 'w300';
     const MAX_POSTERS_BACKDROPS_TOTAL = 50;
     const MAX_STILLS_TOTAL = 50;
     const ITEMS_PER_DUAL_SHELF_ROW = 25;
@@ -66,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSelectedSeasonNumber = null;
 
 
-    // --- User Profile & Navbar Logic ---
+    // --- User Profile & Navbar Logic (существующий код без изменений) ---
     function setDefaultUserIcon() {
         if (!userProfileIconContainer) return;
         userProfileIconContainer.innerHTML = '<i class="fas fa-user"></i>';
@@ -172,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- Search Modal Logic ---
+    // --- Search Modal Logic (существующий код без изменений) ---
     const POSTER_SIZE_SEARCH = 'w154';
     const EXCLUDED_TV_GENRE_IDS = [10767, 10764, 10763, 10766];
     let searchTimeout;
@@ -215,14 +219,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.search-modal-sidebar .custom-dropdown').forEach(dd => { dd.querySelector('.dropdown-toggle')?.addEventListener('click', e => { e.stopPropagation(); const isOpen = dd.classList.contains('open'); document.querySelectorAll('.search-modal-sidebar .custom-dropdown.open').forEach(odd => { if (odd !== dd) odd.classList.remove('open'); }); dd.classList.toggle('open', !isOpen); if (!isOpen && dd.dataset.dropdownId === 'genres-movie' && genreDropdownMovieMenuElement && !genreDropdownMovieMenuElement.children.length && !genreDropdownMovieMenuElement.querySelector('.genres-loading-placeholder')) { const p = Object.assign(document.createElement('p'), { className: 'genres-loading-placeholder', textContent: 'Загрузка жанров...', style: "padding:8px 10px;color:#A0A0A0;font-size:0.9em;font-style:italic;" }); genreDropdownMovieMenuElement.appendChild(p); loadAndPopulateAllGenres(); } }); });
     document.querySelectorAll('.number-input-container').forEach(c => { const i = c.querySelector('input[type="number"]'), uA = c.querySelector('.up-arrow'), dA = c.querySelector('.down-arrow'); if (i && uA && dA) { uA.addEventListener('click', () => { i.stepUp(); i.dispatchEvent(new Event('input', { bubbles: true })); }); dA.addEventListener('click', () => { i.stepDown(); i.dispatchEvent(new Event('input', { bubbles: true })); }); } });
 
-    // --- Lightbox Logic ---
+    // --- Lightbox Logic (существующий код без изменений) ---
     function openLightbox(imageSrc) { if (!lightboxModal || !lightboxImage) return; lightboxImage.src = imageSrc; lightboxModal.classList.add('active'); requestAnimationFrame(() => { if (lightboxImage) lightboxImage.style.opacity = '1'; if (lightboxImage) lightboxImage.style.transform = 'scale(1)'; }); document.body.style.overflow = 'hidden'; }
     function closeLightbox() { if (!lightboxModal || !lightboxImage) return; lightboxImage.style.opacity = '0'; lightboxImage.style.transform = 'scale(0.8)'; setTimeout(() => { lightboxModal.classList.remove('active'); document.body.style.overflow = ''; lightboxImage.src = ''; }, 300); }
     if (lightboxCloseButton) { lightboxCloseButton.addEventListener('click', closeLightbox); }
     if (lightboxModal) { lightboxModal.addEventListener('click', (event) => { if (event.target === lightboxModal) { closeLightbox(); } }); }
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && lightboxModal && lightboxModal.classList.contains('active')) { closeLightbox(); } });
 
-    // --- Shelf and Tile Creation ---
+    // --- Shelf and Tile Creation (существующий код без изменений) ---
     function createShelfElement(id, titleText, isEmptyShelf = false) { const shelfSection = document.createElement('section'); shelfSection.className = 'movie-shelf'; if (isEmptyShelf) shelfSection.classList.add('empty-shelf-placeholder'); shelfSection.id = id; if (titleText) { const title = document.createElement('h2'); title.textContent = titleText; shelfSection.appendChild(title); } const gridWrapper = document.createElement('div'); gridWrapper.className = 'shelf-grid-wrapper'; const controls = document.createElement('div'); controls.className = 'shelf-controls'; controls.innerHTML = ` <button class="shelf-arrow prev-arrow" aria-label="Предыдущие"><i class="fas fa-chevron-left"></i></button> <button class="shelf-arrow next-arrow" aria-label="Следующие"><i class="fas fa-chevron-right"></i></button> `; gridWrapper.appendChild(controls); const grid = document.createElement('div'); grid.className = 'shelf-grid'; gridWrapper.appendChild(grid); shelfSection.appendChild(gridWrapper); const prevArrow = controls.querySelector('.prev-arrow'); const nextArrow = controls.querySelector('.next-arrow'); if (grid && prevArrow && nextArrow) { const getScrollAmount = () => (grid.querySelector('.movie-tile, .media-item, .still-item')?.offsetWidth || grid.clientWidth * 0.8) + (parseFloat(getComputedStyle(grid).gap) || 15); prevArrow.addEventListener('click', () => grid.scrollBy({ left: -getScrollAmount(), behavior: 'smooth' })); nextArrow.addEventListener('click', () => grid.scrollBy({ left: getScrollAmount(), behavior: 'smooth' })); const updateShelfControlsVisibility = () => { requestAnimationFrame(() => { const scrollLeft = Math.round(grid.scrollLeft); const scrollWidth = grid.scrollWidth; const clientWidth = grid.clientWidth; if (grid.children.length === 0) { prevArrow.classList.remove('visible'); nextArrow.classList.remove('visible'); gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll'); return; } const canScrollLeft = scrollLeft > 1; const canScrollRight = (scrollWidth - clientWidth - scrollLeft) > 1; prevArrow.classList.toggle('visible', canScrollLeft); nextArrow.classList.toggle('visible', canScrollRight); gridWrapper.classList.toggle('has-prev-scroll', canScrollLeft); gridWrapper.classList.toggle('has-next-scroll', canScrollRight); }); }; const observer = new IntersectionObserver(entries => { entries.forEach(entry => { if (entry.isIntersecting) { setTimeout(() => updateShelfControlsVisibility(), 200); } else { prevArrow.classList.remove('visible'); nextArrow.classList.remove('visible'); gridWrapper.classList.remove('has-prev-scroll', 'has-next-scroll'); } }); }, { threshold: 0.01 }); observer.observe(shelfSection); grid.addEventListener('scroll', updateShelfControlsVisibility, { passive: true }); window.addEventListener('resize', updateShelfControlsVisibility, { passive: true }); setTimeout(() => updateShelfControlsVisibility(), 300); } return shelfSection; }
     function applyTileRatingStyles(targetElement, ratingValue) { if (!targetElement) return; const rating = parseFloat(ratingValue); targetElement.classList.remove('rating-red', 'rating-gray', 'rating-green', 'rating-none'); targetElement.style.backgroundColor = ''; if (isNaN(rating) || rating === 0) { targetElement.textContent = '–'; targetElement.classList.add('rating-none'); } else { targetElement.textContent = `★ ${rating.toFixed(1)}`; if (rating < 5) targetElement.classList.add('rating-red'); else if (rating < 7) targetElement.classList.add('rating-gray'); else targetElement.classList.add('rating-green'); } }
     function createMovieTileForTabs(movie) { const tile = document.createElement('a'); tile.className = 'movie-tile'; tile.href = `watch.html?tmdbId=${movie.id}&type=${movie.media_type || currentMediaType}`; const posterUrl = movie.poster_path ? `${TMDB_IMAGE_BASE_URL}${POSTER_SIZE_CARD}${movie.poster_path}` : '/images/default-poster.jpg'; const ratingElement = document.createElement('span'); ratingElement.className = 'movie-rating rating-display-badge'; applyTileRatingStyles(ratingElement, movie.vote_average); let overviewText = movie.overview || 'Описание отсутствует.'; if (overviewText.length > 100) { overviewText = overviewText.substring(0, 97) + '...'; } tile.innerHTML = ` <img src="${posterUrl}" alt="${movie.title || movie.name}" class="movie-poster-img" loading="lazy" onerror="this.onerror=null;this.src='/images/error.png';"> <div class="movie-hover-details"> <h3>${movie.title || movie.name}</h3> <p>${overviewText}</p> </div> `; tile.insertBefore(ratingElement, tile.firstChild); return tile; }
@@ -241,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function saveUserRating(rating) { const userId = localStorage.getItem('userId'); if (!userId || !currentItemData) { showToastNotification('Не удалось сохранить оценку. Пользователь не найден или данные фильма не загружены.', true); return; } const { id: tmdb_id, media_type, title, name, poster_path, userListCategory } = currentItemData; const categoryToSend = userListCategory || 'Просмотрено'; const dataToSend = { tmdb_id: parseInt(tmdb_id, 10), media_type: media_type, category: categoryToSend, title: title || name, poster_path: poster_path, rating: rating }; try { const response = await fetch(`/api/user/${userId}/lists`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSend) }); const result = await response.json(); if (response.ok) { showToastNotification(rating ? `Ваша оценка ${rating} сохранена!` : 'Оценка сброшена.', false); currentItemData.userRating = rating; if (!currentItemData.userListCategory && rating) { currentItemData.userListCategory = categoryToSend; updateListCategoryDropdownCheckmarks(); } createRatingWidget(rating); } else { showToastNotification(`Ошибка: ${result.error || 'Не удалось сохранить оценку.'}`, true); } } catch (error) { console.error('Сетевая ошибка при сохранении оценки:', error); showToastNotification('Сетевая ошибка при сохранении оценки.', true); } }
     function createRatingWidget(currentUserRating = null) { if (!userRatingContainer) return; const userId = localStorage.getItem('userId'); userRatingContainer.innerHTML = ''; const widget = document.createElement('div'); widget.className = 'user-rating-widget'; if (currentUserRating) { if (currentUserRating >= 7) widget.classList.add('rated-green'); else if (currentUserRating >= 5) widget.classList.add('rated-gray'); else widget.classList.add('rated-red'); } if (!userId) { userRatingContainer.classList.add('disabled'); widget.setAttribute('title', 'Войдите, чтобы оценить'); const mainContent = document.createElement('div'); mainContent.className = 'widget-main-content'; mainContent.innerHTML = `<i class="far fa-star main-star-icon"></i> <span class="rate-text">Оценить</span>`; widget.appendChild(mainContent); userRatingContainer.appendChild(widget); return; } userRatingContainer.classList.remove('disabled'); const mainContent = document.createElement('div'); mainContent.className = 'widget-main-content'; const mainStarIcon = document.createElement('i'); mainStarIcon.className = 'main-star-icon'; const rateTextSpan = document.createElement('span'); if (currentUserRating) { mainStarIcon.classList.add('fas', 'fa-star'); rateTextSpan.className = 'user-rating-value'; rateTextSpan.textContent = currentUserRating; } else { mainStarIcon.classList.add('far', 'fa-star'); rateTextSpan.className = 'rate-text'; rateTextSpan.textContent = 'Оценить'; } mainContent.appendChild(mainStarIcon); mainContent.appendChild(rateTextSpan); const starsFlyout = document.createElement('div'); starsFlyout.className = 'rating-stars-flyout'; for (let i = 1; i <= 10; i++) { const star = document.createElement('i'); star.className = 'fas fa-star flyout-star'; star.dataset.value = i; if (currentUserRating && i <= currentUserRating) { star.classList.add('selected'); } starsFlyout.appendChild(star); } widget.appendChild(mainContent); widget.appendChild(starsFlyout); userRatingContainer.appendChild(widget); const allFlyoutStars = starsFlyout.querySelectorAll('.flyout-star'); starsFlyout.addEventListener('mouseover', (event) => { if (event.target.classList.contains('flyout-star')) { const hoverValue = parseInt(event.target.dataset.value, 10); allFlyoutStars.forEach((star) => { star.classList.toggle('hovered', parseInt(star.dataset.value, 10) <= hoverValue); }); } }); starsFlyout.addEventListener('mouseout', () => { allFlyoutStars.forEach(star => { star.classList.remove('hovered'); }); }); starsFlyout.addEventListener('click', (event) => { if (event.target.classList.contains('flyout-star')) { const ratingValue = parseInt(event.target.dataset.value, 10); if (currentUserRating === ratingValue) { saveUserRating(null); } else { saveUserRating(ratingValue); } } }); }
 
-    // --- Функции для Комментариев ---
+    // --- Функции для Комментариев (существующий код без изменений) ---
     function createCommentElement(comment, currentUserId) {
         const commentItemElement = document.createElement('div');
         commentItemElement.className = 'comment-item';
@@ -511,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const commentId = editButton.dataset.commentId;
                 const commentItem = editButton.closest('.comment-item');
                 const commentTextElement = commentItem.querySelector('.comment-text');
-                commentTextarea.value = commentTextElement.innerHTML.replace(/<br\s*\/?>/gi, "\n"); // Заменяем <br> на переносы строк для редактирования
+                commentTextarea.value = commentTextElement.innerHTML.replace(/<br\s*\/?>/gi, "\n");
                 newCommentForm.querySelector('input[name="parent_id"]')?.remove();
                 newCommentForm.querySelector('input[name="editing_comment_id"]')?.remove();
                 const editingInput = document.createElement('input');
@@ -527,9 +531,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!userId) { showToastNotification('Для удаления необходимо авторизоваться.', true); return; }
                 const deleteButton = target.closest('.delete-comment-btn');
                 const commentId = deleteButton.dataset.commentId;
-                // Используем кастомное модальное окно вместо confirm
-                // Для примера просто выполняем действие, но в реальном приложении нужна замена confirm
-                // if (confirm('Вы уверены, что хотите удалить этот комментарий? Это действие необратимо.')) {
                 try {
                     const response = await fetch(`/api/comments/${commentId}`, {
                         method: 'DELETE',
@@ -550,51 +551,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (error) {
                     showToastNotification('Сетевая ошибка при удалении.', true);
                 }
-                // }
             }
         });
     }
 
-    // --- Seasons and Episodes Tab Logic ---
+    // --- Seasons and Episodes Tab Logic (измененный код для вызова openPlayerModal) ---
     function renderSeasonsAndEpisodesTab(seasonsData) {
         if (!seasonsEpisodesTabPane) return;
-
         const layoutContainer = seasonsEpisodesTabPane.querySelector('.seasons-episodes-layout');
         if (!layoutContainer) return;
-
         const seasonsListPanel = layoutContainer.querySelector('.seasons-list-panel');
         const episodesListPanel = layoutContainer.querySelector('.episodes-list-panel');
-
         if (!seasonsListPanel || !episodesListPanel) return;
-
-        seasonsListPanel.innerHTML = ''; // Clear previous seasons
-        episodesListPanel.innerHTML = '<p class="select-season-placeholder" style="text-align: center; padding: 20px; color: #A0A0A0;">Выберите сезон для просмотра серий.</p>'; // Reset episodes panel
+        seasonsListPanel.innerHTML = '';
+        episodesListPanel.innerHTML = '<p class="select-season-placeholder" style="text-align: center; padding: 20px; color: #A0A0A0;">Выберите сезон для просмотра серий.</p>';
         episodesListPanel.classList.remove('active');
         currentSelectedSeasonNumber = null;
-
-
         if (!seasonsData || seasonsData.length === 0) {
             seasonsListPanel.innerHTML = '<p class="no-seasons-message">Информация о сезонах отсутствует.</p>';
             return;
         }
-
-        // Filter out season 0 (Specials) from being displayed in the main list if it has no episodes or is generally problematic
         const displayableSeasons = seasonsData.filter(season => season.season_number !== 0 || (season.season_number === 0 && season.episodes && season.episodes.length > 0));
-
-
         displayableSeasons.forEach(season => {
             if (season.season_number === 0 && (!season.episodes || season.episodes.length === 0)) {
-                 // Skip season 0 if it has no episodes, as TMDB sometimes lists "Specials" with 0 episodes.
                 return;
             }
             const seasonItem = document.createElement('div');
             seasonItem.className = 'season-item';
             seasonItem.dataset.seasonNumber = season.season_number;
-
             const posterPath = season.poster_path ? `${TMDB_IMAGE_BASE_URL}${SEASON_POSTER_SIZE}${season.poster_path}` : 'https://placehold.co/154x231/1A1A1A/555555?text=Нет+постера';
             const airYear = season.air_date ? new Date(season.air_date).getFullYear() : 'N/A';
             const episodeCount = season.episode_count || (season.episodes ? season.episodes.length : 0);
-
             seasonItem.innerHTML = `
                 <img src="${posterPath}" alt="Постер ${season.name}" class="season-item-poster" onerror="this.onerror=null;this.src='https://placehold.co/80x120/1A1A1A/555555?text=Нет+фото';">
                 <div class="season-item-info">
@@ -603,48 +590,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="season-item-overview">${season.overview || 'Описание сезона отсутствует.'}</p>
                 </div>
             `;
-
             seasonItem.addEventListener('click', () => {
-                // Remove active class from previously selected season
                 const currentActiveSeason = seasonsListPanel.querySelector('.season-item.active');
                 if (currentActiveSeason) {
                     currentActiveSeason.classList.remove('active');
                 }
-                // Add active class to clicked season
                 seasonItem.classList.add('active');
                 currentSelectedSeasonNumber = season.season_number;
-
                 renderEpisodes(season.episodes || [], episodesListPanel, season.season_number);
-                episodesListPanel.classList.add('active'); // Animate in
+                episodesListPanel.classList.add('active');
             });
             seasonsListPanel.appendChild(seasonItem);
         });
-         if (seasonsListPanel.children.length === 0) { // If all seasons were filtered out (e.g. only empty season 0)
+         if (seasonsListPanel.children.length === 0) {
             seasonsListPanel.innerHTML = '<p class="no-seasons-message">Информация о сезонах отсутствует.</p>';
         }
     }
 
     function renderEpisodes(episodesData, episodesPanelElement, seasonNumber) {
-        episodesPanelElement.innerHTML = ''; // Clear previous episodes
-
+        episodesPanelElement.innerHTML = '';
         if (!episodesData || episodesData.length === 0) {
             episodesPanelElement.innerHTML = '<p class="no-episodes-message">В этом сезоне нет информации о сериях.</p>';
             return;
         }
-
         episodesData.forEach(episode => {
             const episodeItem = document.createElement('div');
             episodeItem.className = 'episode-item';
-            // Store episode name for the click handler
             episodeItem.dataset.episodeName = episode.name || `Серия ${episode.episode_number}`;
             episodeItem.dataset.episodeNumber = episode.episode_number;
-            episodeItem.dataset.seasonNumber = seasonNumber;
-
-
+            episodeItem.dataset.seasonNumber = seasonNumber; // Используем camelCase для JS, но dataset преобразует в data-season-number
             const stillPath = episode.still_path ? `${TMDB_IMAGE_BASE_URL}${EPISODE_STILL_SIZE}${episode.still_path}` : 'https://placehold.co/300x169/1A1A1A/555555?text=Нет+кадра';
             const airDate = episode.air_date ? new Date(episode.air_date).toLocaleDateString('ru-RU') : 'N/A';
             const runtime = episode.runtime ? `${episode.runtime} мин.` : 'N/A';
-
             episodeItem.innerHTML = `
                 <img src="${stillPath}" alt="Кадр ${episode.name}" class="episode-item-still" onerror="this.onerror=null;this.src='https://placehold.co/178x100/1A1A1A/555555?text=Нет+фото';">
                 <div class="episode-item-details">
@@ -653,23 +630,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="episode-item-overview">${episode.overview || 'Описание серии отсутствует.'}</p>
                     </div>
             `;
-
-            // Add click listener to the entire episode item
             episodeItem.addEventListener('click', () => {
-                const episodeTitle = episodeItem.dataset.episodeName;
-                showToastNotification(`Запуск просмотра: ${episodeTitle}`, false);
-                // Здесь будет логика для запуска плеера
-                // Например: playEpisode(currentTmdbId, episodeItem.dataset.seasonNumber, episodeItem.dataset.episodeNumber);
-                console.log(`Воспроизвести: Сериал ID ${currentTmdbId}, Сезон ${episodeItem.dataset.seasonNumber}, Эпизод ${episodeItem.dataset.episodeNumber} (${episodeTitle})`);
-
+                // При клике на эпизод открываем модальное окно с плеером Kinobox
+                // Передаем TMDB ID текущего сериала. Kinobox сам должен обработать выбор сезона/серии,
+                // если он загружен с ID сериала. Если Kinobox поддерживает прямую ссылку на эпизод через опции kbox,
+                // то можно передать seasonNumber и episode.episode_number в openPlayerModal.
+                // Судя по вашей документации, опции kbox не включают явную передачу сезона/эпизода.
+                if (currentTmdbId) {
+                    openPlayerModal(currentTmdbId); // Открываем плеер для всего сериала/фильма
+                } else {
+                    showToastNotification('Не удалось определить ID контента для просмотра.', true);
+                }
             });
-
             episodesPanelElement.appendChild(episodeItem);
         });
     }
 
-
-    // --- Инициализация страницы ---
+    // --- Инициализация страницы (существующий код без изменений) ---
     async function fetchAndDisplayDetails(tmdbId, mediaType) {
         currentTmdbId = tmdbId;
         currentMediaType = mediaType;
@@ -692,10 +669,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ratingBadge) applyRatingStyles(ratingBadge, currentItemData.vote_average);
             if (infoListContainer) { infoListContainer.innerHTML = ''; const detailsMap = { "original_title": { label: "Оригинальное название", value: currentItemData.original_title || currentItemData.original_name }, "studios": { label: "Студия", value: currentItemData.production_companies?.map(c => c.name).join(', ') }, "status": { label: "Статус", value: currentItemData.status === 'Released' ? 'Вышел' : (currentItemData.status || 'Неизвестно') }, "number_of_episodes": { label: "Количество эпизодов", value: mediaType === 'tv' ? currentItemData.number_of_episodes : null }, "first_air_date": { label: "Год выпуска", value: releaseYear ? new Date(releaseYear).getFullYear() : 'N/A' }, "genres": { label: "Жанры", value: currentItemData.genres?.map(g => g.name).join(', ') }, "countries": { label: "Страна производства", value: currentItemData.production_countries?.map(c => c.name).join(', ') }, "runtime": { label: "Длительность", value: mediaType === 'tv' ? `${currentItemData.episode_run_time?.[0] || 'N/A'} мин.` : `${currentItemData.runtime || 'N/A'} мин.` }, "actors": { label: "Актеры", value: getNamesList(currentItemData.credits?.cast, 10) }, "directors": { label: "Режиссеры", value: getNamesList(currentItemData.credits?.crew?.filter(p => p.job === "Director"), 5) }, "producers": { label: "Продюсеры", value: getNamesList(currentItemData.credits?.crew?.filter(p => p.department === "Production" && (p.job === "Producer" || p.job === "Executive Producer")), 5) }, }; for (const key in detailsMap) { const item = detailsMap[key]; if (item.value && item.value !== 'N/A' && String(item.value).trim() !== '' && item.value !== 0) { const infoEl = document.createElement('div'); infoEl.className = 'anime_info_el'; infoEl.innerHTML = `<span class="anime_info_el_key">${item.label}</span><span class="anime_info_el_value">${item.value}</span>`; infoListContainer.appendChild(infoEl); } } }
             const userId = localStorage.getItem('userId'); if (userId) { const listItemData = await getItemListStatus(userId, currentItemData.id, currentItemData.media_type); if (listItemData) { currentItemData.userListCategory = listItemData.category; currentItemData.userRating = listItemData.rating; } } createRatingWidget(currentItemData.userRating); updateListCategoryDropdownCheckmarks();
-
-            // --- Logic for Seasons and Episodes Tab ---
             if (mediaType === 'tv' && seasonsEpisodesTabButton) {
-                seasonsEpisodesTabButton.style.display = 'block'; // Show the tab button
+                seasonsEpisodesTabButton.style.display = 'block';
                 if (currentItemData.all_season_details) {
                     renderSeasonsAndEpisodesTab(currentItemData.all_season_details);
                 } else {
@@ -703,19 +678,15 @@ document.addEventListener('DOMContentLoaded', () => {
                      if(seasonsListPanel) seasonsListPanel.innerHTML = '<p class="no-seasons-message">Подробная информация о сезонах не найдена.</p>';
                 }
             } else if (seasonsEpisodesTabButton) {
-                seasonsEpisodesTabButton.style.display = 'none'; // Hide for movies
+                seasonsEpisodesTabButton.style.display = 'none';
             }
-            // --- End Logic for Seasons and Episodes Tab ---
-
-
             const stillsTabButton = document.querySelector('.tab-button-watch[data-tab-target="#tab-stills"]'); if (mediaType === 'tv' && stillsTabButton && stillsTabPane) { stillsTabButton.style.display = 'block'; stillsTabPane.innerHTML = '<div class="search-loading-indicator" style="display:flex; justify-content:center; padding:20px;"></div>'; if (currentItemData.all_season_details && currentItemData.all_season_details.length > 0) { const maxEpisodesToFetchStillsFrom = 20; let episodesWithDetails = []; currentItemData.all_season_details.forEach(season => { if (season.episodes && season.episodes.length > 0) { episodesWithDetails.push(...season.episodes.map(ep => ({...ep, season_number: season.season_number}))); } }); for (let i = episodesWithDetails.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [episodesWithDetails[i], episodesWithDetails[j]] = [episodesWithDetails[j], episodesWithDetails[i]]; } const episodesToFetch = episodesWithDetails.slice(0, maxEpisodesToFetchStillsFrom); if (episodesToFetch.length > 0) { const stillPromises = episodesToFetch.map(episode => fetchStillsForEpisode(tmdbId, episode.season_number, episode.episode_number)); const results = await Promise.all(stillPromises); renderStills(results.flat(), stillsTabPane); } else { renderStills([], stillsTabPane); } } else { renderStills([], stillsTabPane); } } else if (stillsTabButton) { stillsTabButton.style.display = 'none'; if(stillsTabPane) stillsTabPane.innerHTML = ''; }
             if (backdropsTabPane) { if (currentItemData.images?.backdrops && currentItemData.images.backdrops.length > 0) { renderBackdrops(currentItemData.images.backdrops, backdropsTabPane); } else { backdropsTabPane.innerHTML = '<p class="empty-tab-message">Задники отсутствуют.</p>'; } }
             if (postersTabPane) { if (currentItemData.images?.posters && currentItemData.images.posters.length > 0) { renderPosters(currentItemData.images.posters, postersTabPane); } else { postersTabPane.innerHTML = '<p class="empty-tab-message">Постеры отсутствуют.</p>'; } }
-            if (videosGrid) { videosGrid.innerHTML = ''; const trailers = currentItemData.videos?.results?.filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')) || []; if (trailers.length > 0) { trailers.slice(0, 12).forEach(video => { const videoEl = document.createElement('div'); videoEl.className = 'video-item media-item'; videoEl.innerHTML = ` <img src="https://i.ytimg.com/vi/${video.key}/mqdefault.jpg" alt="${video.name}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/320x180/1A1A1A/555555?text=No+Trailer+Thumb'; this.alt='Нет превью трейлера';"> <div class="play-icon"><i class="fas fa-play"></i></div> `; videoEl.addEventListener('click', () => { window.open(`https://www.youtube.com/watch?v=$${video.key}`, '_blank'); }); videosGrid.appendChild(videoEl); }); } else { videosGrid.innerHTML = '<p class="empty-tab-message">Трейлеры отсутствуют.</p>'; } }
+            if (videosGrid) { videosGrid.innerHTML = ''; const trailers = currentItemData.videos?.results?.filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')) || []; if (trailers.length > 0) { trailers.slice(0, 12).forEach(video => { const videoEl = document.createElement('div'); videoEl.className = 'video-item media-item'; videoEl.innerHTML = ` <img src="https://i.ytimg.com/vi/${video.key}/mqdefault.jpg" alt="${video.name}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/320x180/1A1A1A/555555?text=No+Trailer+Thumb'; this.alt='Нет превью трейлера';"> <div class="play-icon"><i class="fas fa-play"></i></div> `; videoEl.addEventListener('click', () => { window.open(`https://www.youtube.com/watch?v=${video.key}`, '_blank'); }); videosGrid.appendChild(videoEl); }); } else { videosGrid.innerHTML = '<p class="empty-tab-message">Трейлеры отсутствуют.</p>'; } }
             const similarTab = document.getElementById('tab-similar'); const recommendationsTab = document.getElementById('tab-recommendations');
             if (similarTab) { similarTab.innerHTML = ''; if (currentItemData.similar?.results?.length > 0) { const shelf = createShelfElement('similar-shelf', '', false); similarTab.appendChild(shelf); renderSingleShelf(shelf, currentItemData.similar.results.map(item => ({ ...item, id: item.id, media_type: item.media_type || mediaType, title: item.title, name: item.name, poster_path: item.poster_path, overview: item.overview, vote_average: item.vote_average }))); } else { similarTab.innerHTML = '<p class="empty-tab-message">Похожих не найдено.</p>'; } }
             if (recommendationsTab) { recommendationsTab.innerHTML = ''; if (currentItemData.recommendations?.results?.length > 0) { const shelf = createShelfElement('recommendations-shelf', '', false); recommendationsTab.appendChild(shelf); renderSingleShelf(shelf, currentItemData.recommendations.results.map(item => ({ ...item, id: item.id, media_type: item.media_type || mediaType, title: item.title, name: item.name, poster_path: item.poster_path, overview: item.overview, vote_average: item.vote_average }))); } else { recommendationsTab.innerHTML = '<p class="empty-tab-message">Рекомендаций не найдено.</p>'; } }
-
             loadComments(1);
         } catch (error) {
             console.error("Ошибка при загрузке деталей:", error);
@@ -723,7 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- ВОССТАНОВЛЕННЫЙ КОД ДЛЯ КНОПКИ "ДОБАВИТЬ В СПИСОК" ---
+    // --- ВОССТАНОВЛЕННЫЙ КОД ДЛЯ КНОПКИ "ДОБАВИТЬ В СПИСОК" (существующий код без изменений) ---
     if (addToCatalogBtn && catalogCategoryDropdown) {
         addToCatalogBtn.addEventListener('click', async (event) => {
             event.stopPropagation();
@@ -736,46 +707,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToastNotification('Данные о фильме/сериале не загружены.', true);
                 return;
             }
-
-            // Обновляем статус перед открытием дропдауна
             const listItemData = await getItemListStatus(userId, currentItemData.id, currentItemData.media_type);
             if (listItemData) {
                 currentItemData.userListCategory = listItemData.category;
-                if (typeof listItemData.rating !== 'undefined') { // Проверяем, есть ли оценка
+                if (typeof listItemData.rating !== 'undefined') {
                      currentItemData.userRating = listItemData.rating;
                 }
             } else {
-                 currentItemData.userListCategory = null; // Сбрасываем, если нет в списках
-                 // userRating остается как есть, если он был установлен ранее через виджет
+                 currentItemData.userListCategory = null;
             }
-            createRatingWidget(currentItemData.userRating); // Обновляем виджет оценки
-            updateListCategoryDropdownCheckmarks(); // Обновляем галочки в дропдауне
-
+            createRatingWidget(currentItemData.userRating);
+            updateListCategoryDropdownCheckmarks();
             catalogCategoryDropdown.classList.toggle('active');
         });
-
         catalogCategoryDropdown.querySelectorAll('button').forEach(categoryButton => {
             categoryButton.addEventListener('click', async () => {
                 const selectedCategory = categoryButton.dataset.category;
                 const userId = localStorage.getItem('userId');
-
                 if (!userId || !currentItemData) {
                     showToastNotification('Ошибка: Пользователь не авторизован или данные фильма не найдены.', true);
                     catalogCategoryDropdown.classList.remove('active');
                     return;
                 }
-
                 const { id: tmdb_id, media_type, title, name, poster_path, userRating } = currentItemData;
-                const itemTitle = title || name; // Используем title или name
+                const itemTitle = title || name;
                 const dataToSend = {
                     tmdb_id: parseInt(tmdb_id, 10),
                     media_type: media_type,
                     category: selectedCategory,
                     title: itemTitle,
                     poster_path: poster_path,
-                    rating: userRating // Отправляем текущую пользовательскую оценку
+                    rating: userRating
                 };
-
                 try {
                     const response = await fetch(`/api/user/${userId}/lists`, {
                         method: 'POST',
@@ -786,9 +749,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (response.ok) {
                         const message = result.message || `"${itemTitle}" успешно добавлен(а) в категорию "${selectedCategory}"!`;
                         showToastNotification(message, false);
-                        currentItemData.userListCategory = selectedCategory; // Обновляем локальное состояние
-                        updateListCategoryDropdownCheckmarks(); // Обновляем галочки
-                        createRatingWidget(currentItemData.userRating); // Обновляем виджет оценки, если это необходимо
+                        currentItemData.userListCategory = selectedCategory;
+                        updateListCategoryDropdownCheckmarks();
+                        createRatingWidget(currentItemData.userRating);
                     } else {
                         showToastNotification(`Ошибка: ${result.error || 'Не удалось обновить список.'}`, true);
                     }
@@ -803,34 +766,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- ВОССТАНОВЛЕННЫЙ КОД ДЛЯ ПЕРЕКЛЮЧЕНИЯ ВКЛАДОК ---
+    // --- ВОССТАНОВЛЕННЫЙ КОД ДЛЯ ПЕРЕКЛЮЧЕНИЯ ВКЛАДОК (существующий код без изменений) ---
     if (tabsContainer) {
         tabsContainer.addEventListener('click', (event) => {
             const targetButton = event.target.closest('.tab-button-watch');
             if (!targetButton || targetButton.classList.contains('active')) return;
-
             const currentActiveButton = tabsContainer.querySelector('.tab-button-watch.active');
             if (currentActiveButton) currentActiveButton.classList.remove('active');
             targetButton.classList.add('active');
-
             if (tabPanesContainer) {
                 const currentActivePane = tabPanesContainer.querySelector('.tab-pane-watch.active');
                 if (currentActivePane) currentActivePane.classList.remove('active');
-
                 const targetPaneId = targetButton.dataset.tabTarget;
                 const targetPane = document.querySelector(targetPaneId);
                 if (targetPane) {
                     targetPane.classList.add('active');
-                     // Если активирована вкладка "Сезоны и серии", а панель серий была активна,
-                    // но не для текущего выбранного сезона, скрыть её.
                     if (targetPaneId === '#tab-seasons-episodes') {
                         const episodesPanel = targetPane.querySelector('.episodes-list-panel');
-                        // Логика сброса панели серий, если нужно, чтобы при переключении на вкладку "Сезоны"
-                        // она не показывала серии от предыдущего активного сезона на другой вкладке (маловероятно, но для чистоты)
-                        // или если нужно, чтобы при каждом открытии вкладки "Сезоны" панель серий была скрыта до выбора сезона.
                         if (episodesPanel && currentSelectedSeasonNumber === null) {
-                           // episodesPanel.classList.remove('active'); // Скрываем, если не выбран сезон
-                           // episodesPanel.innerHTML = '<p class="select-season-placeholder" style="text-align: center; padding: 20px; color: #A0A0A0;">Выберите сезон для просмотра серий.</p>';
+                           // episodesPanel.classList.remove('active');
                         }
                     }
                 }
@@ -838,29 +792,132 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- НОВАЯ ЛОГИКА для модального окна плеера Kinobox ---
+    function openPlayerModal(tmdbIdToPlay) { // Убраны seasonNumber, episodeNumber, т.к. kbox() их не принимает в опциях
+        if (!tmdbIdToPlay) {
+            showToastNotification('Не удалось определить ID контента для просмотра.', true);
+            return;
+        }
+        if (!playerModal || !kinoboxPlayerTarget || !playerModalContent) {
+            console.error('Элементы модального окна плеера не найдены!');
+            return;
+        }
 
+        // 1. Очистить предыдущий плеер и сбросить состояние
+        kinoboxPlayerTarget.innerHTML = ''; // Очищаем контейнер для плеера
+        if (kinoboxExternalScript && kinoboxExternalScript.parentNode) {
+            kinoboxExternalScript.parentNode.removeChild(kinoboxExternalScript); // Удаляем старый скрипт
+            kinoboxExternalScript = null;
+        }
+        playerModalContent.classList.remove('fullscreen'); // Сброс на случай, если закрыли в полноэкранном
+
+        // 2. Настройки для Kinobox
+        const kinoboxOptions = {
+            search: {
+                tmdb: String(tmdbIdToPlay) // TMDB ID фильма/сериала
+            },
+            menu: { // Стандартные настройки меню, можно изменить
+                enable: true,
+                default: 'menu_list',
+                mobile: 'menu_button',
+                // format: '{N} :: {T} ({Q})', // Можно раскомментировать и настроить
+                // limit: 5,
+            },
+            players: { // Пример настройки источников, можно добавить нужные
+                 alloha: { enable: true, position: 1 }, // Включаем Alloha по умолчанию, если это ваш основной источник
+                 kodik: { enable: true, position: 2 }   // Включаем Kodik
+                // Добавьте другие источники по необходимости
+            },
+            notFoundMessage: 'К сожалению, видео не найдено.'
+            // Можно добавить другие опции из документации Kinobox
+        };
+
+        // 3. Динамически загрузить и выполнить скрипт Kinobox
+        kinoboxExternalScript = document.createElement('script');
+        kinoboxExternalScript.src = 'https://kinobox.tv/kinobox.min.js';
+        kinoboxExternalScript.async = true;
+
+        kinoboxExternalScript.onload = () => {
+            console.log("Kinobox script loaded.");
+            if (window.kbox && kinoboxPlayerTarget) {
+                try {
+                    console.log("Initializing Kinobox with options:", kinoboxOptions, "on target:", kinoboxPlayerTarget);
+                    window.kbox(kinoboxPlayerTarget, kinoboxOptions); // Инициализируем плеер
+                } catch (e) {
+                    console.error("Error initializing Kinobox:", e);
+                    showToastNotification('Ошибка инициализации плеера Kinobox.', true);
+                }
+            } else {
+                console.error('Kinobox function kbox not found or target is missing after script load.');
+                showToastNotification('Не удалось загрузить функцию плеера Kinobox.', true);
+            }
+        };
+        kinoboxExternalScript.onerror = () => {
+            console.error('Failed to load Kinobox script.');
+            showToastNotification('Не удалось загрузить скрипт плеера Kinobox.', true);
+        };
+
+        document.body.appendChild(kinoboxExternalScript); // Добавляем в body, чтобы он выполнился
+
+        // 4. Показать модальное окно
+        playerModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Предотвратить прокрутку фона
+
+        // 5. Плавное расширение на весь экран
+        setTimeout(() => {
+            if (playerModalContent) playerModalContent.classList.add('fullscreen');
+        }, 50);
+    }
+
+    function closePlayerModal() {
+        if (!playerModal || !kinoboxPlayerTarget || !playerModalContent) return;
+
+        playerModal.style.display = 'none';
+        document.body.style.overflow = '';
+
+        // Удалить скрипт Kinobox
+        if (kinoboxExternalScript && kinoboxExternalScript.parentNode) {
+            kinoboxExternalScript.parentNode.removeChild(kinoboxExternalScript);
+            kinoboxExternalScript = null;
+        }
+        // Очистить контейнер плеера (Kinobox может сам удалять содержимое, но для надежности)
+        if (kinoboxPlayerTarget) kinoboxPlayerTarget.innerHTML = '';
+        // Сбросить класс fullscreen
+        if (playerModalContent) playerModalContent.classList.remove('fullscreen');
+    }
+
+    // Обновленный обработчик для главной кнопки "Смотреть"
     if (watchNowMainBtn) {
         watchNowMainBtn.addEventListener('click', () => {
-            if (currentTmdbId && currentMediaType) {
-                showToastNotification(`Запуск плеера для ID ${currentTmdbId} (${currentMediaType})... (демо)`, false);
-                // Здесь будет логика для перехода к плееру или его открытия
+            if (currentTmdbId) {
+                openPlayerModal(currentTmdbId);
             } else {
-                showToastNotification('Не удалось определить ID или тип контента для просмотра.', true);
+                showToastNotification('Не удалось определить ID контента для просмотра.', true);
             }
         });
     }
+
+    // Обработчик для кнопки закрытия модального окна плеера
+    if (playerModalCloseBtn) {
+        playerModalCloseBtn.addEventListener('click', closePlayerModal);
+    }
+
+    // Закрытие модального окна плеера по Escape
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && playerModal && playerModal.style.display === 'flex') {
+            closePlayerModal();
+        }
+    });
+    // --- Конец новой логики для модального окна плеера ---
+
 
     const params = new URLSearchParams(window.location.search);
     const tmdbIdParam = params.get('tmdbId');
     const mediaTypeParam = params.get('type');
 
-    // Reset active tabs before fetching details
     tabsContainer?.querySelectorAll('.tab-button-watch.active').forEach(b => b.classList.remove('active'));
     tabPanesContainer?.querySelectorAll('.tab-pane-watch.active').forEach(p => p.classList.remove('active'));
 
-    // Set default active tab based on media type AFTER details are fetched and seasons tab visibility is determined
-    // This will be handled inside fetchAndDisplayDetails or after it.
-    // For now, ensure a sensible default if nothing else is set.
     const defaultActiveTabButton = document.querySelector('.tab-button-watch[data-tab-target="#tab-backdrops"]');
     if (defaultActiveTabButton && !tabsContainer?.querySelector('.tab-button-watch.active')) {
         defaultActiveTabButton.classList.add('active');
@@ -870,20 +927,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (tmdbIdParam && mediaTypeParam) {
         fetchAndDisplayDetails(tmdbIdParam, mediaTypeParam).then(() => {
-            // After details are fetched, and seasons tab visibility is set,
-            // determine the actual default active tab.
             const currentActiveButton = tabsContainer?.querySelector('.tab-button-watch.active');
-            if (!currentActiveButton) { // If no tab was made active by specific logic (e.g. stills for TV)
+            if (!currentActiveButton) {
                 let newDefaultButton;
                 if (currentMediaType === 'tv') {
-                    // Prefer "Seasons & Episodes" if visible, then "Stills"
                     newDefaultButton = seasonsEpisodesTabButton?.style.display !== 'none'
                         ? seasonsEpisodesTabButton
                         : document.querySelector('.tab-button-watch[data-tab-target="#tab-stills"]');
-                } else { // For movies
+                } else {
                     newDefaultButton = document.querySelector('.tab-button-watch[data-tab-target="#tab-backdrops"]');
                 }
-
                 if (newDefaultButton) {
                     newDefaultButton.classList.add('active');
                     const newDefaultPane = document.querySelector(newDefaultButton.dataset.tabTarget);

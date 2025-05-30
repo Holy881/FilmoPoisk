@@ -1,0 +1,109 @@
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding-top: 20px; /* Отступ для заголовка */
+    background-color: #f0f2f5; /* Светло-серый фон */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #1c1e21; /* Основной цвет текста */
+}
+
+.page-title {
+    font-size: 1.8em;
+    color: #333;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+.series-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Промежуток между карточками серий */
+    width: 100%;
+    max-width: 680px; /* Ограничение ширины списка */
+    padding: 0 15px; /* Боковые отступы на малых экранах */
+    box-sizing: border-box;
+}
+
+.series-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    overflow: hidden; /* Важно для скругленных углов при анимации max-height */
+    border: 1px solid #ddd; /* Тонкая рамка для карточки */
+}
+
+.series-tile {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    position: relative; /* Для возможного добавления индикаторов */
+}
+
+.series-tile:hover {
+    background-color: #f9f9f9;
+}
+
+.series-number-badge {
+    background-color: #4a5c6a; /* Темно-сине-серый цвет */
+    color: white;
+    padding: 8px 14px;
+    border-radius: 6px;
+    margin-right: 15px;
+    font-weight: bold;
+    font-size: 0.95em;
+    flex-shrink: 0; /* Предотвращает сжатие элемента */
+}
+
+.series-details {
+    flex-grow: 1; /* Занимает оставшееся пространство */
+}
+
+.series-details h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.05em;
+    color: #1c1e21; /* Темный цвет для заголовка */
+    font-weight: 600;
+}
+
+.series-details p {
+    margin: 0;
+    font-size: 0.85em;
+    color: #606770; /* Серый цвет для подзаголовка */
+}
+
+.player-container {
+    max-height: 0; /* Изначально скрыт */
+    overflow: hidden;
+    transition: max-height 0.45s ease-in-out; /* Плавная анимация выдвижения */
+    background-color: #000; /* Черный фон для области плеера */
+    /* border-top: 1px solid #e0e0e0; */ /* Опциональный разделитель */
+}
+
+.player-container.active {
+    /* Максимальная высота плеера, например, 70% высоты видимой области экрана */
+    /* Можно использовать и фиксированное значение: max-height: 500px; */
+    max-height: 70vh; 
+}
+
+/* Стили для содержимого плеера, если это не iframe на весь контейнер */
+.kinobox_player {
+    width: 100%;
+    /* Занимает всю высоту родительского .player-container.active */
+    height: 100%; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Минимальная высота, чтобы было видно ошибки или загрузчик */
+    min-height: 300px; 
+}
+
+/* Стили для сообщений об ошибках или статусов внутри .kinobox_player */
+.kinobox_player p {
+    color: #aaa;
+    padding: 20px;
+    text-align: center;
+}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест Kinobox Плеера (плеер в HTML)</title>
+    <link rel="stylesheet" href="kinobox_test.css">
+</head>
+<body>
+    <h1 class="page-title">Тестовая страница Kinobox</h1>
+
+    <div class="episode-list-container">
+        <div class="episode-item" id="test-episode-1" data-tmdb-id="1396"> <div class="episode-item-main-content">
+                <img src="https://placehold.co/178x100/2c3e50/ecf0f1?text=Серия+1" alt="Кадр серии 1" class="episode-item-still">
+                <div class="episode-item-details">
+                    <h5 class="episode-item-title">Во все тяжкие (TMDB ID: 1396)</h5>
+                    <p class="episode-item-meta">Кликни для плеера</p>
+                </div>
+            </div>
+            <div class="episode-player-wrapper"> <button class="close-inline-player-btn" title="Закрыть плеер">&times;</button>
+                <div class="kinobox-active-player-target kinobox_player">
+                    </div>
+            </div>
+        </div>
+
+        <div class="episode-item" id="test-episode-2" data-tmdb-id="60574"> <div class="episode-item-main-content">
+                <img src="https://placehold.co/178x100/34495e/bdc3c7?text=Серия+2" alt="Кадр серии 2" class="episode-item-still">
+                <div class="episode-item-details">
+                    <h5 class="episode-item-title">Флэш (TMDB ID: 60574)</h5>
+                    <p class="episode-item-meta">Кликни для плеера</p>
+                </div>
+            </div>
+            <div class="episode-player-wrapper">
+                <button class="close-inline-player-btn" title="Закрыть плеер">&times;</button>
+                <div class="kinobox-active-player-target kinobox_player">
+                </div>
+            </div>
+        </div>
+
+         <div class="episode-item" id="test-episode-3" data-tmdb-id="82856"> <div class="episode-item-main-content">
+                <img src="https://placehold.co/178x100/16a085/e0e0e0?text=Серия+3" alt="Кадр серии 3" class="episode-item-still">
+                <div class="episode-item-details">
+                    <h5 class="episode-item-title">Мандалорец (TMDB ID: 82856)</h5>
+                    <p class="episode-item-meta">Кликни для плеера</p>
+                </div>
+            </div>
+            <div class="episode-player-wrapper">
+                <button class="close-inline-player-btn" title="Закрыть плеер">&times;</button>
+                <div class="kinobox-active-player-target kinobox_player">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://kinobox.tv/kinobox.min.js"></script>
+    <script src="kinobox_test.js"></script>
+</body>
+</html>

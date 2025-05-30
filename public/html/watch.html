@@ -6,8 +6,7 @@
     <title>Просмотр - ФильмоПОИСК</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/home.css">
-    <link rel="stylesheet" href="/css/watch.css">
+    <link rel="stylesheet" href="/css/home.css"> <link rel="stylesheet" href="/css/watch.css">
     <link rel="icon" type="image/vnd.microsoft.icon" href="/images/favicon.ico" />
 </head>
 <body>
@@ -233,6 +232,13 @@
         <div id="lightbox-caption"></div>
     </div>
 
+    <div id="kinobox-player-modal" class="player-modal" style="display: none;">
+        <div class="player-modal-content">
+            <button class="player-modal-close" aria-label="Закрыть плеер">&times;</button>
+            <div id="kinobox-player-target" style="width: 100%; height: 100%; background-color: #000;">
+                </div>
+        </div>
+    </div>
     <script src="/js/watch.js"></script>
 </body>
 </html>

@@ -1336,8 +1336,7 @@ $child-content-padding-base: 15px;
                 width: 50px; 
                 height: 75px;
             }
-             .season-item-overview {
-            }
+
         }
         .episodes-list-panel {
              width: calc(100% - 220px - 20px - 30px); 
@@ -1447,7 +1446,6 @@ $child-content-padding-base: 15px;
             padding: 0;
 
 
-            &.active { /* No special active state needed for transform in mobile */ }
 
             .episode-item { 
                 flex-direction: column; 
